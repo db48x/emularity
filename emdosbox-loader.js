@@ -152,8 +152,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     DOSBOX.width = nr[0] * scale;
     DOSBOX.height = nr[1] * scale;
 
-    var use_mame = true;
-
     Module = {
       arguments: build_dosbox_arguments(modulecfg),
       screenIsReadOnly: true,
@@ -167,10 +165,8 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       preInit: function() {
         LOADING_TEXT = 'Loading binary files into file system';
         // Load the downloaded binary files into the filesystem.
-        if (game && !use_mame) {
-            LOADING_TEXT = 'Loading game file into file system';
-            DOSBOX.BFSMountZip(game_file);
-        }
+        LOADING_TEXT = 'Loading game file into file system';
+        DOSBOX.BFSMountZip(game_file);
         Module['FS_createFolder']('/', 'cfg', true, true);
         Module['FS_createDataFile']('/cfg', modulecfg['driver'] + '.cfg', keymap, true, true);
         window.clearInterval(drawloadingtimer);
@@ -183,12 +179,9 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
 
     file_countdown = (game ? 1 : 0) + 2;
 
-    if (game && !use_mame) {
-      fetch_file('Game',
-                 game,
-                 function(data) { game_file = data; update_countdown(); });
-    }
-
+    fetch_file('Game',
+               game,
+               function(data) { game_file = data; update_countdown(); });
     fetch_file('Keymap',
                '//archive.org/cors/jsmess_config_v2/' + modulecfg['driver'] + '.cfg',
                function(data) { keymap = data; update_countdown(); },
