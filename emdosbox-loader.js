@@ -1,6 +1,6 @@
 var Module = null;
 
-function JSMESS(canvas, module, game, precallback, callback, scale) {
+function DOSBOX(canvas, module, game, precallback, callback, scale) {
   var js_data;
   var moduledata;
   var requests = [];
@@ -122,8 +122,8 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
       if (!($.cookie && $.cookie('unmute'))){
         setTimeout(function(){
           // someone moved it from 1st to 2nd!
-          if (JSMESS && typeof(JSMESS.sdl_pauseaudio)!='undefined')
-            JSMESS.sdl_pauseaudio(1);
+          if (DOSBOX && typeof(DOSBOX.sdl_pauseaudio)!='undefined')
+            DOSBOX.sdl_pauseaudio(1);
           else if (_SDL_PauseAudio)
             _SDL_PauseAudio(1);
         }, 3000); 
@@ -210,8 +210,8 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
 
     var nr = modulecfg['native_resolution'];
 
-    JSMESS.width = nr[0] * scale;
-    JSMESS.height = nr[1] * scale;
+    DOSBOX.width = nr[0] * scale;
+    DOSBOX.height = nr[1] * scale;
 
     var use_mame = true;
     var arguments;
@@ -309,7 +309,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     return this;
   };
   this.start = start;
-  window.JSMESSstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
+  window.DOSBOXstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
 
   var drawsplash = function() {
     var context = canvas.getContext('2d');   
@@ -348,45 +348,45 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
   try_start();
 }
 
-JSMESS._readySet = false;
+DOSBOX._readySet = false;
 
-JSMESS._readyList = [];
+DOSBOX._readyList = [];
 
-JSMESS._runReadies = function() {
-  if (JSMESS._readyList) {
-    for (var r=0; r < JSMESS._readyList.length; r++) {
-      JSMESS._readyList[r].call(window, []);
+DOSBOX._runReadies = function() {
+  if (DOSBOX._readyList) {
+    for (var r=0; r < DOSBOX._readyList.length; r++) {
+      DOSBOX._readyList[r].call(window, []);
     };
-    JSMESS._readyList = [];
+    DOSBOX._readyList = [];
   };
 };
 
-JSMESS._readyCheck = function() {
-  if (JSMESS.running) {
-    JSMESS._runReadies();
+DOSBOX._readyCheck = function() {
+  if (DOSBOX.running) {
+    DOSBOX._runReadies();
   } else {
-    JSMESS._readySet = setTimeout(JSMESS._readyCheck, 10);
+    DOSBOX._readySet = setTimeout(DOSBOX._readyCheck, 10);
   };
 };
 
-JSMESS.ready = function(r) {
-  if (JSMESS.running) {
+DOSBOX.ready = function(r) {
+  if (DOSBOX.running) {
     r.call(window, []);
   } else {
-    JSMESS._readyList.push(function() { canvas.style.width = JSMESS.width + 'px'; canvas.style.height = JSMESS.height + 'px'; } );
-    if (!(JSMESS._readySet)) {
-      JSMESS._readyCheck();
+    DOSBOX._readyList.push(function() { canvas.style.width = DOSBOX.width + 'px'; canvas.style.height = DOSBOX.height + 'px'; } );
+    if (!(DOSBOX._readySet)) {
+      DOSBOX._readyCheck();
     }
   };
 }
 
-JSMESS.setScale = function() {
-  Module.canvas.style.width = JSMESS.width + 'px';
-  Module.canvas.style.height = JSMESS.height + 'px';
+DOSBOX.setScale = function() {
+  Module.canvas.style.width = DOSBOX.width + 'px';
+  Module.canvas.style.height = DOSBOX.height + 'px';
 };
 
-JSMESS.fullScreenChangeHandler = function() {
+DOSBOX.fullScreenChangeHandler = function() {
   if (!(document.mozFullScreenElement || document.fullScreenElement)) {
-      setTimeout(JSMESS.setScale, 0);
+      setTimeout(DOSBOX.setScale, 0);
   }
 }
