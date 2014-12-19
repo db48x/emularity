@@ -126,15 +126,14 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
             DOSBOX.sdl_pauseaudio(1);
           else if (_SDL_PauseAudio)
             _SDL_PauseAudio(1);
-        }, 3000); 
+        }, 3000);
       }
     }
   };
 
   var build_dosbox_arguments = function (config) {
     LOADING_TEXT = 'Building arguments';
-    return ['/dosprogram/'+ config['emulator_start']
-           ];
+    return ['/dosprogram/'+ config['emulator_start']];
   };
 
   var get_game_name = function (game_path) {
@@ -174,7 +173,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
         }
         Module['FS_createFolder']('/', 'cfg', true, true);
         Module['FS_createDataFile']('/cfg', modulecfg['driver'] + '.cfg', keymap, true, true);
-        window.clearInterval(drawloadingtimer);        
+        window.clearInterval(drawloadingtimer);
         if (callback) {
           modulecfg.canvas = canvas;
           window.setTimeout(function() { callback(modulecfg); }, 0);
@@ -198,7 +197,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
                '//archive.org/cors/jsmess_engine_v2/' + modulecfg['js_filename'],
                function(data) { js_data = data; update_countdown(); },
                'text', true);
-    
   };
 
   var keyevent = function(e) {
@@ -215,7 +213,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     loading = true;
     drawloadingtimer = window.setInterval(draw_loading_status, 1000/60);
     if (precallback) {
-      window.setTimeout(function() {precallback()}, 0);
+      window.setTimeout(precallback, 0);
     }
     init_module();
     return this;
@@ -224,7 +222,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
   window.DOSBOXstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
 
   var drawsplash = function() {
-    var context = canvas.getContext('2d');   
+    var context = canvas.getContext('2d');
     splashimg.onload = function(){
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.save();
