@@ -54,17 +54,17 @@ window.onkeydown = keypress;
     if (isfullscreensupported()) {
       fullscreenbutton.addEventListener('click', gofullscreen);
       if ('onfullscreenchange' in document) {
-        document.addEventListener('fullscreenchange', JSMESS.fullScreenChangeHandler);
+        document.addEventListener('fullscreenchange', DOSBOX.fullScreenChangeHandler);
       } else if ('onmozfullscreenchange' in document) {
-        document.addEventListener('mozfullscreenchange', JSMESS.fullScreenChangeHandler);
+        document.addEventListener('mozfullscreenchange', DOSBOX.fullScreenChangeHandler);
       } else if ('onwebkitfullscreenchange' in document) {
-        document.addEventListener('webkitfullscreenchange', JSMESS.fullScreenChangeHandler);
+        document.addEventListener('webkitfullscreenchange', DOSBOX.fullScreenChangeHandler);
       }
     } else {
       fullscreenbutton.disabled = true;
     }
     var canvas = document.getElementById('canvas');
-    mess = new JSMESS(canvas)
+    mess = new DOSBOX(canvas)
       .setscale(get('scale') ? parseFloat(get('scale')) : 1)
       .setmodule(module)
     setgame(loader_game);
