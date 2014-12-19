@@ -1,7 +1,6 @@
 var Module = null;
 
 function DOSBOX(canvas, module, game, precallback, callback, scale) {
-  var js_data;
   var moduledata;
   var requests = [];
   var drawloadingtimer;
@@ -112,12 +111,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     file_countdown -= 1;
     if (file_countdown <= 0) {
       loading = false;
-      var headID = document.getElementsByTagName('head')[0];
-      var newScript = document.createElement('script');
-      newScript.type = 'text/javascript';
-      newScript.text = js_data;
-      headID.appendChild(newScript);
-
       // see archive.js for the mute/unmute button/JS
       if (!($.cookie && $.cookie('unmute'))){
         setTimeout(function(){
@@ -145,7 +138,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     var modulecfg = JSON.parse(moduledata);
 
     var game_file = null;
-    var keymap    = null;
 
     var nr = modulecfg['native_resolution'];
 
@@ -167,8 +159,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
         // Load the downloaded binary files into the filesystem.
         LOADING_TEXT = 'Loading game file into file system';
         DOSBOX.BFSMountZip(game_file);
-        Module['FS_createFolder']('/', 'cfg', true, true);
-        Module['FS_createDataFile']('/cfg', modulecfg['driver'] + '.cfg', keymap, true, true);
         window.clearInterval(drawloadingtimer);
         if (callback) {
           modulecfg.canvas = canvas;
@@ -182,14 +172,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     fetch_file('Game',
                game,
                function(data) { game_file = data; update_countdown(); });
-    fetch_file('Keymap',
-               '//archive.org/cors/jsmess_config_v2/' + modulecfg['driver'] + '.cfg',
-               function(data) { keymap = data; update_countdown(); },
-               'text', true, true);
-    fetch_file('Javascript',
-               '//archive.org/cors/jsmess_engine_v2/' + modulecfg['js_filename'],
-               function(data) { js_data = data; update_countdown(); },
-               'text', true);
   };
 
   var keyevent = function(e) {
