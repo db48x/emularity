@@ -124,20 +124,26 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     }
   };
 
-  var build_dosbox_arguments = function (config) {
+  var build_dosbox_arguments = function (config, emulator_start) {
     LOADING_TEXT = 'Building arguments';
-    return ['/dosprogram/'+ config['emulator_start']];
+    return ['/dosprogram/'+ emulator_start];
   };
 
   var get_game_name = function (game_path) {
     return game_path.split('/').pop();
   };
 
+  var get_meta_url = function (game_path) {
+    var path = game_path.split('/');
+    return "//archive.org/cors/"+ path[4] +"/"+ path[4] +"_meta.xml";
+  };
+
   var init_module = function() {
     LOADING_TEXT = 'Parsing config';
     var modulecfg = JSON.parse(moduledata);
 
-    var game_file = null;
+    var game_file = null,
+        meta_file = null;
 
     var nr = modulecfg['native_resolution'];
 
@@ -145,7 +151,10 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     DOSBOX.height = nr[1] * scale;
 
     Module = {
-      arguments: build_dosbox_arguments(modulecfg),
+      arguments: build_dosbox_arguments(modulecfg,
+                                        meta_file.getElementsByTagName("emulator_start")
+                                                 .item(0)
+                                                 .textContent),
       screenIsReadOnly: true,
       print: (function() {
         return function(text) {
@@ -167,8 +176,12 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       }
     };
 
-    file_countdown = (game ? 1 : 0) + 2;
+    file_countdown = 2;
 
+    fetch_file('Metadata',
+               get_meta_url(game),
+               function(data) { meta_file = data; update_countdown(); },
+               'xml', true);
     fetch_file('Game',
                game,
                function(data) { game_file = data; update_countdown(); });
