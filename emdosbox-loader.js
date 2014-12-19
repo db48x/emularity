@@ -213,7 +213,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     JSMESS.width = nr[0] * scale;
     JSMESS.height = nr[1] * scale;
 
-    var use_mame = parseInt(modulecfg['arcade'], 10);
+    var use_mame = true;
     var arguments;
 
     if (use_mame) {
