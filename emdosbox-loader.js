@@ -205,8 +205,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
 
     var game_file = null;
     var keymap    = null;
-    var bios_filenames = modulecfg['bios_filenames'];
-    var bios_files = {};
 
     var nr = modulecfg['native_resolution'];
 
@@ -235,11 +233,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       preInit: function() {
         LOADING_TEXT = 'Loading binary files into file system';
         // Load the downloaded binary files into the filesystem.
-        for (var bios_fname in bios_files) {
-          if (bios_files.hasOwnProperty(bios_fname)) {
-            Module['FS_createDataFile']('/', bios_fname, bios_files[bios_fname], true, true);
-          }
-        }
         if (game && !use_mame) {
             LOADING_TEXT = 'Loading game file into file system';
             Module['FS_createDataFile']('/', game.replace(/\//g,'_'), game_file, true, true);
@@ -254,23 +247,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       }
     };
 
-    bios_filenames = bios_filenames.filter(String);
-    file_countdown = bios_filenames.length + (game ? 1 : 0) + 2;
-
-    // Fetch the BIOS and the game we want to run.
-    LOADING_TEXT = 'Fetching BIOS and Game';
-    if (!use_mame) {
-      for (var i=0; i < bios_filenames.length; i++) {
-        var fname = bios_filenames[i];
-        fetch_file('Bios',
-                   '//archive.org/cors/jsmess_bios_v2/' + fname,
-                   function(data) { bios_files[fname] = data; update_countdown(); });
-      }
-    } else {
-      fetch_file('Bios',
-                 game,
-                 function (data) { bios_files[get_game_name(game)] = data; update_countdown(); });
-    }
+    file_countdown = (game ? 1 : 0) + 2;
 
     if (game && !use_mame) {
       fetch_file('Game',
