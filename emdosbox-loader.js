@@ -284,7 +284,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
       e.preventDefault();
       start();
     }
-  }
+  };
 
   var start = function() {
     window.removeEventListener('keypress', keyevent);
@@ -296,7 +296,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     }
     init_module();
     return this;
-  }
+  };
   this.start = start;
   window.JSMESSstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
 
@@ -314,17 +314,10 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
       context.restore();
     };
     spinnerimg.onload = function() {
-      var use_mame = parseInt(JSON.parse(moduledata).arcade, 10);
-      var src;
-      if (use_mame) {
-        src = '/images/mame.png';
-      } else {
-        src = '/images/mess.png';
-      }
-      splashimg.src = src;
-    }
+      splashimg.src = '/images/dosbox.png';;
+    };
     spinnerimg.src = '/images/spinner.png';
-  }
+  };
 
   var configLoaded = function (data) {
     moduledata = data;
