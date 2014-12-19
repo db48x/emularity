@@ -235,7 +235,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
         // Load the downloaded binary files into the filesystem.
         if (game && !use_mame) {
             LOADING_TEXT = 'Loading game file into file system';
-            Module['FS_createDataFile']('/', game.replace(/\//g,'_'), game_file, true, true);
+            DOSBOX.BFSMountZip(game_file);
         }
         Module['FS_createFolder']('/', 'cfg', true, true);
         Module['FS_createDataFile']('/cfg', modulecfg['driver'] + '.cfg', keymap, true, true);
@@ -367,3 +367,44 @@ DOSBOX.fullScreenChangeHandler = function() {
       setTimeout(DOSBOX.setScale, 0);
   }
 }
+
+DOSBOX.BFSMountZip = function BFSMount(loadedData) {
+    var zipfs = new BrowserFS.FileSystem.ZipFS(loadedData),
+        mfs = new BrowserFS.FileSystem.MountableFileSystem(),
+        memfs = new BrowserFS.FileSystem.InMemory();
+    mfs.mount('/zip', zipfs);
+    mfs.mount('/mem', memfs);
+    BrowserFS.initialize(mfs);
+    // Copy the read-only zip file contents to a writable in-memory storage.
+    this.recursiveCopy('/zip', '/mem');
+    // Re-initialize BFS to just use the writable in-memory storage.
+    BrowserFS.initialize(memfs);
+    // Mount the file system into Emscripten.
+    var BFS = new BrowserFS.EmscriptenFS();
+    FS.mkdir('/' + zipFileMountFolder);
+    FS.mount(BFS, {root: '/'}, '/' + zipFileMountFolder);
+};
+
+// Helper function: Recursively copies contents from one folder to another.
+DOSBOX.recursiveCopy = function recursiveCopy(oldDir, newDir) {
+    var path = BrowserFS.BFSRequire('path'),
+        fs = BrowserFS.BFSRequire('fs');
+    copyDirectory(oldDir, newDir);
+    function copyDirectory(oldDir, newDir) {
+        if (!fs.existsSync(newDir)) {
+            fs.mkdirSync(newDir);
+        }
+        fs.readdirSync(oldDir).forEach(function(item) {
+            var p = path.resolve(oldDir, item),
+                newP = path.resolve(newDir, item);
+            if (fs.statSync(p).isDirectory()) {
+                copyDirectory(p, newP);
+            } else {
+                copyFile(p, newP);
+            }
+        });
+    }
+    function copyFile(oldFile, newFile) {
+        fs.writeFileSync(newFile, fs.readFileSync(oldFile));
+    }
+};
