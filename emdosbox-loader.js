@@ -316,8 +316,8 @@ DOSBOX.BFSMountZip = function BFSMount(loadedData) {
     BrowserFS.initialize(memfs);
     // Mount the file system into Emscripten.
     var BFS = new BrowserFS.EmscriptenFS();
-    FS.mkdir('/' + zipFileMountFolder);
-    FS.mount(BFS, {root: '/'}, '/' + zipFileMountFolder);
+    FS.mkdir('/dosprogram');
+    FS.mount(BFS, {root: '/'}, '/dosprogram');
 };
 
 // Helper function: Recursively copies contents from one folder to another.
