@@ -131,70 +131,12 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     }
   };
 
-  var build_mess_arguments = function (config) {
+  var build_dosbox_arguments = function (config) {
     LOADING_TEXT = 'Building arguments';
-    var nr = config['native_resolution'];
-    // see archive.js for the mute/unmute button/JS
-    var muted = (!(typeof($.cookie)!='undefined'  &&  $.cookie('unmute')));    
-
-    var args = [
-      config['driver'],
-      '-verbose',
-      '-rompath','.',
-      '-window',
-      '-resolution', nr[0]+'x' + nr[1],
-      '-nokeepaspect'
-    ];
-
-    if (config.autoboot) {
-      args.push('-autoboot_command');
-    }
-
-    if (muted){
-      args.push('-sound', 'none');
-    } else if (SAMPLE_RATE) {
-      args.push('-samplerate', SAMPLE_RATE);
-    }
-    
-    if (game) {
-      args.push('-' + config['peripherals'][0], game.replace(/\//g,'_'));
-    }
-
-    if (config['extra_args']) {
-      args = args.concat(config['extra_args']);
-    }
-
-    return args;
+    return ['/dosprogram/'+ config['emulator_start']
+           ];
   };
 
-  var build_mame_arguments = function (config) {
-    LOADING_TEXT = 'Building arguments';
-    var nr = config['native_resolution'];
-    // see archive.js for the mute/unmute button/JS
-    var muted = (!(typeof($.cookie)!='undefined'  &&  $.cookie('unmute')));    
-
-    var args = [
-      config['driver'],
-      '-verbose',
-      '-rompath','.',
-      '-window',
-      '-resolution', nr[0]+'x' + nr[1],
-      '-nokeepaspect'
-    ];
-
-    if (muted){
-      args.push('-sound', 'none');
-    } else if (SAMPLE_RATE) {
-      args.push('-samplerate', SAMPLE_RATE);
-    }
-
-    if (config['extra_args']) {
-      args = args.concat(config['extra_args']);
-    }
-
-    return args;
-  };
-  
   var get_game_name = function (game_path) {
     return game_path.split('/').pop();
   };
@@ -212,16 +154,9 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     DOSBOX.height = nr[1] * scale;
 
     var use_mame = true;
-    var arguments;
-
-    if (use_mame) {
-      arguments = build_mame_arguments(modulecfg);
-    } else {
-      arguments = build_mess_arguments(modulecfg);
-    }
 
     Module = {
-      arguments: arguments,
+      arguments: build_dosbox_arguments(modulecfg),
       screenIsReadOnly: true,
       print: (function() {
         return function(text) {
