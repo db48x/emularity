@@ -23,36 +23,36 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
   }());
 
   var can_start = function () {
-    return !!canvas && !!module && !!game && !!scale && !has_started
+    return !!canvas && !!module && !!game && !!scale && !has_started;
   };
 
   this.setscale = function(_scale) {
     scale = _scale;
     try_start();
     return this;
-  }
+  };
 
   this.setprecallback = function(_precallback) {
     precallback = _precallback;
     return this;
-  }
+  };
 
   this.setcallback = function(_callback) {
     callback = _callback;
     return this;
-  }
+  };
 
   this.setmodule = function(_module) {
     module = _module;
     try_start();
     return this;
-  }
+  };
 
   this.setgame = function(_game) {
     game = _game;
     try_start();
     return this;
-  }
+  };
 
   var draw_loading_status = function() {
     var context = canvas.getContext('2d');
@@ -93,7 +93,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
       if (!unmanaged) {
         xhr.progress = 1.0;
       }
-      var ints = raw ? xhr.response :  new Int8Array(xhr.response);
+      var ints = raw ? xhr.response : new Int8Array(xhr.response);
       cb(ints);
     };
     if (!unmanaged) {
@@ -109,7 +109,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
   };
 
   var update_countdown = function() {
-    file_countdown -= 1
+    file_countdown -= 1;
     if (file_countdown <= 0) {
       loading = false;
       var headID = document.getElementsByTagName('head')[0];
@@ -119,14 +119,13 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
       headID.appendChild(newScript);
 
       // see archive.js for the mute/unmute button/JS
-      if (!($.cookie  &&  $.cookie('unmute'))){
+      if (!($.cookie && $.cookie('unmute'))){
         setTimeout(function(){
           // someone moved it from 1st to 2nd!
-          if (JSMESS  &&  typeof(JSMESS.sdl_pauseaudio)!='undefined')
+          if (JSMESS && typeof(JSMESS.sdl_pauseaudio)!='undefined')
             JSMESS.sdl_pauseaudio(1);
           else if (_SDL_PauseAudio)
             _SDL_PauseAudio(1);
-          
         }, 3000); 
       }
     }
@@ -158,14 +157,14 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     }
     
     if (game) {
-      args.push('-' + config['peripherals'][0], game.replace(/\//g,'_'))
+      args.push('-' + config['peripherals'][0], game.replace(/\//g,'_'));
     }
 
     if (config['extra_args']) {
-      args = args.concat(config['extra_args'])
+      args = args.concat(config['extra_args']);
     }
 
-    return args
+    return args;
   };
 
   var build_mame_arguments = function (config) {
@@ -190,13 +189,13 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     }
 
     if (config['extra_args']) {
-      args = args.concat(config['extra_args'])
+      args = args.concat(config['extra_args']);
     }
 
-    return args
+    return args;
   };
   
-  get_game_name = function (game_path) {
+  var get_game_name = function (game_path) {
     return game_path.split('/').pop();
   };
 
@@ -250,31 +249,43 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
         window.clearInterval(drawloadingtimer);        
         if (callback) {
           modulecfg.canvas = canvas;
-          window.setTimeout(function() {callback(modulecfg)}, 0);
+          window.setTimeout(function() { callback(modulecfg); }, 0);
         }
       }
     };
 
     bios_filenames = bios_filenames.filter(String);
-    file_countdown = bios_filenames.length + (game ? 1 : 0) + 2
+    file_countdown = bios_filenames.length + (game ? 1 : 0) + 2;
 
     // Fetch the BIOS and the game we want to run.
     LOADING_TEXT = 'Fetching BIOS and Game';
     if (!use_mame) {
       for (var i=0; i < bios_filenames.length; i++) {
         var fname = bios_filenames[i];
-        fetch_file('Bios', '//archive.org/cors/jsmess_bios_v2/' + fname, function(data) { bios_files[fname] = data; update_countdown(); });
+        fetch_file('Bios',
+                   '//archive.org/cors/jsmess_bios_v2/' + fname,
+                   function(data) { bios_files[fname] = data; update_countdown(); });
       }
     } else {
-      fetch_file('Bios', game, function (data) { bios_files[get_game_name(game)] = data; update_countdown(); });
+      fetch_file('Bios',
+                 game,
+                 function (data) { bios_files[get_game_name(game)] = data; update_countdown(); });
     }
 
     if (game && !use_mame) {
-      fetch_file('Game', game, function(data) { game_file = data; update_countdown(); });
+      fetch_file('Game',
+                 game,
+                 function(data) { game_file = data; update_countdown(); });
     }
 
-    fetch_file('Keymap', '//archive.org/cors/jsmess_config_v2/' + modulecfg['driver'] + '.cfg', function(data) { keymap = data; update_countdown(); }, 'text', true, true);
-    fetch_file('Javascript', '//archive.org/cors/jsmess_engine_v2/' + modulecfg['js_filename'], function(data) { js_data = data; update_countdown(); }, 'text', true);
+    fetch_file('Keymap',
+               '//archive.org/cors/jsmess_config_v2/' + modulecfg['driver'] + '.cfg',
+               function(data) { keymap = data; update_countdown(); },
+               'text', true, true);
+    fetch_file('Javascript',
+               '//archive.org/cors/jsmess_engine_v2/' + modulecfg['js_filename'],
+               function(data) { js_data = data; update_countdown(); },
+               'text', true);
     
   };
 
