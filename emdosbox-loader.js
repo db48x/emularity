@@ -165,8 +165,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
                                                 meta_file.getElementsByTagName("emulator_start")
                                                          .item(0)
                                                          .textContent);
-        LOADING_TEXT = 'Loading binary files into file system';
-        // Load the downloaded binary files into the filesystem.
         LOADING_TEXT = 'Loading game file into file system';
         DOSBOX.BFSMountZip(game_file);
         window.clearInterval(drawloadingtimer);
@@ -288,7 +286,7 @@ DOSBOX.fullScreenChangeHandler = function() {
   if (!(document.mozFullScreenElement || document.fullScreenElement)) {
       setTimeout(DOSBOX.setScale, 0);
   }
-}
+};
 
 DOSBOX.BFSMountZip = function BFSMount(loadedData) {
     var zipfs = new BrowserFS.FileSystem.ZipFS(loadedData),

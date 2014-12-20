@@ -15,7 +15,7 @@ function gofullscreen() {
 function keypress(e) {
      if (typeof(loader_game)=='object'  &&  !loader_game.started)
          return true; // Don't ignore certain keys yet (until game started by "click to play")
-  
+
      var key = e.which;
      if($.inArray(key,ar) > -1) {
          e.preventDefault(); //Don't let arrow, pg up/down, home, end affect page position
@@ -28,15 +28,15 @@ window.onkeydown = keypress;
 
 (function() {
   function get(name) {
-    if(typeof(loader_game)=='object')
+    if (typeof(loader_game)=='object')
       return loader_game[name]; //alternate case where dont have CGI args to parse...
-    if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search)) {
+    if ((name = (new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))) {
       return decodeURIComponent(name[1]);
     }
   }
 
   var games;
-  var mess;
+  var emulator;
   var module;
 
   function getmodule() {
@@ -50,7 +50,7 @@ window.onkeydown = keypress;
   }
 
   function ready() {
-    var fullscreenbutton = document.getElementById('gofullscreen')
+    var fullscreenbutton = document.getElementById('gofullscreen');
     if (isfullscreensupported()) {
       fullscreenbutton.addEventListener('click', gofullscreen);
       if ('onfullscreenchange' in document) {
@@ -64,12 +64,11 @@ window.onkeydown = keypress;
       fullscreenbutton.disabled = true;
     }
     var canvas = document.getElementById('canvas');
-    mess = new DOSBOX(canvas)
-      .setscale(get('scale') ? parseFloat(get('scale')) : 1)
-      .setmodule(module)
-    setgame(loader_game);
+    emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
+                                 .setmodule(module)
+                                 .setgame(getgameurl(loader_game));
     if (get('autostart')) {
-      mess.start();
+      emulator.start();
     }
     // Gamepad text
     if (detectgamepadsupport()) {
@@ -79,20 +78,20 @@ window.onkeydown = keypress;
         var s = (gamepads.length === 1 ? '' : 's');
         gamepadDiv.innerHTML = gamepads.length + ' gamepad'+s+' detected. If the game does not ' +
                                'respond to your gamepad'+s+', refresh the browser and try again.';
-        if (mess.hasStarted) {
+        if (emulator.hasStarted) {
           gamepadDiv.innerHTML += "<br />Restart MESS to use new gamepads.";
         }
       });
     }
   }
 
-  function setgame(game) {
-    game = (game == 'NONE') ? undefined : game;
-    mess.setgame(game ? '//archive.org/cors/'+ game : undefined);
+  function getgameurl(game) {
+    return (game === 'NONE') ? undefined
+                             : ('//archive.org/cors/'+ game);
   }
 
   function switchgame(e) {
-    setgame(e.target.value);
+    emulator.setgame(getgameurl(e.target.value));
   }
 
   // Firefox will not give us Joystick data unless we register this NOP
