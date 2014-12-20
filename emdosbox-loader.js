@@ -151,10 +151,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     DOSBOX.height = nr[1] * scale;
 
     Module = {
-      arguments: build_dosbox_arguments(modulecfg,
-                                        meta_file.getElementsByTagName("emulator_start")
-                                                 .item(0)
-                                                 .textContent),
+      arguments: undefined,
       screenIsReadOnly: true,
       print: (function() {
         return function(text) {
@@ -164,6 +161,10 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       canvas: canvas,
       noInitialRun: false,
       preInit: function() {
+        this.arguments = build_dosbox_arguments(modulecfg,
+                                                meta_file.getElementsByTagName("emulator_start")
+                                                         .item(0)
+                                                         .textContent);
         LOADING_TEXT = 'Loading binary files into file system';
         // Load the downloaded binary files into the filesystem.
         LOADING_TEXT = 'Loading game file into file system';
