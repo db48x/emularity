@@ -117,7 +117,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
           // someone moved it from 1st to 2nd!
           if (DOSBOX && typeof(DOSBOX.sdl_pauseaudio)!='undefined')
             DOSBOX.sdl_pauseaudio(1);
-          else if (_SDL_PauseAudio)
+          else if (typeof _SDL_PauseAudio !== "undefined")
             _SDL_PauseAudio(1);
         }, 3000);
       }
