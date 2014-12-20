@@ -182,7 +182,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     fetch_file('Metadata',
                get_meta_url(game),
                function(data) { meta_file = data; update_countdown(); },
-               'xml', true);
+               'document', true);
     fetch_file('Game',
                game,
                function(data) { game_file = data; update_countdown(); });
