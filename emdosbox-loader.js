@@ -1,6 +1,7 @@
 var Module = null;
 
 function DOSBOX(canvas, module, game, precallback, callback, scale) {
+  var js_url;
   var moduledata;
   var requests = [];
   var drawloadingtimer;
@@ -111,6 +112,15 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     file_countdown -= 1;
     if (file_countdown <= 0) {
       loading = false;
+
+      if (js_url) {
+        var head = document.getElementsByTagName('head')[0];
+        var newScript = document.createElement('script');
+        newScript.type = 'text/javascript';
+        newScript.src = get_js_url(js_url);
+        head.appendChild(newScript);
+      }
+
       // see archive.js for the mute/unmute button/JS
       if (!($.cookie && $.cookie('unmute'))){
         setTimeout(function(){
@@ -138,15 +148,19 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     return "//archive.org/cors/"+ path[4] +"/"+ path[4] +"_meta.xml";
   };
 
+  var get_js_url = function (js_filename) {
+    return "//archive.org/cors/jsmess_engine_v2/"+ js_filename;
+  };
+
   var init_module = function() {
     LOADING_TEXT = 'Parsing config';
     var modulecfg = JSON.parse(moduledata);
+    js_url = modulecfg['js_filename'];
 
     var game_file = null,
         meta_file = null;
 
     var nr = modulecfg['native_resolution'];
-
     DOSBOX.width = nr[0] * scale;
     DOSBOX.height = nr[1] * scale;
 
