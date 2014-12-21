@@ -175,10 +175,10 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       canvas: canvas,
       noInitialRun: false,
       preInit: function() {
-        this.arguments = build_dosbox_arguments(modulecfg,
-                                                meta_file.getElementsByTagName("emulator_start")
-                                                         .item(0)
-                                                         .textContent);
+        Module.arguments = build_dosbox_arguments(modulecfg,
+                                                  meta_file.getElementsByTagName("emulator_start")
+                                                           .item(0)
+                                                           .textContent);;
         LOADING_TEXT = 'Loading game file into file system';
         DOSBOX.BFSMountZip(game_file);
         window.clearInterval(drawloadingtimer);
@@ -193,11 +193,17 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
 
     fetch_file('Metadata',
                get_meta_url(game),
-               function(data) { meta_file = data; update_countdown(); },
+               function(data) {
+                   meta_file = data;
+                   update_countdown();
+               },
                'document', true);
     fetch_file('Game',
                game,
-               function(data) { game_file = data; update_countdown(); });
+               function(data) {
+                   game_file = new BrowserFS.BFSRequire('buffer').Buffer(data);
+                   update_countdown();
+               });
   };
 
   var keyevent = function(e) {
