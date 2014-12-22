@@ -122,11 +122,11 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
                noInitialRun: false,
                preInit: function () {
                    Module.arguments = build_dosbox_arguments(modulecfg,
-                                                             game_file.getElementsByTagName("emulator_start")
+                                                             meta_file.getElementsByTagName("emulator_start")
                                                                       .item(0)
                                                                       .textContent);
                    LOADING_TEXT = 'Loading game file into file system';
-                   DOSBOX.BFSMountZip(meta_file);
+                   DOSBOX.BFSMountZip(new BrowserFS.BFSRequire('buffer').Buffer(game_file));
                    window.clearInterval(drawloadingtimer);
                    if (callback) {
                        modulecfg.canvas = canvas;
