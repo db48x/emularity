@@ -1,7 +1,6 @@
 var Module = null;
 
 function DOSBOX(canvas, module, game, precallback, callback, scale) {
-  var js_url;
   var moduledata;
   var requests = [];
   var drawloadingtimer;
@@ -10,7 +9,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
   var splashimg = new Image();
   var spinnerimg = new Image();
   var has_started = false;
-  var loading = false;
   var LOADING_TEXT;
 
   var SAMPLE_RATE = (function () {
@@ -21,10 +19,6 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     var sample = new audio_ctx;
     return sample.sampleRate.toString();
   }());
-
-  var can_start = function () {
-    return !!canvas && !!module && !!game && !!scale && !has_started;
-  };
 
   this.setscale = function(_scale) {
     scale = _scale;
@@ -54,10 +48,126 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     return this;
   };
 
+  try_start();
+
+  function try_start () {
+    if (!can_start()) {
+      return;
+    }
+    has_started = true;
+    var config = fetch_file('ModuleInfo',
+                            '//archive.org/cors/jsmess_engine_v2/' + module + '.json',
+                            'text', true, true);
+    config.then(function (data) {
+                  moduledata = data;
+                  window.addEventListener('keypress', keyevent);
+                  canvas.addEventListener('click', start);
+                  drawsplash();
+                });
+  }
+
+  function can_start() {
+    return !!canvas && !!module && !!game && !!scale && !has_started;
+  };
+
+  var keyevent = function(e) {
+    if (typeof(loader_game)=='object') return; // game will start with click-to-play instead of [SPACE] char
+    if (e.which == 32) {
+      e.preventDefault();
+      start();
+    }
+  };
+
+  var start = function() {
+    window.removeEventListener('keypress', keyevent);
+    canvas.removeEventListener('click', start);
+    drawloadingtimer = window.setInterval(draw_loading_status, 1000/60);
+    if (precallback) {
+      window.setTimeout(precallback, 0);
+    }
+
+    LOADING_TEXT = 'Parsing config';
+    var modulecfg = JSON.parse(moduledata);
+
+    var nr = modulecfg['native_resolution'];
+    DOSBOX.width = nr[0] * scale;
+    DOSBOX.height = nr[1] * scale;
+
+    file_countdown = 2;
+
+    LOADING_TEXT = 'Downloading game data...';
+    Promise.all([fetch_file('Metadata',
+                            get_meta_url(game),
+                            'document', true),
+                 fetch_file('Game',
+                            game)])
+           .then(function(game_data) {
+                   Module = init_module(modulecfg, game_data[0], game_data[1]);
+                   if (modulecfg['js_filename']) {
+                     attach_script(modulecfg['js_filename']);
+                   }
+                   handle_mute();
+                 });
+    return this;
+  };
+  this.start = start;
+  //global hook to method (so can be invoked with a "click to play" image being clicked)
+  window.DOSBOXstart = start;
+
+  function init_module(modulecfg, meta_file, game_file) {
+      return { arguments: undefined,
+               screenIsReadOnly: true,
+               print: function (text) { console.log(text); },
+               canvas: canvas,
+               noInitialRun: false,
+               preInit: function () {
+                   Module.arguments = build_dosbox_arguments(modulecfg,
+                                                             game_file.getElementsByTagName("emulator_start")
+                                                                      .item(0)
+                                                                      .textContent);
+                   LOADING_TEXT = 'Loading game file into file system';
+                   DOSBOX.BFSMountZip(meta_file);
+                   window.clearInterval(drawloadingtimer);
+                   if (callback) {
+                       modulecfg.canvas = canvas;
+                       window.setTimeout(function() {
+                                           callback(modulecfg);
+                                         },
+                                         0);
+                   }
+               }
+             };
+  }
+
+  var drawsplash = function() {
+    var context = canvas.getContext('2d');
+    splashimg.onload = function() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.save();
+      context.drawImage(splashimg,
+                        canvas.width / 2 - (splashimg.width / 2),
+                        canvas.height / 3 - (splashimg.height / 2));
+      context.font = '18px sans-serif';
+      context.fillStyle = 'Black';
+      context.textAlign = 'center';
+      context.fillText('Press the SPACEBAR to start.',
+                       canvas.width / 2,
+                       (canvas.height / 2) + (splashimg.height / 2));
+      context.textAlign = 'start';
+      context.restore();
+    };
+    spinnerimg.onload = function() {
+      splashimg.src = '/images/dosbox.png';;
+    };
+    spinnerimg.src = '/images/spinner.png';
+  };
+
   var draw_loading_status = function() {
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
+    context.drawImage(splashimg,
+                      canvas.width / 2 - (splashimg.width / 2),
+                      canvas.height / 3 - (splashimg.height / 2));
     var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
     context.save();
     context.translate((canvas.width / 2), spinnerpos);
@@ -68,7 +178,9 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     context.font = '18px sans-serif';
     context.fillStyle = 'Black';
     context.textAlign = 'center';
-    context.fillText(LOADING_TEXT, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
+    context.fillText(LOADING_TEXT,
+                     canvas.width / 2,
+                     (canvas.height / 2) + (splashimg.height / 4));
     context.restore();
     spinnerrot += .25;
   };
@@ -82,60 +194,36 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     }
   };
 
-  var fetch_file = function(title, url, cb, rt, raw, unmanaged) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = rt ? rt : 'arraybuffer';
-    xhr.onload = function(e) {
-      if (xhr.status != 200) {
-        return;
-      }
-      if (!unmanaged) {
-        xhr.progress = 1.0;
-      }
-      var ints = raw ? xhr.response : new Int8Array(xhr.response);
-      cb(ints);
-    };
-    if (!unmanaged) {
-      xhr.onprogress = progress_fetch_file;
-      xhr.title = title;
-      xhr.progress = 0;
-      xhr.total = 0;
-      xhr.loaded = 0;
-      xhr.lengthComputable = false;
-      requests.push(xhr);
-    }
-    xhr.send();
-  };
-
-  var update_countdown = function() {
-    file_countdown -= 1;
-    if (file_countdown <= 0) {
-      loading = false;
-
-      if (js_url) {
-        var head = document.getElementsByTagName('head')[0];
-        var newScript = document.createElement('script');
-        newScript.type = 'text/javascript';
-        newScript.src = get_js_url(js_url);
-        head.appendChild(newScript);
-      }
-
-      // see archive.js for the mute/unmute button/JS
-      if (!($.cookie && $.cookie('unmute'))){
-        setTimeout(function(){
-          // someone moved it from 1st to 2nd!
-          if (DOSBOX && typeof(DOSBOX.sdl_pauseaudio)!='undefined')
-            DOSBOX.sdl_pauseaudio(1);
-          else if (typeof _SDL_PauseAudio !== "undefined")
-            _SDL_PauseAudio(1);
-        }, 3000);
-      }
-    }
+  var fetch_file = function(title, url, rt, raw, unmanaged) {
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = rt ? rt : 'arraybuffer';
+        xhr.onload = function(e) {
+          if (xhr.status != 200) {
+            return;
+          }
+          if (!unmanaged) {
+            xhr.progress = 1.0;
+          }
+          resolve(raw ? xhr.response
+                      : new Int8Array(xhr.response));
+        };
+        xhr.onerror = reject;
+        if (!unmanaged) {
+          xhr.onprogress = progress_fetch_file;
+          xhr.title = title;
+          xhr.progress = 0;
+          xhr.total = 0;
+          xhr.loaded = 0;
+          xhr.lengthComputable = false;
+          requests.push(xhr);
+        }
+        xhr.send();
+      });
   };
 
   var build_dosbox_arguments = function (config, emulator_start) {
-    LOADING_TEXT = 'Building arguments';
     return ['/dosprogram/'+ emulator_start];
   };
 
@@ -152,117 +240,26 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     return "//archive.org/cors/jsmess_engine_v2/"+ js_filename;
   };
 
-  var init_module = function() {
-    LOADING_TEXT = 'Parsing config';
-    var modulecfg = JSON.parse(moduledata);
-    js_url = modulecfg['js_filename'];
-
-    var game_file = null,
-        meta_file = null;
-
-    var nr = modulecfg['native_resolution'];
-    DOSBOX.width = nr[0] * scale;
-    DOSBOX.height = nr[1] * scale;
-
-    Module = {
-      arguments: undefined,
-      screenIsReadOnly: true,
-      print: (function() {
-        return function(text) {
-          console.log(text);
-        };
-      })(),
-      canvas: canvas,
-      noInitialRun: false,
-      preInit: function() {
-        Module.arguments = build_dosbox_arguments(modulecfg,
-                                                  meta_file.getElementsByTagName("emulator_start")
-                                                           .item(0)
-                                                           .textContent);;
-        LOADING_TEXT = 'Loading game file into file system';
-        DOSBOX.BFSMountZip(game_file);
-        window.clearInterval(drawloadingtimer);
-        if (callback) {
-          modulecfg.canvas = canvas;
-          window.setTimeout(function() { callback(modulecfg); }, 0);
-        }
-      }
-    };
-
-    file_countdown = 2;
-
-    fetch_file('Metadata',
-               get_meta_url(game),
-               function(data) {
-                   meta_file = data;
-                   update_countdown();
-               },
-               'document', true);
-    fetch_file('Game',
-               game,
-               function(data) {
-                   game_file = new BrowserFS.BFSRequire('buffer').Buffer(data);
-                   update_countdown();
-               });
-  };
-
-  var keyevent = function(e) {
-    if (typeof(loader_game)=='object') return; // game will start with click-to-play instead of [SPACE] char
-    if (e.which == 32) {
-      e.preventDefault();
-      start();
-    }
-  };
-
-  var start = function() {
-    window.removeEventListener('keypress', keyevent);
-    canvas.removeEventListener('click', start);
-    loading = true;
-    drawloadingtimer = window.setInterval(draw_loading_status, 1000/60);
-    if (precallback) {
-      window.setTimeout(precallback, 0);
-    }
-    init_module();
-    return this;
-  };
-  this.start = start;
-  window.DOSBOXstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
-
-  var drawsplash = function() {
-    var context = canvas.getContext('2d');
-    splashimg.onload = function(){
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.save();
-      context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
-      context.font = '18px sans-serif';
-      context.fillStyle = 'Black';
-      context.textAlign = 'center';
-      context.fillText('Press the SPACEBAR to start.', canvas.width / 2, (canvas.height / 2) + (splashimg.height / 2));
-      context.textAlign = 'start';
-      context.restore();
-    };
-    spinnerimg.onload = function() {
-      splashimg.src = '/images/dosbox.png';;
-    };
-    spinnerimg.src = '/images/spinner.png';
-  };
-
-  var configLoaded = function (data) {
-    moduledata = data;
-    window.addEventListener('keypress', keyevent);
-    canvas.addEventListener('click', start);
-    drawsplash();
-  };
-
-  function try_start () {
-    if (!can_start()) {
-      return;
-    }
-    has_started = true;
-    fetch_file('ModuleInfo', '//archive.org/cors/jsmess_engine_v2/' + module + '.json', configLoaded, 'text', true, true);
+  function attach_script(url) {
+    var head = document.getElementsByTagName('head')[0];
+    var newScript = document.createElement('script');
+    newScript.type = 'text/javascript';
+    newScript.src = get_js_url(url);
+    head.appendChild(newScript);
   }
 
-  try_start();
+  function handle_mute() {
+    // see archive.js for the mute/unmute button/JS
+    if (!($.cookie && $.cookie('unmute'))){
+        setTimeout(function(){
+            // someone moved it from 1st to 2nd!
+            if (DOSBOX && typeof(DOSBOX.sdl_pauseaudio)!='undefined')
+                DOSBOX.sdl_pauseaudio(1);
+            else if (typeof _SDL_PauseAudio !== "undefined")
+                _SDL_PauseAudio(1);
+        }, 3000);
+    }
+  }
 }
 
 DOSBOX._readySet = false;
