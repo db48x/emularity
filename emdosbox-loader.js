@@ -102,9 +102,14 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
                  fetch_file('Game',
                             game)])
            .then(function(game_data) {
+                   LOADING_TEXT = 'Loading game file into file system';
+                   DOSBOX.BFSMountZip(new BrowserFS.BFSRequire('buffer').Buffer(game_file));
                    Module = init_module(modulecfg, game_data[0], game_data[1]);
                    if (modulecfg['js_filename']) {
+                     LOADING_TEXT = 'Launching DosBox';
                      attach_script(modulecfg['js_filename']);
+                   } else {
+                     LOADING_TEXT = 'Invalid System Disk';
                    }
                    handle_mute();
                  });
@@ -115,18 +120,15 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
   window.DOSBOXstart = start;
 
   function init_module(modulecfg, meta_file, game_file) {
-      return { arguments: undefined,
+      return { arguments: build_dosbox_arguments(modulecfg,
+                                                 meta_file.getElementsByTagName("emulator_start")
+                                                          .item(0)
+                                                          .textContent),
                screenIsReadOnly: true,
                print: function (text) { console.log(text); },
                canvas: canvas,
                noInitialRun: false,
                preInit: function () {
-                   Module.arguments = build_dosbox_arguments(modulecfg,
-                                                             meta_file.getElementsByTagName("emulator_start")
-                                                                      .item(0)
-                                                                      .textContent);
-                   LOADING_TEXT = 'Loading game file into file system';
-                   DOSBOX.BFSMountZip(new BrowserFS.BFSRequire('buffer').Buffer(game_file));
                    window.clearInterval(drawloadingtimer);
                    if (callback) {
                        modulecfg.canvas = canvas;
