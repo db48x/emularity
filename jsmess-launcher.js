@@ -1,11 +1,7 @@
 var ar = new Array(33,34,35,36,37,38,39,40);
 
 function getfullscreenenabler() {
-  return canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen || canvas.requestFullScreen;
-}
-
-function getpointerlockenabler() {
-  return canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+    return canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen || canvas.requestFullScreen;
 }
 
 function isfullscreensupported() {
@@ -19,7 +15,7 @@ function gofullscreen() {
 function keypress(e) {
      if (typeof(loader_game)=='object'  &&  !loader_game.started)
          return true; // Don't ignore certain keys yet (until game started by "click to play")
-
+  
      var key = e.which;
      if($.inArray(key,ar) > -1) {
          e.preventDefault(); //Don't let arrow, pg up/down, home, end affect page position
@@ -32,15 +28,15 @@ window.onkeydown = keypress;
 
 (function() {
   function get(name) {
-    if (typeof(loader_game)=='object')
+    if(typeof(loader_game)=='object')
       return loader_game[name]; //alternate case where dont have CGI args to parse...
-    if ((name = (new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))) {
+    if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search)) {
       return decodeURIComponent(name[1]);
     }
   }
 
   var games;
-  var emulator;
+  var mess;
   var module;
 
   function getmodule() {
@@ -54,31 +50,26 @@ window.onkeydown = keypress;
   }
 
   function ready() {
-    var fullscreenbutton = document.getElementById('gofullscreen');
+    var fullscreenbutton = document.getElementById('gofullscreen')
     if (isfullscreensupported()) {
       fullscreenbutton.addEventListener('click', gofullscreen);
       if ('onfullscreenchange' in document) {
-        document.addEventListener('fullscreenchange', DOSBOX.fullScreenChangeHandler);
+        document.addEventListener('fullscreenchange', JSMESS.fullScreenChangeHandler);
       } else if ('onmozfullscreenchange' in document) {
-        document.addEventListener('mozfullscreenchange', DOSBOX.fullScreenChangeHandler);
+        document.addEventListener('mozfullscreenchange', JSMESS.fullScreenChangeHandler);
       } else if ('onwebkitfullscreenchange' in document) {
-        document.addEventListener('webkitfullscreenchange', DOSBOX.fullScreenChangeHandler);
+        document.addEventListener('webkitfullscreenchange', JSMESS.fullScreenChangeHandler);
       }
     } else {
       fullscreenbutton.disabled = true;
     }
     var canvas = document.getElementById('canvas');
-    emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
-                                 .setmodule(module)
-                                 .setgame(getgameurl(loader_game));
-    disableRightClickContextMenu(canvas);
-
-    // Emscripten doesn't use the proper prefixed functions for fullscreen requests,
-    // so let's map the prefixed versions to the correct function.
-    canvas.requestPointerLock = getpointerlockenabler();
-
+    mess = new JSMESS(canvas)
+      .setscale(get('scale') ? parseFloat(get('scale')) : 1)
+      .setmodule(module)
+    setgame(loader_game);
     if (get('autostart')) {
-      emulator.start();
+      mess.start();
     }
     // Gamepad text
     if (detectgamepadsupport()) {
@@ -88,34 +79,22 @@ window.onkeydown = keypress;
         var s = (gamepads.length === 1 ? '' : 's');
         gamepadDiv.innerHTML = gamepads.length + ' gamepad'+s+' detected. If the game does not ' +
                                'respond to your gamepad'+s+', refresh the browser and try again.';
-        if (emulator.hasStarted) {
+        if (mess.hasStarted) {
           gamepadDiv.innerHTML += "<br />Restart MESS to use new gamepads.";
         }
       });
     }
   }
 
-  function getgameurl(game) {
+  function setgame(game) {
+    game = (game == 'NONE') ? undefined : game;
     // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
-    return (game === 'NONE') ? undefined
-                             : ('//cors.archive.org/cors/'+ game);
-  }
-
-  /**
-   * Disables the right click menu for the given element.
-   */
-  function disableRightClickContextMenu(element) {
-    element.addEventListener('contextmenu', function(e) {
-      if (e.button == 2) {
-        // Block right-click menu thru preventing default action.
-        e.preventDefault();
-      }
-    });
+    mess.setgame(game ? '//cors.archive.org/cors/'+ game : undefined);
   }
 
   function switchgame(e) {
-    emulator.setgame(getgameurl(e.target.value));
+    setgame(e.target.value);
   }
 
   // Firefox will not give us Joystick data unless we register this NOP
