@@ -158,6 +158,10 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
   };
 
   var init_module = function() {
+    if (moduledata == null) {
+      // HACK: Module data isn't ready yet. It'll call us once loaded.
+      return;
+    }
     LOADING_TEXT = 'Loading Program';
     var modulecfg = JSON.parse(moduledata);
     js_url = modulecfg['js_filename'];
@@ -278,12 +282,18 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     window.addEventListener('keypress', keyevent);
     canvas.addEventListener('click', start);
     drawsplash();
+    if (loading) {
+      // HACK: User clicked play before module metadata loaded, and play aborted.
+      // Now that metadata is ready, begin playing.
+      init_module();
+    }
   };
 
   function try_start () {
     if (!can_start()) {
       return;
     }
+    LOADING_TEXT = "Fetching item metadata...";
     has_started = true;
     // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/jsmess_engine_v2/...json
     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
