@@ -70,7 +70,8 @@ window.onkeydown = keypress;
     var canvas = document.getElementById('canvas');
     emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
                                  .setmodule(module)
-                                 .setgame(getgameurl(loader_game));
+                                 .setgame(getgameurl(loader_game))
+                                 .start();
     disableRightClickContextMenu(canvas);
 
     // Emscripten doesn't use the proper prefixed functions for fullscreen requests,

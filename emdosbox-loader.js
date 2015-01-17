@@ -964,7 +964,6 @@ var Module = null;
 (function (Promise) {
    function DOSBOX(canvas, module, game, precallback, callback, scale) {
      var js_url;
-     var moduledata;
      var requests = [];
      var drawloadingtimer;
      var file_countdown;
@@ -985,13 +984,8 @@ var Module = null;
        return sample.sampleRate.toString();
      }());
    
-     var can_start = function () {
-       return !!canvas && !!module && !!game && !!scale && !has_started;
-     };
-   
      this.setscale = function(_scale) {
        scale = _scale;
-       try_start();
        return this;
      };
    
@@ -1007,13 +1001,11 @@ var Module = null;
    
      this.setmodule = function(_module) {
        module = _module;
-       try_start();
        return this;
      };
    
      this.setgame = function(_game) {
        game = _game;
-       try_start();
        return this;
      };
    
@@ -1113,61 +1105,64 @@ var Module = null;
        return "//cors.archive.org/cors/jsmess_engine_v2/"+ js_filename;
      };
    
-     var keyevent = function(e) {
-       if (typeof(loader_game)=='object') return; // game will start with click-to-play instead of [SPACE] char
-       if (e.which == 32) {
-         e.preventDefault();
-         start();
-       }
-     };
-   
      var start = function() {
-       // Prevent loading the game multiple times.
-       if (loading) {
+       if (has_started)
          return false;
-       }
-       window.removeEventListener('keypress', keyevent);
-       canvas.removeEventListener('click', start);
-       loading = true;
-       drawloadingtimer = window.setInterval(draw_loading_status, 1000/60);
-       if (precallback) {
-         window.setTimeout(precallback, 0);
-       }
-   
-       LOADING_TEXT = 'Parsing config';
-       var modulecfg = JSON.parse(moduledata);
-   
-       var nr = modulecfg['native_resolution'];
-       DOSBOX.width = nr[0] * scale;
-       DOSBOX.height = nr[1] * scale;
-   
-       file_countdown = 2;
-   
-       LOADING_TEXT = 'Downloading game data...';
-       Promise.all([fetch_file('Metadata',
-                               get_meta_url(game),
-                               'document', true),
-                    fetch_file('Game',
-                               game)])
-              .then(function(game_data) {
-                      Module = init_module(modulecfg, game_data[0], game_data[1]);
-                      if (modulecfg['js_filename']) {
-                        LOADING_TEXT = 'Launching DosBox';
-                        attach_script(modulecfg['js_filename']);
-                      } else {
-                        LOADING_TEXT = 'Invalid System Disk';
-                      }
-                    });
+       has_started = true;
+
+       var k, c, modulecfg;
+
+       // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/jsmess_engine_v2/...json
+       // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
+       var steps = fetch_file('Module Info',
+                              '//archive.org/cors/jsmess_engine_v2/' + module + '.json',
+                              'text', true, true);
+       steps.then(function (data) {
+                    return new Promise(function (resolve, reject) {
+                                         modulecfg = JSON.parse(data);
+
+                                         var nr = modulecfg['native_resolution'];
+                                         DOSBOX.width = nr[0] * scale;
+                                         DOSBOX.height = nr[1] * scale;
+
+                                         window.addEventListener('keypress', k = keyevent(resolve));
+                                         canvas.addEventListener('click', c = resolve);
+                                         drawsplash();
+                                       });
+                  })
+            .then(function () {
+                    window.removeEventListener('keypress', k);
+                    canvas.removeEventListener('click', c);
+                    loading = true;
+                    drawloadingtimer = window.setInterval(draw_loading_status, 1000/60);
+                    if (precallback) {
+                      window.setTimeout(precallback, 0);
+                    }
+
+                    file_countdown = 2;
+
+                    LOADING_TEXT = 'Downloading game data...';
+                    return Promise.all([fetch_file('Metadata',
+                                                   get_meta_url(game),
+                                                   'document', true),
+                                        fetch_file('Game',
+                                                   game)]);
+                  })
+            .then(function(game_data) {
+                    Module = init_module(modulecfg, game_data[0], game_data[1]);
+                    if (modulecfg['js_filename']) {
+                      LOADING_TEXT = 'Launching DosBox';
+                      attach_script(modulecfg['js_filename']);
+                    } else {
+                      LOADING_TEXT = 'Invalid System Disk';
+                    }
+                  });
        return this;
      };
      this.start = start;
      window.DOSBOXstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
-   
+
      var init_module = function(modulecfg, meta_file, game_file) {
-       if (moduledata == null) {
-         // HACK: Module data isn't ready yet. It'll call us once loaded.
-         return null;
-       }
        return { arguments: build_dosbox_arguments(modulecfg,
                                                   meta_file.getElementsByTagName("emulator_start")
                                                            .item(0)
@@ -1192,6 +1187,17 @@ var Module = null;
               };
      };
    
+     function keyevent(resolve) {
+       return function (e) {
+                if (typeof loader_game === 'object')
+                  return; // game will start with click-to-play instead of [SPACE] char
+                if (e.which == 32) {
+                  e.preventDefault();
+                  resolve();
+                }
+              };
+     };
+
      var drawsplash = function() {
        var context = canvas.getContext('2d');
        splashimg.onload = function(){
@@ -1211,30 +1217,6 @@ var Module = null;
        spinnerimg.src = '/images/spinner.png';
      };
    
-     function try_start () {
-       if (!can_start()) {
-         return;
-       }
-       LOADING_TEXT = "Fetching item metadata...";
-       has_started = true;
-       // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/jsmess_engine_v2/...json
-       // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
-       var config = fetch_file('Module Info',
-                               '//archive.org/cors/jsmess_engine_v2/' + module + '.json',
-                               'text', true, true);
-       config.then(function (data) {
-                     moduledata = data;
-                     window.addEventListener('keypress', keyevent);
-                     canvas.addEventListener('click', start);
-                     drawsplash();
-                     if (loading) {
-                       // HACK: User clicked play before module metadata loaded, and play aborted.
-                       // Now that metadata is ready, begin playing.
-                       init_module();
-                     }
-                   });
-     }
-   
      function attach_script(js_url) {
          if (js_url) {
            var head = document.getElementsByTagName('head')[0];
@@ -1244,8 +1226,6 @@ var Module = null;
            head.appendChild(newScript);
          }
      }
-
-     try_start();
    }
    
    DOSBOX._readySet = false;
