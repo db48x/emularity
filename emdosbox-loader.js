@@ -974,7 +974,7 @@ var Module = null;
      var has_started = false;
      var loading = false;
      var LOADING_TEXT;
-   
+
      var SAMPLE_RATE = (function () {
        var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
        if (!audio_ctx) {
@@ -983,32 +983,32 @@ var Module = null;
        var sample = new audio_ctx;
        return sample.sampleRate.toString();
      }());
-   
+
      this.setscale = function(_scale) {
        scale = _scale;
        return this;
      };
-   
+
      this.setprecallback = function(_precallback) {
        precallback = _precallback;
        return this;
      };
-   
+
      this.setcallback = function(_callback) {
        callback = _callback;
        return this;
      };
-   
+
      this.setmodule = function(_module) {
        module = _module;
        return this;
      };
-   
+
      this.setgame = function(_game) {
        game = _game;
        return this;
      };
-   
+
      var draw_loading_status = function() {
        var context = canvas.getContext('2d');
        context.clearRect(0, 0, canvas.width, canvas.height);
@@ -1027,7 +1027,7 @@ var Module = null;
        context.restore();
        spinnerrot += .25;
      };
-   
+
      var progress_fetch_file = function(e) {
        if (e.lengthComputable) {
          e.target.progress = e.loaded / e.total;
@@ -1036,7 +1036,7 @@ var Module = null;
          e.target.lengthComputable = e.lengthComputable;
        }
      };
-   
+
      var fetch_file = function(title, url, rt, raw, unmanaged) {
        return new Promise(function (resolve, reject) {
                             var xhr = new XMLHttpRequest();
@@ -1064,12 +1064,12 @@ var Module = null;
                             xhr.send();
                           });
      };
-   
+
      var update_countdown = function() {
        file_countdown -= 1;
        if (file_countdown <= 0) {
          loading = false;
-   
+
          // see archive.js for the mute/unmute button/JS
          if (!($.cookie && $.cookie('unmute'))){
            setTimeout(function(){
@@ -1082,29 +1082,31 @@ var Module = null;
          }
        }
      };
-   
+
      var build_dosbox_arguments = function (config, emulator_start) {
        LOADING_TEXT = 'Building arguments';
        return ['/dosprogram/'+ emulator_start];
      };
-   
+
      var get_game_name = function (game_path) {
        return game_path.split('/').pop();
      };
-   
+
+     // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
+     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
+     var get_emulator_config_url = function (module) {
+       return '//archive.org/cors/jsmess_engine_v2/' + module + '.json';
+     };
+
      var get_meta_url = function (game_path) {
        var path = game_path.split('/');
-       // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
-       // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
        return "//cors.archive.org/cors/"+ path[4] +"/"+ path[4] +"_meta.xml";
      };
-   
+
      var get_js_url = function (js_filename) {
-       // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
-       // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
        return "//cors.archive.org/cors/jsmess_engine_v2/"+ js_filename;
      };
-   
+
      var start = function() {
        if (has_started)
          return false;
@@ -1112,10 +1114,8 @@ var Module = null;
 
        var k, c, modulecfg;
 
-       // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/jsmess_engine_v2/...json
-       // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
        var steps = fetch_file('Module Info',
-                              '//archive.org/cors/jsmess_engine_v2/' + module + '.json',
+                              get_emulator_config_url(module),
                               'text', true, true);
        steps.then(function (data) {
                     return new Promise(function (resolve, reject) {
@@ -1186,7 +1186,7 @@ var Module = null;
                 }
               };
      };
-   
+
      function keyevent(resolve) {
        return function (e) {
                 if (typeof loader_game === 'object')
@@ -1216,7 +1216,7 @@ var Module = null;
        };
        spinnerimg.src = '/images/spinner.png';
      };
-   
+
      function attach_script(js_url) {
          if (js_url) {
            var head = document.getElementsByTagName('head')[0];
@@ -1227,11 +1227,11 @@ var Module = null;
          }
      }
    }
-   
+
    DOSBOX._readySet = false;
-   
+
    DOSBOX._readyList = [];
-   
+
    DOSBOX._runReadies = function() {
      if (DOSBOX._readyList) {
        for (var r=0; r < DOSBOX._readyList.length; r++) {
@@ -1240,7 +1240,7 @@ var Module = null;
        DOSBOX._readyList = [];
      };
    };
-   
+
    DOSBOX._readyCheck = function() {
      if (DOSBOX.running) {
        DOSBOX._runReadies();
@@ -1248,7 +1248,7 @@ var Module = null;
        DOSBOX._readySet = setTimeout(DOSBOX._readyCheck, 10);
      };
    };
-   
+
    DOSBOX.ready = function(r) {
      if (DOSBOX.running) {
        r.call(window, []);
@@ -1259,18 +1259,18 @@ var Module = null;
        }
      };
    };
-   
+
    DOSBOX.setScale = function() {
      Module.canvas.style.width = DOSBOX.width + 'px';
      Module.canvas.style.height = DOSBOX.height + 'px';
    };
-   
+
    DOSBOX.fullScreenChangeHandler = function() {
      if (!(document.mozFullScreenElement || document.fullScreenElement)) {
          setTimeout(DOSBOX.setScale, 0);
      }
    };
-   
+
    DOSBOX.BFSMountZip = function BFSMount(loadedData) {
        var zipfs = new BrowserFS.FileSystem.ZipFS(loadedData),
            mfs = new BrowserFS.FileSystem.MountableFileSystem(),
@@ -1287,7 +1287,7 @@ var Module = null;
        FS.mkdir('/dosprogram');
        FS.mount(BFS, {root: '/'}, '/dosprogram');
    };
-   
+
    // Helper function: Recursively copies contents from one folder to another.
    DOSBOX.recursiveCopy = function recursiveCopy(oldDir, newDir) {
        var path = BrowserFS.BFSRequire('path'),
@@ -1311,7 +1311,7 @@ var Module = null;
            fs.writeFileSync(newFile, fs.readFileSync(oldFile));
        }
    };
-   
+
    /**
     * Searches for dosbox.conf, and moves it to '/dosbox.conf' so dosbox uses it.
     */
@@ -1338,7 +1338,7 @@ var Module = null;
          });
        }
        searchDirectory('/');
-   
+
        if (dosboxConfPath !== null) {
          FS.writeFile('/dosbox.conf', FS.readFile(dosboxConfPath), { encoding: 'binary' });
        }
