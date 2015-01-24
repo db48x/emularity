@@ -1064,8 +1064,6 @@ var Module = null;
        splash.loading_text = 'Building arguments';
        var args = [];
 
-       //args.push(emulator_start);
-
        var len = game_files.length;
        for (var i = 0; i < len; i++) {
          args.push('-c', 'mount '+ game_files[i].drive +' '+ game_files[i].mountpoint);
