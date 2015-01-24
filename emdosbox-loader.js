@@ -1071,8 +1071,12 @@ var Module = null;
          args.push('-c', 'mount '+ game_files[i].drive +' '+ game_files[i].mountpoint);
        }
 
-       args.push('-c', 'c:');
-       args.push('-c', emulator_start);
+       var path = emulator_start.split(/\\|\//); // I have LTS already
+       args.push('-c', /^[a-zA-Z]:$/.test(path[0]) ? path.shift() : 'c:');
+       var prog = path.pop();
+       if (path && path.length)
+         args.push('-c', 'cd '+ path.join('/'));
+       args.push('-c', prog);
 
        return args;
      };
