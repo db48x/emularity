@@ -1105,7 +1105,7 @@ var Module = null;
          return false;
        has_started = true;
 
-       var k, c, modulecfg, metadata;
+       var k, c, modulecfg, metadata, game_files;
        drawsplash();
 
        var loading = fetch_file('Metadata',
@@ -1122,26 +1122,12 @@ var Module = null;
                                         'text', true, true);
                     })
               .then(function (data) {
-                      return new Promise(function (resolve, reject) {
-                                           modulecfg = JSON.parse(data);
+                      modulecfg = JSON.parse(data);
 
-                                           var nr = modulecfg['native_resolution'];
-                                           DOSBOX.width = nr[0] * scale;
-                                           DOSBOX.height = nr[1] * scale;
+                      var nr = modulecfg['native_resolution'];
+                      DOSBOX.width = nr[0] * scale;
+                      DOSBOX.height = nr[1] * scale;
 
-                                           splash.loading_text = 'Press any key to continue...';
-                                           splash.spinning = false;
-
-                                           // stashes these event listeners so that we can remove them after
-                                           window.addEventListener('keypress', k = keyevent(resolve));
-                                           canvas.addEventListener('click', c = resolve);
-                                         });
-                    })
-              .then(function () {
-                      window.removeEventListener('keypress', k);
-                      canvas.removeEventListener('click', c);
-                      splash.spinning = true;
-                      loading = true;
                       if (precallback) {
                         window.setTimeout(precallback, 0);
                       }
@@ -1177,8 +1163,24 @@ var Module = null;
 
                       return Promise.all(files);
                     })
-              .then(function(game_data) {
-                      Module = init_module(modulecfg, metadata, game_data);
+              .then(function (game_data) {
+                      game_files = game_data;
+                      return new Promise(function (resolve, reject) {
+                                           splash.loading_text = 'Press any key to continue...';
+                                           splash.spinning = false;
+
+                                           // stashes these event listeners so that we can remove them after
+                                           window.addEventListener('keypress', k = keyevent(resolve));
+                                           canvas.addEventListener('click', c = resolve);
+                                         });
+                    })
+              .then(function () {
+                      splash.spinning = true;
+                      window.removeEventListener('keypress', k);
+                      canvas.removeEventListener('click', c);
+
+                      Module = init_module(modulecfg, metadata, game_files);
+
                       if (modulecfg['js_filename']) {
                         splash.loading_text = 'Launching DosBox';
                         attach_script(modulecfg['js_filename']);
