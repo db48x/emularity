@@ -967,13 +967,15 @@ var Module = null;
      var requests = [];
      var drawloadingtimer;
      var file_countdown;
-     var spinnerrot = 0;
      var splashimg = new Image();
      var spinnerimg = new Image();
      // TODO: Have an enum value that communicates the current state of DOSBOX, e.g. 'initializing', 'loading', 'running'.
      var has_started = false;
      var loading = false;
-     var LOADING_TEXT;
+     var splash = { loading_text: "",
+                    spinning: true,
+                    spinner_rotation: 0,
+                    finished_loading: false };
 
      var SAMPLE_RATE = (function () {
        var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
@@ -1007,25 +1009,6 @@ var Module = null;
      this.setgame = function(_game) {
        game = _game;
        return this;
-     };
-
-     var draw_loading_status = function() {
-       var context = canvas.getContext('2d');
-       context.clearRect(0, 0, canvas.width, canvas.height);
-       context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
-       var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
-       context.save();
-       context.translate((canvas.width / 2), spinnerpos);
-       context.rotate(spinnerrot);
-       context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
-       context.restore();
-       context.save();
-       context.font = '18px sans-serif';
-       context.fillStyle = 'Black';
-       context.textAlign = 'center';
-       context.fillText(LOADING_TEXT, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
-       context.restore();
-       spinnerrot += .25;
      };
 
      var progress_fetch_file = function(e) {
@@ -1078,7 +1061,7 @@ var Module = null;
      };
 
      var build_dosbox_arguments = function (config, emulator_start, game_files) {
-       LOADING_TEXT = 'Building arguments';
+       splash.loading_text = 'Building arguments';
        var args = [];
 
        //args.push(emulator_start);
@@ -1123,11 +1106,13 @@ var Module = null;
        has_started = true;
 
        var k, c, modulecfg, metadata;
+       drawsplash();
 
        var loading = fetch_file('Metadata',
                                 get_meta_url(game),
                                 'document', true);
        loading.then(function (data) {
+                      splash.loading_text = 'Downloading game metadata...';
                       metadata = data;
                       var module = metadata.getElementsByTagName("emulator")
                                            .item(0)
@@ -1144,17 +1129,19 @@ var Module = null;
                                            DOSBOX.width = nr[0] * scale;
                                            DOSBOX.height = nr[1] * scale;
 
+                                           splash.loading_text = 'Press any key to continue...';
+                                           splash.spinning = false;
+
                                            // stashes these event listeners so that we can remove them after
                                            window.addEventListener('keypress', k = keyevent(resolve));
                                            canvas.addEventListener('click', c = resolve);
-                                           drawsplash();
                                          });
                     })
               .then(function () {
                       window.removeEventListener('keypress', k);
                       canvas.removeEventListener('click', c);
+                      splash.spinning = true;
                       loading = true;
-                      drawloadingtimer = window.setInterval(draw_loading_status, 1000/60);
                       if (precallback) {
                         window.setTimeout(precallback, 0);
                       }
@@ -1186,17 +1173,17 @@ var Module = null;
                       }
 
                       file_countdown = files.length;
-                      LOADING_TEXT = 'Downloading game data...';
+                      splash.loading_text = 'Downloading game data...';
 
                       return Promise.all(files);
                     })
               .then(function(game_data) {
                       Module = init_module(modulecfg, metadata, game_data);
                       if (modulecfg['js_filename']) {
-                        LOADING_TEXT = 'Launching DosBox';
+                        splash.loading_text = 'Launching DosBox';
                         attach_script(modulecfg['js_filename']);
                       } else {
-                        LOADING_TEXT = 'Invalid System Disk';
+                        splash.loading_text = 'Invalid System Disk';
                       }
                     });
        return this;
@@ -1215,14 +1202,14 @@ var Module = null;
                 canvas: canvas,
                 noInitialRun: false,
                 preInit: function () {
-                           LOADING_TEXT = 'Loading game file(s) into file system';
+                           splash.loading_text = 'Loading game file(s) into file system';
                            var len = game_files.length;
                            for (var i = 0; i < len; i++) {
                              DOSBOX.BFSMountZip(game_files[i].mountpoint,
                                                 new BrowserFS.BFSRequire('buffer').Buffer(game_files[i].data));
                            }
                            DOSBOX.moveConfigToRoot();
-                           window.clearInterval(drawloadingtimer);
+                           splash.finished_loading = true;
                            if (callback) {
                                modulecfg.canvas = canvas;
                                window.setTimeout(function() {
@@ -1245,23 +1232,40 @@ var Module = null;
               };
      };
 
-     var drawsplash = function() {
+     var drawsplash = function () {
        var context = canvas.getContext('2d');
-       splashimg.onload = function(){
-         context.clearRect(0, 0, canvas.width, canvas.height);
-         context.save();
-         context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
-         context.font = '18px sans-serif';
-         context.fillStyle = 'Black';
-         context.textAlign = 'center';
-         context.fillText('Click here to start', canvas.width / 2, (canvas.height / 2) + (splashimg.height / 2));
-         context.textAlign = 'start';
-         context.restore();
+       splashimg.onload = function (){
+         draw_loading_status(0);
+         animLoop(draw_loading_status);
        };
-       spinnerimg.onload = function() {
-         splashimg.src = '/images/dosbox.png';;
-       };
+       splashimg.src = '/images/dosbox.png';
        spinnerimg.src = '/images/spinner.png';
+     };
+
+     var draw_loading_status = function (deltaT) {
+       var context = canvas.getContext('2d');
+       context.clearRect(0, 0, canvas.width, canvas.height);
+       context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
+
+       if (splash.spinning) {
+         var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
+         context.save();
+         context.translate((canvas.width / 2), spinnerpos);
+         context.rotate(splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT);
+         context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
+         context.restore();
+       }
+
+       context.save();
+       context.font = '18px sans-serif';
+       context.fillStyle = 'Black';
+       context.textAlign = 'center';
+       context.fillText(splash.loading_text, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
+       context.restore();
+
+       if (splash.finished_loading)
+         return false;
+       return true;
      };
 
      function attach_script(js_url) {
@@ -1394,3 +1398,42 @@ var Module = null;
 
    window.DOSBOX = DOSBOX;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
+
+// Cross browser, backward compatible solution
+(function(window, Date) {
+   // feature testing
+   var raf = window.requestAnimationFrame ||
+             window.mozRequestAnimationFrame ||
+             window.webkitRequestAnimationFrame ||
+             window.msRequestAnimationFrame ||
+             window.oRequestAnimationFrame;
+
+   window.animLoop = function (render, element) {
+                       var running, lastFrame = +new Date;
+                       function loop (now) {
+                         if (running !== false) {
+                           // fallback to setTimeout if requestAnimationFrame wasn't found
+                           raf ? raf(loop, element)
+                               : setTimeout(loop, 1000 / 60);
+                           // Make sure to use a valid time, since:
+                           // - Chrome 10 doesn't return it at all
+                           // - setTimeout returns the actual timeout
+                           now = now && now > 1E4 ? now : +new Date;
+                           var deltaT = now - lastFrame;
+                           // do not render frame when deltaT is too high
+                           if (deltaT < 160) {
+                             running = render(deltaT, now);
+                           }
+                           lastFrame = now;
+                         }
+                       }
+                       loop();
+                     };
+})(window, Date);
+
+// Usage
+//animLoop(function (deltaT, now) {
+//           // rendering code goes here
+//           // return false; will stop the loop
+//         },
+//         animWrapper);
