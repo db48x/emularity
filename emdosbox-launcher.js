@@ -41,15 +41,8 @@ window.onkeydown = keypress;
 
   var games;
   var emulator;
-  var module;
-
-  function getmodule() {
-    module = get('module');
-    module = module ? module : 'test';
-  }
 
   function init() {
-    getmodule();
     ready();
   }
 
@@ -69,7 +62,6 @@ window.onkeydown = keypress;
     }
     var canvas = document.getElementById('canvas');
     emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
-                                 .setmodule(module)
                                  .setgame(getgameurl(loader_game))
                                  .start();
     disableRightClickContextMenu(canvas);
