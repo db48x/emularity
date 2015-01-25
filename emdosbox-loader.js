@@ -1146,7 +1146,7 @@ var Module = null;
                     },
                     function () {
                       splash.loading_text = 'Failed to download metadata!';
-                      splash.finished_loading = true;
+                      splash.failed_loading = true;
                     })
               .then(function (data) {
                       modulecfg = JSON.parse(data);
@@ -1192,7 +1192,7 @@ var Module = null;
                     },
                     function () {
                       splash.loading_text = 'Failed to download metadata!';
-                      splash.finished_loading = true;
+                      splash.failed_loading = true;
                     })
               .then(function (game_data) {
                       game_files = game_data;
@@ -1207,7 +1207,7 @@ var Module = null;
                     },
                     function () {
                       splash.loading_text = 'Failed to download game data!';
-                      splash.finished_loading = true;
+                      splash.failed_loading = true;
                     })
               .then(function () {
                       splash.spinning = true;
@@ -1225,7 +1225,7 @@ var Module = null;
                     },
                     function () {
                       splash.loading_text = 'Invalid media, track 0 bad or unusable';
-                      splash.finished_loading = true;
+                      splash.failed_loading = true;
                     });
        return this;
      };
@@ -1306,6 +1306,8 @@ var Module = null;
 
        if (splash.finished_loading) {
          document.getElementById("dosbox-progress-indicator").style.display = 'none';
+       }
+       if (splash.finished_loading || splash.failed_loading) {
          return false;
        }
        return true;
