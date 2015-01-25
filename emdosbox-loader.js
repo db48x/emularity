@@ -1011,10 +1011,26 @@ var Module = null;
        return this;
      };
 
-     var progress_fetch_file = function(e) {
+     var progress_fetch_file = function (e) {
+
      };
 
      var fetch_file = function(title, url, rt, raw, unmanaged) {
+       var table = document.getElementById("dosbox-progress-indicator");
+       var row, cell;
+       if (!table) {
+         table = document.createElement('table');
+         table.setAttribute('id', "dosbox-progress-indicator");
+         table.style.position = 'absolute';
+         table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
+         table.style.left = canvas.offsetLeft + (64 + 32) +'px';
+         document.documentElement.appendChild(table);
+       }
+       row = table.insertRow(-1);
+       cell = row.insertCell(-1);
+       cell.textContent = '—';
+       row.insertCell(-1).textContent = title;
+
        return new Promise(function (resolve, reject) {
                             var xhr = new XMLHttpRequest();
                             xhr.open('GET', url, true);
@@ -1024,11 +1040,15 @@ var Module = null;
                                              if (!unmanaged) {
                                                xhr.progress = 1.0;
                                              }
+                                             cell.textContent = '✔';
                                              resolve(raw ? xhr.response
                                                          : new Int8Array(xhr.response));
                                            }
                                          };
-                            xhr.onerror = reject;
+                            xhr.onerror = function (e) {
+                                            cell.textContent = '✘';
+                                            reject();
+                                          };
                             if (!unmanaged) {
                               xhr.onprogress = progress_fetch_file;
                               xhr.title = title;
@@ -1091,7 +1111,7 @@ var Module = null;
 
      var get_meta_url = function (game_path) {
        var path = game_path.split('/');
-       return "//cors.archive.org/cors/"+ path[4] +"/"+ path[4] +"_meta.xml";
+       return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_meta.xml";
      };
 
      var get_zip_url = function (game_path) {
@@ -1110,16 +1130,17 @@ var Module = null;
        var k, c, modulecfg, metadata, game_files;
        drawsplash();
 
-       var loading = fetch_file('Metadata',
+       splash.loading_text = 'Downloading game metadata...';
+       var loading = fetch_file('Game Metadata',
                                 get_meta_url(game),
                                 'document', true);
        loading.then(function (data) {
-                      splash.loading_text = 'Downloading game metadata...';
                       metadata = data;
+                      splash.loading_text = 'Downloading emulator metadata...';
                       var module = metadata.getElementsByTagName("emulator")
                                            .item(0)
                                            .textContent;
-                      return fetch_file('Module Info',
+                      return fetch_file('Emulator Metadata',
                                         get_emulator_config_url(module),
                                         'text', true, true);
                     })
@@ -1145,7 +1166,7 @@ var Module = null;
 
                       var files = [];
                       if (game) {
-                        files.push(fetch_file('Game', game).then(mountat("c")));
+                        files.push(fetch_file('Game File: '+ game, get_zip_url(game)).then(mountat("c")));
                       }
 
                       var len = metadata.documentElement.childNodes.length;
@@ -1251,24 +1272,26 @@ var Module = null;
        context.clearRect(0, 0, canvas.width, canvas.height);
        context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
 
-       if (splash.spinning) {
-         var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
-         context.save();
-         context.translate((canvas.width / 2), spinnerpos);
-         context.rotate(splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT);
-         context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
-         context.restore();
-       }
+       var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
+       context.save();
+       context.translate((64/2) + 16, spinnerpos);
+       context.rotate(splash.spinning ? (splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT)
+                                      : 0);
+       context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
+       context.restore();
 
        context.save();
        context.font = '18px sans-serif';
        context.fillStyle = 'Black';
        context.textAlign = 'center';
        context.fillText(splash.loading_text, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
+
        context.restore();
 
-       if (splash.finished_loading)
+       if (splash.finished_loading) {
+         document.getElementById("dosbox-progress-indicator").style.display = 'none';
          return false;
+       }
        return true;
      };
 
@@ -1281,7 +1304,7 @@ var Module = null;
            head.appendChild(newScript);
          }
      }
-   }
+   };
 
    DOSBOX._readySet = false;
 

@@ -62,7 +62,8 @@ window.onkeydown = keypress;
     }
     var canvas = document.getElementById('canvas');
     emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
-                                 .setgame(getgameurl(loader_game))
+                                 .setgame(loader_game === 'NONE' ? null
+                                                                 : loader_game)
                                  .start();
     disableRightClickContextMenu(canvas);
 
@@ -86,13 +87,6 @@ window.onkeydown = keypress;
         }
       });
     }
-  }
-
-  function getgameurl(game) {
-    // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
-    // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
-    return (game === 'NONE') ? undefined
-                             : ('//cors.archive.org/cors/'+ game);
   }
 
   /**
