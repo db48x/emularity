@@ -1143,6 +1143,10 @@ var Module = null;
                       return fetch_file('Emulator Metadata',
                                         get_emulator_config_url(module),
                                         'text', true, true);
+                    },
+                    function () {
+                      splash.loading_text = 'Failed to download metadata!';
+                      splash.finished = true;
                     })
               .then(function (data) {
                       modulecfg = JSON.parse(data);
@@ -1185,6 +1189,10 @@ var Module = null;
                       splash.loading_text = 'Downloading game data...';
 
                       return Promise.all(files);
+                    },
+                    function () {
+                      splash.loading_text = 'Failed to download metadata!';
+                      splash.finished = true;
                     })
               .then(function (game_data) {
                       game_files = game_data;
@@ -1196,6 +1204,10 @@ var Module = null;
                                            window.addEventListener('keypress', k = keyevent(resolve));
                                            canvas.addEventListener('click', c = resolve);
                                          });
+                    },
+                    function () {
+                      splash.loading_text = 'Failed to download game data!';
+                      splash.finished = true;
                     })
               .then(function () {
                       splash.spinning = true;
@@ -1208,8 +1220,12 @@ var Module = null;
                         splash.loading_text = 'Launching DosBox';
                         attach_script(modulecfg['js_filename']);
                       } else {
-                        splash.loading_text = 'Invalid System Disk';
+                        splash.loading_text = 'Non-system disk or disk error';
                       }
+                    },
+                    function () {
+                      splash.loading_text = 'Invalid media, track 0 bad or unusable';
+                      splash.finished = true;
                     });
        return this;
      };
