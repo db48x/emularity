@@ -1168,21 +1168,28 @@ var Module = null;
                         };
                       }
 
-                      var files = [];
+                      // first get the urls
+                      var urls = [];
                       if (game) {
-                        files.push(fetch_file('Game File: '+ game, get_zip_url(game)).then(mountat("c")));
+                        // ugh, such a hack
+                        urls.push({ nodeName: 'dosbox_drive_c', 'textContent': game});
+                      }
+                      var len = metadata.documentElement.childNodes.length, i;
+                      for (i = 0; i < len; i++) {
+                        var node = metadata.documentElement.childNodes[i];
+                        var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
+                        if (m) {
+                          urls.push(node);
+                        }
                       }
 
-                      var len = metadata.documentElement.childNodes.length;
-                      for (var i = 0; i < len; i++) {
-                        var node = metadata.documentElement.childNodes[i];
-                        var m = node.nodeName.match(/^dosbox_drive_([a-zA-Z])$/);
-                        if (m) {
-                          var file = fetch_file('Game File: '+ node.textContent,
-                                                get_zip_url(node.textContent));
-                          file.then(mountat(m[1]));
-                          files.append(file);
-                        }
+                      // and a count, then fetch them in
+                      var files = [],
+                          len = urls.length;
+                      for (i = 0; i < len; i++) {
+                        var node = urls[i],
+                            drive = node.nodeName.split('_')[2]
+                        files.push(fetch_file('Game File ('+ (i+1) +' of '+ len +')', get_zip_url(node.textContent)).then(mountat(drive)));
                       }
 
                       file_countdown = files.length;
