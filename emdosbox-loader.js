@@ -1249,6 +1249,12 @@ var Module = null;
                 print: function (text) { console.log(text); },
                 canvas: canvas,
                 noInitialRun: false,
+                locateFile: function (file) {
+                              if ("file_locations" in modulecfg && file in modulecfg.file_locations) {
+                                return get_js_url(modulecfg.file_locations[file]);
+                              }
+                              throw new Error("Don't know how to find file: "+ file);
+                            },
                 preInit: function () {
                            splash.loading_text = 'Loading game file(s) into file system';
                            var len = game_files.length;
