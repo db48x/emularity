@@ -199,6 +199,12 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       // isolating keyboard input to the canvas.
       keyboardListeningElement: canvas,
       noInitialRun: false,
+      locateFile: function (file) {
+                    if ("file_locations" in modulecfg && file in modulecfg.file_locations) {
+                      return get_js_url(modulecfg.file_locations[file]);
+                    }
+                    throw new Error("Don't know how to find file: "+ file);
+                  },
       preInit: function() {
         Module.arguments = build_dosbox_arguments(modulecfg,
                                                   meta_file.getElementsByTagName("emulator_start")
