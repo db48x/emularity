@@ -975,7 +975,9 @@ var Module = null;
      var splash = { loading_text: "",
                     spinning: true,
                     spinner_rotation: 0,
-                    finished_loading: false };
+                    finished_loading: false,
+                    colors: { foreground: 'black',
+                              background: 'white' } };
 
      var SAMPLE_RATE = (function () {
        var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
@@ -1011,6 +1013,11 @@ var Module = null;
        return this;
      };
 
+     this.setSplashColors = function (colors) {
+       this.splash.colors = colors;
+       return this;
+     };
+
      var progress_fetch_file = function (e) {
 
      };
@@ -1024,6 +1031,7 @@ var Module = null;
          table.style.position = 'absolute';
          table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
          table.style.left = canvas.offsetLeft + (64 + 32) +'px';
+         table.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
          document.documentElement.appendChild(table);
        }
        row = table.insertRow(-1);
@@ -1287,6 +1295,7 @@ var Module = null;
      };
 
      var drawsplash = function () {
+       canvas.setAttribute('moz-opaque', '');
        var context = canvas.getContext('2d');
        splashimg.onload = function (){
          draw_loading_status(0);
@@ -1298,7 +1307,8 @@ var Module = null;
 
      var draw_loading_status = function (deltaT) {
        var context = canvas.getContext('2d');
-       context.clearRect(0, 0, canvas.width, canvas.height);
+       context.fillStyle = "background" in splash.colors ? splash.colors.background : 'white';
+       context.fillRect(0, 0, canvas.width, canvas.height);
        context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
 
        var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
@@ -1311,7 +1321,7 @@ var Module = null;
 
        context.save();
        context.font = '18px sans-serif';
-       context.fillStyle = 'Black';
+       context.fillStyle = "foreground" in splash.colors ? splash.colors.foreground : 'black';
        context.textAlign = 'center';
        context.fillText(splash.loading_text, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
 
