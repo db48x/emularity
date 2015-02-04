@@ -963,16 +963,10 @@ var Module = null;
 
 (function (Promise) {
    function IALoader(canvas, game, callback, scale) {
-     var metadata, modulecfg,
-         emulator = new DOSBOX(canvas).setmodule("dosbox")
-                                      .setscale(scale)
+     var metadata, module, modulecfg,
+         emulator = new DOSBOX(canvas).setscale(scale)
                                       .setLoad(loadFiles)
-                                      .setcallback(function (module) {
-                                                     var nr = modulecfg['native_resolution'];
-                                                     emulator.width = nr[0] * scale;
-                                                     emulator.height = nr[1] * scale;
-                                                     callback(module);
-                                                   });
+                                      .setcallback(callback);
 
      function loadFiles(fetch_file, splash) {
        splash.loading_text = 'Downloading game metadata...';
@@ -983,10 +977,10 @@ var Module = null;
                             loading.then(function (data) {
                                            metadata = data;
                                            splash.loading_text = 'Downloading emulator metadata...';
-                                           var module = metadata.getElementsByTagName("emulator")
-                                                                .item(0)
-                                                                .textContent;
-                                           return fetch_file('Emulator Metadata',
+                                           module = metadata.getElementsByTagName("emulator")
+                                                            .item(0)
+                                                            .textContent;
+                                           return fetch_file('DOSBOX Metadata',
                                                              get_emulator_config_url(module),
                                                              'text', true, true);
                                          },
@@ -1041,12 +1035,17 @@ var Module = null;
                                              throw new Error("Don't know how to find file: "+ filename);
                                            }
 
+                                           var nr = modulecfg['native_resolution'];
                                            resolve({ files: game_files,
+                                                     emulatorType: module,
                                                      jsFilename: get_js_url(modulecfg.js_filename),
                                                      locateAdditionalJS: locateAdditionalJS,
                                                      emulatorStart: metadata.getElementsByTagName("emulator_start")
                                                                             .item(0)
-                                                                            .textContent
+                                                                            .textContent,
+                                                     nativeResolution: { width: nr[0],
+                                                                         height: nr[1] },
+                                                     aspectRatio: nr[0] / nr[1]
                                                    });
                                          },
                                          function () {
@@ -1092,11 +1091,10 @@ var Module = null;
      return emulator;
    }
 
-   function DOSBOX(canvas, module, callback, scale, loadFiles) {
+   function DOSBOX(canvas, callback, loadFiles) {
      var js_url;
      var requests = [];
      var drawloadingtimer;
-     var file_countdown;
      var splashimg = new Image();
      var spinnerimg = new Image();
      // TODO: Have an enum value that communicates the current state of DOSBOX, e.g. 'initializing', 'loading', 'running'.
@@ -1118,18 +1116,25 @@ var Module = null;
        return sample.sampleRate.toString();
      }());
 
-     this.setscale = function(_scale) {
+     var css_resolution, scale, aspectRatio;
+
+     this.setScale = function(_scale) {
        scale = _scale;
+       return this;
+     };
+
+     this.setCSSResolution = function(_resolution) {
+       css_resolution = _resolution;
+       return this;
+     };
+
+     this.setAspectRatio = function(_aspectRatio) {
+       aspectRatio = _aspectRatio;
        return this;
      };
 
      this.setcallback = function(_callback) {
        callback = _callback;
-       return this;
-     };
-
-     this.setmodule = function(_module) {
-       module = _module;
        return this;
      };
 
@@ -1164,7 +1169,6 @@ var Module = null;
                                          });
                     })
               .then(function () {
-                      file_countdown = game_data.files.length;
                       splash.spinning = true;
                       window.removeEventListener('keypress', k);
                       canvas.removeEventListener('click', c);
@@ -1173,6 +1177,10 @@ var Module = null;
                       blockSomeKeys();
                       setupFullScreen();
                       disableRightClickContextMenu(canvas);
+                      resizeCanvas(canvas,
+                                   scale = game_data.scale || scale,
+                                   css_resolution = game_data.nativeResolution || css_resolution,
+                                   aspectRatio = game_data.aspectRatio || aspectRatio);
 
                       // Emscripten doesn't use the proper prefixed functions for fullscreen requests,
                       // so let's map the prefixed versions to the correct function.
@@ -1247,24 +1255,6 @@ var Module = null;
                           });
      };
 
-     var update_countdown = function() {
-       file_countdown -= 1;
-       if (file_countdown <= 0) {
-         loading = false;
-
-         // see archive.js for the mute/unmute button/JS
-         if (!($.cookie && $.cookie('unmute'))){
-           setTimeout(function(){
-             // someone moved it from 1st to 2nd!
-             if (DOSBOX && typeof(DOSBOX.sdl_pauseaudio)!='undefined')
-               DOSBOX.sdl_pauseaudio(1);
-             else if (typeof _SDL_PauseAudio !== "undefined")
-               _SDL_PauseAudio(1);
-           }, 3000);
-         }
-       }
-     };
-
      var build_dosbox_arguments = function (emulator_start, game_files) {
        splash.loading_text = 'Building arguments';
        var args = [];
@@ -1296,7 +1286,7 @@ var Module = null;
                            var len = game_files.length;
                            for (var i = 0; i < len; i++) {
                              DOSBOX.BFSMountZip(game_files[i].mountpoint,
-                                                new BrowserFS.BFSRequire('buffer').Buffer(game_files[i].data));
+                                                  new BrowserFS.BFSRequire('buffer').Buffer(game_files[i].data));
                            }
                            DOSBOX.moveConfigToRoot();
                            splash.finished_loading = true;
@@ -1318,13 +1308,18 @@ var Module = null;
               };
      };
 
+     var resizeCanvas = function (canvas, scale, resolution, aspectRatio) {
+       canvas.style.width = resolution.css_width * scale +'px';
+       canvas.style.height = resolution.css_height * scale +'px';
+     };
+
      var drawsplash = function () {
        canvas.setAttribute('moz-opaque', '');
        var context = canvas.getContext('2d');
-       splashimg.onload = function (){
-         draw_loading_status(0);
-         animLoop(draw_loading_status);
-       };
+       splashimg.onload = function () {
+                            draw_loading_status(0);
+                            animLoop(draw_loading_status);
+                          };
        splashimg.src = '/images/dosbox.png';
        spinnerimg.src = '/images/spinner.png';
      };
@@ -1383,10 +1378,10 @@ var Module = null;
      };
 
      function setupFullScreen() {
+       var self = this;
        var fullScreenChangeHandler = function() {
                                        if (!(document.mozFullScreenElement || document.fullScreenElement)) {
-                                         canvas.style.width = DOSBOX.width + 'px';
-                                         canvas.style.height = DOSBOX.height + 'px';
+                                         resizeCanvas(canvas, scale, css_resolution, aspectRatio);
                                        }
                                      };
        if ('onfullscreenchange' in document) {
@@ -1430,38 +1425,6 @@ var Module = null;
                                   }
                                 });
      }
-   };
-
-   DOSBOX._readySet = false;
-
-   DOSBOX._readyList = [];
-
-   DOSBOX._runReadies = function() {
-     if (DOSBOX._readyList) {
-       for (var r=0; r < DOSBOX._readyList.length; r++) {
-         DOSBOX._readyList[r].call(window, []);
-       };
-       DOSBOX._readyList = [];
-     };
-   };
-
-   DOSBOX._readyCheck = function() {
-     if (DOSBOX.running) {
-       DOSBOX._runReadies();
-     } else {
-       DOSBOX._readySet = setTimeout(DOSBOX._readyCheck, 10);
-     };
-   };
-
-   DOSBOX.ready = function(r) {
-     if (DOSBOX.running) {
-       r.call(window, []);
-     } else {
-       DOSBOX._readyList.push(function() { canvas.style.width = DOSBOX.width + 'px'; canvas.style.height = DOSBOX.height + 'px'; } );
-       if (!(DOSBOX._readySet)) {
-         DOSBOX._readyCheck();
-       }
-     };
    };
 
    DOSBOX.BFSMountZip = function BFSMount(path, loadedData) {
