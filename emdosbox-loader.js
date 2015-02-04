@@ -962,7 +962,137 @@
 var Module = null;
 
 (function (Promise) {
-   function DOSBOX(canvas, module, game, precallback, callback, scale) {
+   function IALoader(canvas, game, callback, scale) {
+     var metadata, modulecfg,
+         emulator = new DOSBOX(canvas).setmodule("dosbox")
+                                      .setscale(scale)
+                                      .setLoad(loadFiles)
+                                      .setcallback(function (module) {
+                                                     var nr = modulecfg['native_resolution'];
+                                                     emulator.width = nr[0] * scale;
+                                                     emulator.height = nr[1] * scale;
+                                                     callback(module);
+                                                   });
+
+     function loadFiles(fetch_file, splash) {
+       splash.loading_text = 'Downloading game metadata...';
+       return new Promise(function (resolve, reject) {
+                            var loading = fetch_file('Game Metadata',
+                                                     get_meta_url(game),
+                                                     'document', true);
+                            loading.then(function (data) {
+                                           metadata = data;
+                                           splash.loading_text = 'Downloading emulator metadata...';
+                                           var module = metadata.getElementsByTagName("emulator")
+                                                                .item(0)
+                                                                .textContent;
+                                           return fetch_file('Emulator Metadata',
+                                                             get_emulator_config_url(module),
+                                                             'text', true, true);
+                                         },
+                                         function () {
+                                           splash.loading_text = 'Failed to download metadata!';
+                                           splash.failed_loading = true;
+                                           reject();
+                                         })
+                                   .then(function (data) {
+                                           modulecfg = JSON.parse(data);
+
+                                           // first get the urls
+                                           var urls = [];
+                                           if (game) {
+                                             // ugh, such a hack
+                                             urls.push({ nodeName: 'dosbox_drive_c', 'textContent': game});
+                                           }
+                                           var len = metadata.documentElement.childNodes.length, i;
+                                           for (i = 0; i < len; i++) {
+                                             var node = metadata.documentElement.childNodes[i];
+                                             var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
+                                             if (m) {
+                                               urls.push(node);
+                                             }
+                                           }
+
+                                           // and a count, then fetch them in
+                                           var files = [],
+                                               len = urls.length;
+                                           for (i = 0; i < len; i++) {
+                                             var node = urls[i],
+                                                 drive = node.nodeName.split('_')[2],
+                                                 title = 'Game File ('+ (i+1) +' of '+ len +')',
+                                                 url = get_zip_url(node.textContent);
+                                             files.push(fetch_file(title, url).then(mountat(drive)));
+                                           }
+
+                                           splash.loading_text = 'Downloading game data...';
+
+                                           return Promise.all(files);
+                                         },
+                                         function () {
+                                           splash.loading_text = 'Failed to download metadata!';
+                                           splash.failed_loading = true;
+                                           reject();
+                                         })
+                                   .then(function (game_files) {
+                                           function locateAdditionalJS(filename) {
+                                             if ("file_locations" in modulecfg && filename in modulecfg.file_locations) {
+                                               return get_js_url(modulecfg.file_locations[filename]);
+                                             }
+                                             throw new Error("Don't know how to find file: "+ filename);
+                                           }
+
+                                           resolve({ files: game_files,
+                                                     jsFilename: get_js_url(modulecfg.js_filename),
+                                                     locateAdditionalJS: locateAdditionalJS,
+                                                     emulatorStart: metadata.getElementsByTagName("emulator_start")
+                                                                            .item(0)
+                                                                            .textContent
+                                                   });
+                                         },
+                                         function () {
+                                           splash.loading_text = 'Failed to download game data!';
+                                           splash.failed_loading = true;
+                                           reject();
+                                         });
+                          });
+     }
+
+     var get_game_name = function (game_path) {
+       return game_path.split('/').pop();
+     };
+
+     // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
+     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
+     var get_emulator_config_url = function (module) {
+       return '//archive.org/cors/jsmess_engine_v2/' + module + '.json';
+     };
+
+     var get_meta_url = function (game_path) {
+       var path = game_path.split('/');
+       return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_meta.xml";
+     };
+
+     var get_zip_url = function (game_path) {
+       return "//cors.archive.org/cors/"+ game_path;
+     };
+
+     var get_js_url = function (js_filename) {
+       return "//cors.archive.org/cors/jsmess_engine_v2/"+ js_filename;
+     };
+
+     function mountat (drive) {
+       return function (data) {
+         return { drive: drive,
+                  mountpoint: "/" + drive,
+                  data: data
+                };
+       };
+     }
+
+     return emulator;
+   }
+
+   function DOSBOX(canvas, module, callback, scale, loadFiles) {
      var js_url;
      var requests = [];
      var drawloadingtimer;
@@ -993,11 +1123,6 @@ var Module = null;
        return this;
      };
 
-     this.setprecallback = function(_precallback) {
-       precallback = _precallback;
-       return this;
-     };
-
      this.setcallback = function(_callback) {
        callback = _callback;
        return this;
@@ -1008,15 +1133,67 @@ var Module = null;
        return this;
      };
 
-     this.setgame = function(_game) {
-       game = _game;
-       return this;
-     };
-
      this.setSplashColors = function (colors) {
        this.splash.colors = colors;
        return this;
      };
+
+     this.setLoad = function (loadFunc) {
+       loadFiles = loadFunc;
+       return this;
+     };
+
+     var start = function () {
+       if (has_started)
+         return false;
+       has_started = true;
+
+       var k, c, game_data;
+       drawsplash();
+
+       var loading = loadFiles(fetch_file, splash);
+       loading.then(function (_game_data) {
+                      game_data = _game_data;
+                      return new Promise(function (resolve, reject) {
+                                           splash.loading_text = 'Press any key to continue...';
+                                           splash.spinning = false;
+
+                                           // stashes these event listeners so that we can remove them after
+                                           window.addEventListener('keypress', k = keyevent(resolve));
+                                           canvas.addEventListener('click', c = resolve);
+                                         });
+                    })
+              .then(function () {
+                      file_countdown = game_data.files.length;
+                      splash.spinning = true;
+                      window.removeEventListener('keypress', k);
+                      canvas.removeEventListener('click', c);
+
+                      // Don't let arrow, pg up/down, home, end affect page position
+                      blockSomeKeys();
+                      setupFullScreen();
+                      disableRightClickContextMenu(canvas);
+
+                      // Emscripten doesn't use the proper prefixed functions for fullscreen requests,
+                      // so let's map the prefixed versions to the correct function.
+                      canvas.requestPointerLock = getpointerlockenabler();
+
+                      Module = init_module(game_data.emulatorStart, game_data.files, game_data.locateAdditionalJS);
+
+                      if (game_data.jsFilename) {
+                        splash.loading_text = 'Launching DosBox';
+                        attach_script(game_data.jsFilename);
+                      } else {
+                        splash.loading_text = 'Non-system disk or disk error';
+                      }
+                    },
+                    function () {
+                      splash.loading_text = 'Invalid media, track 0 bad or unusable';
+                      splash.failed_loading = true;
+                    });
+       return this;
+     };
+     this.start = start;
 
      var progress_fetch_file = function (e) {
 
@@ -1088,7 +1265,7 @@ var Module = null;
        }
      };
 
-     var build_dosbox_arguments = function (config, emulator_start, game_files) {
+     var build_dosbox_arguments = function (emulator_start, game_files) {
        splash.loading_text = 'Building arguments';
        var args = [];
 
@@ -1107,171 +1284,13 @@ var Module = null;
        return args;
      };
 
-     var get_game_name = function (game_path) {
-       return game_path.split('/').pop();
-     };
-
-     // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
-     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
-     var get_emulator_config_url = function (module) {
-       return '//archive.org/cors/jsmess_engine_v2/' + module + '.json';
-     };
-
-     var get_meta_url = function (game_path) {
-       var path = game_path.split('/');
-       return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_meta.xml";
-     };
-
-     var get_zip_url = function (game_path) {
-       return "//cors.archive.org/cors/"+ game_path;
-     };
-
-     var get_js_url = function (js_filename) {
-       return "//cors.archive.org/cors/jsmess_engine_v2/"+ js_filename;
-     };
-
-     var start = function() {
-       if (has_started)
-         return false;
-       has_started = true;
-
-       var k, c, modulecfg, metadata, game_files;
-       drawsplash();
-
-       splash.loading_text = 'Downloading game metadata...';
-       var loading = fetch_file('Game Metadata',
-                                get_meta_url(game),
-                                'document', true);
-       loading.then(function (data) {
-                      metadata = data;
-                      splash.loading_text = 'Downloading emulator metadata...';
-                      var module = metadata.getElementsByTagName("emulator")
-                                           .item(0)
-                                           .textContent;
-                      return fetch_file('Emulator Metadata',
-                                        get_emulator_config_url(module),
-                                        'text', true, true);
-                    },
-                    function () {
-                      splash.loading_text = 'Failed to download metadata!';
-                      splash.failed_loading = true;
-                    })
-              .then(function (data) {
-                      modulecfg = JSON.parse(data);
-
-                      var nr = modulecfg['native_resolution'];
-                      DOSBOX.width = nr[0] * scale;
-                      DOSBOX.height = nr[1] * scale;
-
-                      if (precallback) {
-                        window.setTimeout(precallback, 0);
-                      }
-
-                      function mountat (drive) {
-                        return function (data) {
-                          return { drive: drive,
-                                   mountpoint: "/" + drive,
-                                   data: data
-                                 };
-                        };
-                      }
-
-                      // first get the urls
-                      var urls = [];
-                      if (game) {
-                        // ugh, such a hack
-                        urls.push({ nodeName: 'dosbox_drive_c', 'textContent': game});
-                      }
-                      var len = metadata.documentElement.childNodes.length, i;
-                      for (i = 0; i < len; i++) {
-                        var node = metadata.documentElement.childNodes[i];
-                        var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
-                        if (m) {
-                          urls.push(node);
-                        }
-                      }
-
-                      // and a count, then fetch them in
-                      var files = [],
-                          len = urls.length;
-                      for (i = 0; i < len; i++) {
-                        var node = urls[i],
-                            drive = node.nodeName.split('_')[2]
-                        files.push(fetch_file('Game File ('+ (i+1) +' of '+ len +')', get_zip_url(node.textContent)).then(mountat(drive)));
-                      }
-
-                      file_countdown = files.length;
-                      splash.loading_text = 'Downloading game data...';
-
-                      return Promise.all(files);
-                    },
-                    function () {
-                      splash.loading_text = 'Failed to download metadata!';
-                      splash.failed_loading = true;
-                    })
-              .then(function (game_data) {
-                      game_files = game_data;
-                      return new Promise(function (resolve, reject) {
-                                           splash.loading_text = 'Press any key to continue...';
-                                           splash.spinning = false;
-
-                                           // stashes these event listeners so that we can remove them after
-                                           window.addEventListener('keypress', k = keyevent(resolve));
-                                           canvas.addEventListener('click', c = resolve);
-                                         });
-                    },
-                    function () {
-                      splash.loading_text = 'Failed to download game data!';
-                      splash.failed_loading = true;
-                    })
-              .then(function () {
-                      splash.spinning = true;
-                      window.removeEventListener('keypress', k);
-                      canvas.removeEventListener('click', c);
-
-                      // Don't let arrow, pg up/down, home, end affect page position
-                      blockSomeKeys();
-                      setupFullScreen();
-                      disableRightClickContextMenu(canvas);
-
-                      // Emscripten doesn't use the proper prefixed functions for fullscreen requests,
-                      // so let's map the prefixed versions to the correct function.
-                      canvas.requestPointerLock = getpointerlockenabler();
-
-                      Module = init_module(modulecfg, metadata, game_files);
-
-                      if (modulecfg['js_filename']) {
-                        splash.loading_text = 'Launching DosBox';
-                        attach_script(modulecfg['js_filename']);
-                      } else {
-                        splash.loading_text = 'Non-system disk or disk error';
-                      }
-                    },
-                    function () {
-                      splash.loading_text = 'Invalid media, track 0 bad or unusable';
-                      splash.failed_loading = true;
-                    });
-       return this;
-     };
-     this.start = start;
-     window.DOSBOXstart = start;//global hook to method (so can be invoked with a "click to play" image being clicked)
-
-     var init_module = function(modulecfg, metadata, game_files) {
-       return { arguments: build_dosbox_arguments(modulecfg,
-                                                  metadata.getElementsByTagName("emulator_start")
-                                                          .item(0)
-                                                          .textContent,
-                                                  game_files),
+     var init_module = function(emulator_start, game_files, locateAdditionalJS) {
+       return { arguments: build_dosbox_arguments(emulator_start, game_files),
                 screenIsReadOnly: true,
                 print: function (text) { console.log(text); },
                 canvas: canvas,
                 noInitialRun: false,
-                locateFile: function (file) {
-                              if ("file_locations" in modulecfg && file in modulecfg.file_locations) {
-                                return get_js_url(modulecfg.file_locations[file]);
-                              }
-                              throw new Error("Don't know how to find file: "+ file);
-                            },
+                locateFile: locateAdditionalJS,
                 preInit: function () {
                            splash.loading_text = 'Loading game file(s) into file system';
                            var len = game_files.length;
@@ -1282,11 +1301,7 @@ var Module = null;
                            DOSBOX.moveConfigToRoot();
                            splash.finished_loading = true;
                            if (callback) {
-                               modulecfg.canvas = canvas;
-                               window.setTimeout(function() {
-                                                   callback(modulecfg, metadata, game_files);
-                                                 },
-                                                 0);
+                               window.setTimeout(function() { callback(this); }, 0);
                            }
                          }
               };
@@ -1350,7 +1365,7 @@ var Module = null;
            var head = document.getElementsByTagName('head')[0];
            var newScript = document.createElement('script');
            newScript.type = 'text/javascript';
-           newScript.src = get_js_url(js_url);
+           newScript.src = js_url;
            head.appendChild(newScript);
          }
      }
@@ -1363,9 +1378,9 @@ var Module = null;
        return canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen || canvas.requestFullScreen;
      }
 
-     function isfullscreensupported() {
+     this.isfullscreensupported = function () {
         return !!(getfullscreenenabler());
-     }
+     };
 
      function setupFullScreen() {
        var fullScreenChangeHandler = function() {
@@ -1523,6 +1538,7 @@ var Module = null;
      }
    };
 
+   window.IALoader = IALoader;
    window.DOSBOX = DOSBOX;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
 

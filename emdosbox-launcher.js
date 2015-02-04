@@ -1,4 +1,4 @@
-(function() {
+(function () {
   function get(name) {
     if (typeof(loader_game)=='object')
       return loader_game[name]; //alternate case where dont have CGI args to parse...
@@ -11,11 +11,11 @@
   var emulator;
 
   function ready() {
-    var canvas = document.getElementById('canvas');
-    emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
-                                 .setgame(loader_game === 'NONE' ? null
-                                                                 : loader_game)
-                                 .start();
+    var game = loader_game === 'NONE' ? null : loader_game,
+        scale = get('scale') ? parseFloat(get('scale')) : 1,
+        canvas = document.getElementById('canvas');
+
+    emulator = new IALoader(canvas, game, null, scale).start();
 
     var fullscreenbutton = document.getElementById('gofullscreen');
     if (emulator.isfullscreensupported()) {
