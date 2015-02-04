@@ -1229,6 +1229,15 @@ var Module = null;
                       window.removeEventListener('keypress', k);
                       canvas.removeEventListener('click', c);
 
+                      // Don't let arrow, pg up/down, home, end affect page position
+                      blockSomeKeys();
+                      setupFullScreen();
+                      disableRightClickContextMenu(canvas);
+
+                      // Emscripten doesn't use the proper prefixed functions for fullscreen requests,
+                      // so let's map the prefixed versions to the correct function.
+                      canvas.requestPointerLock = getpointerlockenabler();
+
                       Module = init_module(modulecfg, metadata, game_files);
 
                       if (modulecfg['js_filename']) {
@@ -1345,6 +1354,67 @@ var Module = null;
            head.appendChild(newScript);
          }
      }
+
+     function getpointerlockenabler() {
+       return canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+     }
+
+     function getfullscreenenabler() {
+       return canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen || canvas.requestFullScreen;
+     }
+
+     function isfullscreensupported() {
+        return !!(getfullscreenenabler());
+     }
+
+     function setupFullScreen() {
+       var fullScreenChangeHandler = function() {
+                                       if (!(document.mozFullScreenElement || document.fullScreenElement)) {
+                                         canvas.style.width = DOSBOX.width + 'px';
+                                         canvas.style.height = DOSBOX.height + 'px';
+                                       }
+                                     };
+       if ('onfullscreenchange' in document) {
+         document.addEventListener('fullscreenchange', fullScreenChangeHandler);
+       } else if ('onmozfullscreenchange' in document) {
+         document.addEventListener('mozfullscreenchange', fullScreenChangeHandler);
+       } else if ('onwebkitfullscreenchange' in document) {
+         document.addEventListener('webkitfullscreenchange', fullScreenChangeHandler);
+       }
+     };
+
+     this.requestFullScreen = function () {
+       Module.requestFullScreen(1, 0);
+     };
+
+     /**
+       * Prevents page navigation keys such as page up/page down from
+       * moving the page while the user is playing.
+       */
+     function blockSomeKeys() {
+       var blocked_keys = [33, 34, 35, 36, 37, 38, 39, 40];
+       function keypress (e) {
+         if (blocked_keys.indexOf(e.which) >= 0) {
+           e.preventDefault();
+           return false;
+         }
+         return true;
+       }
+       window.onkeydown = keypress;
+     }
+
+     /**
+       * Disables the right click menu for the given element.
+       */
+     function disableRightClickContextMenu(element) {
+       element.addEventListener('contextmenu',
+                                function (e) {
+                                  if (e.button == 2) {
+                                    // Block right-click menu thru preventing default action.
+                                    e.preventDefault();
+                                  }
+                                });
+     }
    };
 
    DOSBOX._readySet = false;
@@ -1377,17 +1447,6 @@ var Module = null;
          DOSBOX._readyCheck();
        }
      };
-   };
-
-   DOSBOX.setScale = function() {
-     Module.canvas.style.width = DOSBOX.width + 'px';
-     Module.canvas.style.height = DOSBOX.height + 'px';
-   };
-
-   DOSBOX.fullScreenChangeHandler = function() {
-     if (!(document.mozFullScreenElement || document.fullScreenElement)) {
-         setTimeout(DOSBOX.setScale, 0);
-     }
    };
 
    DOSBOX.BFSMountZip = function BFSMount(path, loadedData) {
