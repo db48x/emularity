@@ -964,9 +964,9 @@ var Module = null;
 (function (Promise) {
    function IALoader(canvas, game, callback, scale) {
      var metadata, module, modulecfg,
-         emulator = new DOSBOX(canvas).setscale(scale)
-                                      .setLoad(loadFiles)
-                                      .setcallback(callback);
+         emulator = new Emulator(canvas).setscale(scale)
+                                        .setLoad(loadFiles)
+                                        .setcallback(callback);
 
      function loadFiles(fetch_file, splash) {
        splash.loading_text = 'Downloading game metadata...';
@@ -980,7 +980,7 @@ var Module = null;
                                            module = metadata.getElementsByTagName("emulator")
                                                             .item(0)
                                                             .textContent;
-                                           return fetch_file('DOSBOX Metadata',
+                                           return fetch_file('Emulator Metadata',
                                                              get_emulator_config_url(module),
                                                              'text', true, true);
                                          },
@@ -1091,13 +1091,13 @@ var Module = null;
      return emulator;
    }
 
-   function DOSBOX(canvas, callback, loadFiles) {
+   function Emulator(canvas, callback, loadFiles) {
      var js_url;
      var requests = [];
      var drawloadingtimer;
      var splashimg = new Image();
      var spinnerimg = new Image();
-     // TODO: Have an enum value that communicates the current state of DOSBOX, e.g. 'initializing', 'loading', 'running'.
+     // TODO: Have an enum value that communicates the current state of the emulator, e.g. 'initializing', 'loading', 'running'.
      var has_started = false;
      var loading = false;
      var splash = { loading_text: "",
@@ -1285,10 +1285,10 @@ var Module = null;
                            splash.loading_text = 'Loading game file(s) into file system';
                            var len = game_files.length;
                            for (var i = 0; i < len; i++) {
-                             DOSBOX.BFSMountZip(game_files[i].mountpoint,
+                             Emulator.BFSMountZip(game_files[i].mountpoint,
                                                   new BrowserFS.BFSRequire('buffer').Buffer(game_files[i].data));
                            }
-                           DOSBOX.moveConfigToRoot();
+                           Emulator.moveConfigToRoot();
                            splash.finished_loading = true;
                            if (callback) {
                                window.setTimeout(function() { callback(this); }, 0);
@@ -1427,7 +1427,7 @@ var Module = null;
      }
    };
 
-   DOSBOX.BFSMountZip = function BFSMount(path, loadedData) {
+   Emulator.BFSMountZip = function BFSMount(path, loadedData) {
        var zipfs = new BrowserFS.FileSystem.ZipFS(loadedData),
            mfs = new BrowserFS.FileSystem.MountableFileSystem(),
            memfs = new BrowserFS.FileSystem.InMemory();
@@ -1445,7 +1445,7 @@ var Module = null;
    };
 
    // Helper function: Recursively copies contents from one folder to another.
-   DOSBOX.recursiveCopy = function recursiveCopy(oldDir, newDir) {
+   Emulator.recursiveCopy = function recursiveCopy(oldDir, newDir) {
        var path = BrowserFS.BFSRequire('path'),
            fs = BrowserFS.BFSRequire('fs');
        copyDirectory(oldDir, newDir);
@@ -1471,7 +1471,7 @@ var Module = null;
    /**
     * Searches for dosbox.conf, and moves it to '/dosbox.conf' so dosbox uses it.
     */
-   DOSBOX.moveConfigToRoot = function moveConfigToRoot() {
+   Emulator.moveConfigToRoot = function moveConfigToRoot() {
      if (typeof FS !== 'undefined') {
        var dosboxConfPath = null;
        // Recursively search for dosbox.conf.
@@ -1502,7 +1502,7 @@ var Module = null;
    };
 
    window.IALoader = IALoader;
-   window.DOSBOX = DOSBOX;
+   window.Emulator = Emulator;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
 
 // Cross browser, backward compatible solution
