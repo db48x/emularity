@@ -964,7 +964,7 @@ var Module = null;
 (function (Promise) {
    function IALoader(canvas, game, callback, scale) {
      var metadata, module, modulecfg,
-         emulator = new Emulator(canvas).setscale(scale)
+         emulator = new Emulator(canvas).setScale(scale)
                                         .setLoad(loadFiles)
                                         .setcallback(callback);
 
