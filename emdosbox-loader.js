@@ -994,10 +994,6 @@ var Module = null;
 
                                            // first get the urls
                                            var urls = [];
-                                           if (game) {
-                                             // ugh, such a hack
-                                             urls.push({ nodeName: 'dosbox_drive_c', 'textContent': game});
-                                           }
                                            var len = metadata.documentElement.childNodes.length, i;
                                            for (i = 0; i < len; i++) {
                                              var node = metadata.documentElement.childNodes[i];
@@ -1013,13 +1009,19 @@ var Module = null;
                                            for (i = 0; i < len; i++) {
                                              var node = urls[i],
                                                  drive = node.nodeName.split('_')[2],
-                                                 title = 'Game File ('+ (i+1) +' of '+ len +')',
+                                                 title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
                                                  url = get_zip_url(node.textContent);
                                              files.push(fetch_file(title, url).then(mountat(drive)));
                                            }
 
-                                           splash.loading_text = 'Downloading game data...';
+                                           if (game) {
+                                             var drive = 'c',
+                                                 title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
+                                                 url = get_zip_url(game);
+                                             files.push(fetch_file(title, url).then(mountat(drive)));
+                                           }
 
+                                           splash.loading_text = 'Downloading game data...';
                                            return Promise.all(files);
                                          },
                                          function () {
