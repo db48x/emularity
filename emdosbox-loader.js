@@ -1116,6 +1116,18 @@ var Module = null;
        return sample.sampleRate.toString();
      }());
 
+     var SDL_PauseAudio;
+     this.mute = function (state) {
+       try {
+         if (!SDL_PauseAudio)
+           SDL_PauseAudio = Module.cwrap('SDL_PauseAudio', '', ['number']);
+         SDL_PauseAudio(state);
+       } catch (x) {
+         console.log("Unable to change audio state:", x);
+       }
+       return this;
+     };
+
      var css_resolution, scale, aspectRatio;
 
      this.setScale = function(_scale) {
