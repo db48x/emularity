@@ -1460,6 +1460,9 @@ var Module = null;
 
        context.restore();
 
+       var table = document.getElementById("dosbox-progress-indicator");
+       table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
+
        if (splash.finished_loading) {
          document.getElementById("dosbox-progress-indicator").style.display = 'none';
        }
