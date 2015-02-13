@@ -23,6 +23,15 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     return sample.sampleRate.toString();
   }());
 
+  // right off the bat we set the canvas's inner dimensions to
+  // whatever it's current css dimensions are; this isn't likely to be
+  // the same size that dosbox/jsmess will set it to, but it avoids
+  // the case where the size was left at the default 300x150
+  if (!canvas.hasAttribute("width")) {
+    canvas.width = parseInt(getComputedStyle(canvas).width, 10);
+    canvas.height = parseInt(getComputedStyle(canvas).height, 10);
+  }
+
   var can_start = function () {
     return !!canvas && !!module && !!game && !!scale && !has_started;
   };
