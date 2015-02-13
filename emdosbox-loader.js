@@ -13,6 +13,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
   var has_started = false;
   var loading = false;
   var LOADING_TEXT;
+  var splash_inverse = getComputedStyle(document.getElementsByTagName("body")[0]).backgroundColor === 'rgb(0, 0, 0)';
 
   var SAMPLE_RATE = (function () {
     var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
@@ -76,7 +77,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
     context.restore();
     context.save();
     context.font = '18px sans-serif';
-    context.fillStyle = 'Black';
+    context.fillStyle = splash_inverse ? 'white' : 'black';
     context.textAlign = 'center';
     context.fillText(LOADING_TEXT, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
     context.restore();
@@ -280,7 +281,7 @@ function DOSBOX(canvas, module, game, precallback, callback, scale) {
       context.save();
       context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
       context.font = '18px sans-serif';
-      context.fillStyle = 'Black';
+      context.fillStyle = splash_inverse ? 'white' : 'black';
       context.textAlign = 'center';
       context.fillText('Click here to start', canvas.width / 2, (canvas.height / 2) + (splashimg.height / 2));
       context.textAlign = 'start';
