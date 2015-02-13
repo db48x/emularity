@@ -51,17 +51,19 @@ window.onkeydown = keypress;
 
   function ready() {
     var fullscreenbutton = document.getElementById('gofullscreen')
-    if (isfullscreensupported()) {
-      fullscreenbutton.addEventListener('click', gofullscreen);
-      if ('onfullscreenchange' in document) {
-        document.addEventListener('fullscreenchange', JSMESS.fullScreenChangeHandler);
-      } else if ('onmozfullscreenchange' in document) {
-        document.addEventListener('mozfullscreenchange', JSMESS.fullScreenChangeHandler);
-      } else if ('onwebkitfullscreenchange' in document) {
-        document.addEventListener('webkitfullscreenchange', JSMESS.fullScreenChangeHandler);
+    if (fullscreenbutton) {
+      if (isfullscreensupported()) {
+        fullscreenbutton.addEventListener('click', gofullscreen);
+        if ('onfullscreenchange' in document) {
+          document.addEventListener('fullscreenchange', JSMESS.fullScreenChangeHandler);
+        } else if ('onmozfullscreenchange' in document) {
+          document.addEventListener('mozfullscreenchange', JSMESS.fullScreenChangeHandler);
+        } else if ('onwebkitfullscreenchange' in document) {
+          document.addEventListener('webkitfullscreenchange', JSMESS.fullScreenChangeHandler);
+        }
+      } else {
+        fullscreenbutton.disabled = true;
       }
-    } else {
-      fullscreenbutton.disabled = true;
     }
     var canvas = document.getElementById('canvas');
     mess = new JSMESS(canvas)

@@ -12,6 +12,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
   var has_started = false;
   var loading = false;
   var LOADING_TEXT;
+  var splash_inverse = getComputedStyle(document.getElementsByTagName("body")[0]).backgroundColor === 'rgb(0, 0, 0)';
 
   var SAMPLE_RATE = (function () {
     var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
@@ -21,6 +22,15 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     var sample = new audio_ctx;
     return sample.sampleRate.toString();
   }());
+
+  // right off the bat we set the canvas's inner dimensions to
+  // whatever it's current css dimensions are; this isn't likely to be
+  // the same size that dosbox/jsmess will set it to, but it avoids
+  // the case where the size was left at the default 300x150
+  if (!canvas.hasAttribute("width")) {
+    canvas.width = parseInt(getComputedStyle(canvas).width, 10);
+    canvas.height = parseInt(getComputedStyle(canvas).height, 10);
+  }
 
   var can_start = function () {
     return !!canvas && !!module && !!game && !!scale && !has_started
@@ -66,7 +76,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
     context.restore();
     context.save();
     context.font = '18px sans-serif';
-    context.fillStyle = 'Black';
+    context.fillStyle = splash_inverse ? 'white' : 'black';
     context.textAlign = 'center';
     context.fillText(LOADING_TEXT, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
     context.restore();
@@ -311,7 +321,7 @@ function JSMESS(canvas, module, game, precallback, callback, scale) {
       context.save();
       context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
       context.font = '18px sans-serif';
-      context.fillStyle = 'Black';
+      context.fillStyle = splash_inverse ? 'white' : 'black';
       context.textAlign = 'center';
       context.fillText('Click here to start', canvas.width / 2, (canvas.height / 2) + (splashimg.height / 2));
       context.textAlign = 'start';
