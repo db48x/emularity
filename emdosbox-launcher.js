@@ -55,17 +55,19 @@ window.onkeydown = keypress;
 
   function ready() {
     var fullscreenbutton = document.getElementById('gofullscreen');
-    if (isfullscreensupported()) {
-      fullscreenbutton.addEventListener('click', gofullscreen);
-      if ('onfullscreenchange' in document) {
-        document.addEventListener('fullscreenchange', DOSBOX.fullScreenChangeHandler);
-      } else if ('onmozfullscreenchange' in document) {
-        document.addEventListener('mozfullscreenchange', DOSBOX.fullScreenChangeHandler);
-      } else if ('onwebkitfullscreenchange' in document) {
-        document.addEventListener('webkitfullscreenchange', DOSBOX.fullScreenChangeHandler);
+    if (fullscreenbutton) {
+      if (isfullscreensupported()) {
+        fullscreenbutton.addEventListener('click', gofullscreen);
+        if ('onfullscreenchange' in document) {
+          document.addEventListener('fullscreenchange', DOSBOX.fullScreenChangeHandler);
+        } else if ('onmozfullscreenchange' in document) {
+          document.addEventListener('mozfullscreenchange', DOSBOX.fullScreenChangeHandler);
+        } else if ('onwebkitfullscreenchange' in document) {
+          document.addEventListener('webkitfullscreenchange', DOSBOX.fullScreenChangeHandler);
+        }
+      } else {
+        fullscreenbutton.disabled = true;
       }
-    } else {
-      fullscreenbutton.disabled = true;
     }
     var canvas = document.getElementById('canvas');
     emulator = new DOSBOX(canvas).setscale(get('scale') ? parseFloat(get('scale')) : 1)
