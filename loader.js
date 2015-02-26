@@ -151,7 +151,7 @@ var Module = null;
                               var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
                               files.push(cfgr.mountFile('/'+ fname,
                                                         cfgr.fetchFile(title,
-                                                                       get_js_url(fname))));
+                                                                       get_bios_url(fname))));
                             }
                           });
        files.push(cfgr.mountFile('/'+ get_game_name(game),
@@ -171,7 +171,7 @@ var Module = null;
                               var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
                               files.push(cfgr.mountFile('/'+ fname,
                                                         cfgr.fetchFile(title,
-                                                                       get_js_url(fname))));
+                                                                       get_bios_url(fname))));
                             }
                           });
        files.push(cfgr.mountFile('/'+ get_game_name(game),
@@ -208,6 +208,10 @@ var Module = null;
 
      var get_js_url = function (js_filename) {
        return "//cors.archive.org/cors/jsmess_engine_v2/"+ js_filename;
+     };
+
+     var get_bios_url = function (bios_filename) {
+       return "//cors.archive.org/cors/jsmess_bios_v2/"+ bios_filename;
      };
 
      function mountat (drive) {
