@@ -333,7 +333,7 @@ var Module = null;
      return { extra_mess_args: args };
    };
 
-   var build_mess_arguments = function (muted, game, driver, native_resolution, sample_rate, peripheral, extra_args) {
+   var build_mess_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args) {
      var args = [driver,
                  '-verbose',
                  '-rompath', 'emulator',
@@ -347,7 +347,7 @@ var Module = null;
        args.push('-samplerate', sample_rate);
      }
 
-     if (game) {
+     if (peripheral && peripheral[0]) {
        args.push('-' + peripheral[0], peripheral[1].replace(/\//g,'_'));
      }
 
