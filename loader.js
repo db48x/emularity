@@ -73,15 +73,11 @@ var Module = null;
                                                                                       .item(0)
                                                                                       .textContent));
                                            } else if (module) {
-                                             if (mame) {
-                                               config_args.push(cfgr.driver(modulecfg.driver),
-                                                                cfgr.extraArgs(modulecfg.extra_args));
-                                               if (modulecfg.peripherals && modulecfg.peripherals[0]) {
-                                                 config_args.push(cfgr.peripheral(modulecfg.peripherals[0], game));
-                                               }
-                                             } else {
-                                               config_args.push(cfgr.driver(modulecfg.driver),
-                                                                cfgr.extraArgs(modulecfg.extra_args));
+                                             config_args.push(cfgr.driver(modulecfg.driver),
+                                                              cfgr.extraArgs(modulecfg.extra_args));
+                                             if (modulecfg.peripherals && modulecfg.peripherals[0]) {
+                                               config_args.push(cfgr.peripheral(modulecfg.peripherals[0],
+                                                                                get_game_name(game)));
                                              }
                                            }
 
@@ -352,7 +348,8 @@ var Module = null;
      }
 
      if (peripheral && peripheral[0]) {
-       args.push('-' + peripheral[0], peripheral[1].replace(/\//g,'_'));
+       args.push('-' + peripheral[0],
+                 '/emulator/'+ (peripheral[1].replace(/\//g,'_')));
      }
 
      if (extra_args) {
