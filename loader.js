@@ -962,9 +962,19 @@
 var Module = null;
 
 (function (Promise) {
-   function IALoader(canvas, game, callback, scale) {
-     var metadata, module, modulecfg,
+   function IALoader(canvas, game, callback, scale, splashimg) {
+     var SAMPLE_RATE = (function () {
+                          var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
+                          if (!audio_ctx) {
+                            return false;
+                          }
+                          var sample = new audio_ctx;
+                          return sample.sampleRate.toString();
+                        }());
+
+     var metadata, module, modulecfg, config_args,
          emulator = new Emulator(canvas).setScale(scale)
+                                        .setSplashImage(splashimg)
                                         .setLoad(loadFiles)
                                         .setcallback(callback);
      var cfgr;
@@ -980,10 +990,6 @@ var Module = null;
                                            module = metadata.getElementsByTagName("emulator")
                                                             .item(0)
                                                             .textContent;
-                                           if (module.indexOf("dosbox") === 0)
-                                             cfgr = DosBoxLoader;
-                                           else
-                                             throw new Error("Unknown module type "+ module +"; cannot configure the emulator.");
                                            return fetch_file('Emulator Metadata',
                                                              get_emulator_config_url(module),
                                                              'text', true, true);
@@ -991,74 +997,156 @@ var Module = null;
                                          function () {
                                            splash.loading_text = 'Failed to download metadata!';
                                            splash.failed_loading = true;
-                                           reject();
+                                           reject(1);
                                          })
                                    .then(function (data) {
                                            modulecfg = JSON.parse(data);
+                                           var mame = 'arcade' in modulecfg && parseInt(modulecfg['arcade'], 10);
+                                           var get_files;
 
-                                           // first get the urls
-                                           var urls = [];
-                                           var len = metadata.documentElement.childNodes.length, i;
-                                           for (i = 0; i < len; i++) {
-                                             var node = metadata.documentElement.childNodes[i];
-                                             var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
-                                             if (m) {
-                                               urls.push(node);
+                                           if (module && module.indexOf("dosbox") === 0) {
+                                             cfgr = DosBoxLoader;
+                                             get_files = get_dosbox_files;
+                                           }
+                                           else if (module) {
+                                             if (mame) {
+                                               cfgr = JSMAMELoader;
+                                               get_files = get_mame_files;
+                                             } else {
+                                               cfgr = JSMESSLoader;
+                                               get_files = get_mess_files;
+                                             }
+                                           }
+                                           else {
+                                             throw new Error("Unknown module type "+ module +"; cannot configure the emulator.");
+                                           }
+
+                                           var nr = modulecfg['native_resolution'];
+                                           config_args = [cfgr.emulatorJS(get_js_url(modulecfg.js_filename)),
+                                                          cfgr.locateAdditionalEmulatorJS(locateAdditionalJS),
+                                                          cfgr.nativeResolution(nr[0], nr[1]),
+                                                          cfgr.aspectRatio(nr[0] / nr[1]),
+                                                          cfgr.sampleRate(SAMPLE_RATE),
+                                                          cfgr.muted(!($.cookie && $.cookie('unmute')))];
+
+                                           if (module && module.indexOf("dosbox") === 0) {
+                                               config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
+                                                                                      .item(0)
+                                                                                      .textContent));
+                                           } else if (module) {
+                                             if (mame) {
+                                               config_args.push(cfgr.driver(modulecfg.driver),
+                                                                cfgr.extraArgs(modulecfg.extra_args));
+                                               if (modulecfg.peripherals && modulecfg.peripherals[0]) {
+                                                 config_args.push(cfgr.peripheral(modulecfg.peripherals[0], game));
+                                               }
+                                             } else {
+                                               config_args.push(cfgr.driver(modulecfg.driver),
+                                                                cfgr.extraArgs(modulecfg.extra_args));
                                              }
                                            }
 
-                                           // and a count, then fetch them in
-                                           var files = [],
-                                               len = urls.length;
-                                           for (i = 0; i < len; i++) {
-                                             var node = urls[i],
-                                                 drive = node.nodeName.split('_')[2],
-                                                 title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
-                                                 url = get_zip_url(node.textContent);
-                                             files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
-                                           }
-
-                                           if (game) {
-                                             var drive = 'c',
-                                                 title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
-                                                 url = get_zip_url(game);
-                                             files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
-                                           }
-
                                            splash.loading_text = 'Downloading game data...';
-                                           return Promise.all(files);
+                                           return Promise.all(get_files(cfgr, metadata, modulecfg));
                                          },
                                          function () {
                                            splash.loading_text = 'Failed to download metadata!';
                                            splash.failed_loading = true;
-                                           reject();
+                                           reject(2);
                                          })
                                    .then(function (game_files) {
-                                           function locateAdditionalJS(filename) {
-                                             if ("file_locations" in modulecfg && filename in modulecfg.file_locations) {
-                                               return get_js_url(modulecfg.file_locations[filename]);
-                                             }
-                                             throw new Error("Don't know how to find file: "+ filename);
-                                           }
-
-                                           var nr = modulecfg['native_resolution'];
-
-                                           resolve(cfgr.apply(null, extend([cfgr.emulatorJS(get_js_url(modulecfg.js_filename)),
-                                                                            cfgr.locateAdditionalEmulatorJS(locateAdditionalJS),
-                                                                            cfgr.nativeResolution(nr[0], nr[1]),
-                                                                            cfgr.aspectRatio(nr[0] / nr[1]),
-                                                                            cfgr.startExe(metadata.getElementsByTagName("emulator_start")
-                                                                                                 .item(0)
-                                                                                                 .textContent)],
-                                                                           game_files)));
+                                           resolve(cfgr.apply(null, extend(config_args, game_files)));
                                          },
                                          function () {
                                            splash.loading_text = 'Failed to download game data!';
                                            splash.failed_loading = true;
-                                           reject();
+                                           reject(3);
                                          });
                           });
      }
+
+     function locateAdditionalJS(filename) {
+       if ("file_locations" in modulecfg && filename in modulecfg.file_locations) {
+         return get_js_url(modulecfg.file_locations[filename]);
+       }
+       throw new Error("Don't know how to find file: "+ filename);
+     }
+
+     function get_dosbox_files(cfgr, emulator, modulecfg) {
+       // first get the urls
+       var urls = [], files = [];
+       var len = metadata.documentElement.childNodes.length, i;
+       for (i = 0; i < len; i++) {
+         var node = metadata.documentElement.childNodes[i];
+         var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
+         if (m) {
+           urls.push(node);
+         }
+       }
+
+       // and a count, then fetch them in
+       var len = urls.length;
+       for (i = 0; i < len; i++) {
+         var node = urls[i],
+             drive = node.nodeName.split('_')[2],
+             title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
+             url = get_zip_url(node.textContent);
+         files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
+       }
+
+       if (game) {
+         var drive = 'c',
+             title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
+             url = get_zip_url(game);
+         files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
+       }
+
+       return files;
+     }
+
+     function get_mess_files(cfgr, metadata, modulecfg) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
+                              files.push(cfgr.mountFile('/'+ fname,
+                                                        cfgr.fetchFile(title,
+                                                                       get_js_url(fname))));
+                            }
+                          });
+       files.push(cfgr.mountFile('/'+ get_game_name(game),
+                                 cfgr.fetchFile("Game File",
+                                                get_zip_url(game))));
+       files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
+                                 cfgr.fetchOptionalFile("CFG File",
+                                                        get_zip_url(get_item_name(game) +'/'+ modulecfg['driver'] + '.cfg'))));
+       return files;
+     }
+
+     function get_mame_files(cfgr, metadata, modulecfg) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
+                              files.push(cfgr.mountFile('/'+ fname,
+                                                        cfgr.fetchFile(title,
+                                                                       get_js_url(fname))));
+                            }
+                          });
+       files.push(cfgr.mountFile('/'+ get_game_name(game),
+                                 cfgr.fetchFile("Game File",
+                                                get_zip_url(game))));
+       files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
+                                 cfgr.fetchOptionalFile("CFG File",
+                                                        get_zip_url(get_item_name(game) +'/'+ modulecfg['driver'] + '.cfg'))));
+       return files;
+     }
+
+     var get_item_name = function (game_path) {
+       return game_path.split('/').shift();
+     };
 
      var get_game_name = function (game_path) {
        return game_path.split('/').pop();
@@ -1095,59 +1183,182 @@ var Module = null;
      return emulator;
    }
 
-   function DosBoxLoader() {
+   function BaseLoader() {
      return Array.prototype.reduce.call(arguments, extend);
    }
 
-   DosBoxLoader.canvas = function (id) {
+   BaseLoader.canvas = function (id) {
      var elem = id instanceof Element ? id : document.getElementById(id);
      return { canvas: elem };
    };
 
-   DosBoxLoader.emulatorJS = function (url) {
+   BaseLoader.emulatorJS = function (url) {
      return { emulatorJS: url };
    };
 
-   DosBoxLoader.locateAdditionalEmulatorJS = function (func) {
+   BaseLoader.locateAdditionalEmulatorJS = function (func) {
      return { locateAdditionalJS: func };
    };
 
-   DosBoxLoader.startExe = function (path) {
-     return { emulatorStart: path };
-   };
-
-   DosBoxLoader.nativeResolution = function (width, height) {
+   BaseLoader.nativeResolution = function (width, height) {
      if (typeof width !== 'number' || typeof height !== 'number')
        throw new Error("Width and height must be numbers");
      return { width: Math.floor(width), height: Math.floor(height) };
    };
 
-   DosBoxLoader.aspectRatio = function (ratio) {
+   BaseLoader.aspectRatio = function (ratio) {
      if (typeof ratio !== 'number')
        throw new Error("Aspect ratio must be a number");
      return { aspectRatio: ratio };
    };
 
-   DosBoxLoader.mountZip = function (drive, file) {
+   BaseLoader.sampleRate = function (rate) {
+     return { sample_rate: rate };
+   };
+
+   BaseLoader.muted = function (muted) {
+     return { muted: muted };
+   };
+
+   BaseLoader.mountZip = function (drive, file) {
      return { files: [{ drive: drive,
                         mountpoint: "/" + drive,
                         file: file
                       }] };
    };
 
-   DosBoxLoader.mountFile = function (filename, file) {
+   BaseLoader.mountFile = function (filename, file) {
      return { files: [{ mountpoint: filename,
                         file: file
                       }] };
    };
 
-   DosBoxLoader.fetchFile = function (title, url) {
+   BaseLoader.fetchFile = function (title, url) {
      return { title: title, url: url };
    };
 
-   DosBoxLoader.localFile = function (title, data) {
+   BaseLoader.fetchOptionalFile = function (title, url) {
+     return { title: title, url: url, optional: true };
+   };
+
+   BaseLoader.localFile = function (title, data) {
      return { title: title, data: data };
    };
+
+   function DosBoxLoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files);
+     return config;
+   }
+   DosBoxLoader.__proto__ = BaseLoader;
+
+   DosBoxLoader.startExe = function (path) {
+     return { emulatorStart: path };
+   };
+
+   function JSMESSLoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.emulator_arguments = build_mess_arguments(config.muted, config.mess_driver,
+                                                      [config.width, config.height], config.sample_rate,
+                                                      config.peripheral, config.extra_mess_args);
+     return config;
+   }
+   JSMESSLoader.__proto__ = BaseLoader;
+
+   JSMESSLoader.driver = function (driver) {
+     return { mess_driver: driver };
+   };
+
+   JSMESSLoader.peripheral = function (peripheral, game) {
+     return { peripheral: [peripheral, game] };
+   };
+
+   JSMESSLoader.extraArgs = function (args) {
+     return { extra_mess_args: args };
+   };
+
+   function JSMAMELoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.emulator_arguments = build_mame_arguments(config.muted, config.mess_driver,
+                                                      [config.width, config.height], config.sample_rate,
+                                                      config.extra_mess_args);
+     return config;
+   }
+   JSMAMELoader.__proto__ = BaseLoader;
+
+   JSMAMELoader.driver = function (driver) {
+     return { mess_driver: driver };
+   };
+
+   JSMAMELoader.extraArgs = function (args) {
+     return { extra_mess_args: args };
+   };
+
+   var build_mess_arguments = function (muted, game, driver, native_resolution, sample_rate, peripheral, extra_args) {
+     var args = [driver,
+                 '-verbose',
+                 '-rompath', 'emulator',
+                 '-window',
+                 '-resolution', native_resolution.join('x'),
+                 '-nokeepaspect'];
+
+     if (muted) {
+       args.push('-sound', 'none');
+     } else if (sample_rate) {
+       args.push('-samplerate', sample_rate);
+     }
+
+     if (game) {
+       args.push('-' + peripheral[0], peripheral[1].replace(/\//g,'_'));
+     }
+
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
+
+     return args;
+   };
+
+   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, extra_args) {
+     var args = [driver,
+                 '-verbose',
+                 '-rompath', 'emulator',
+                 '-window',
+                 '-resolution', native_resolution.join('x'),
+                 '-nokeepaspect'];
+
+     if (muted) {
+       args.push('-sound', 'none');
+     } else if (sample_rate) {
+       args.push('-samplerate', sample_rate);
+     }
+
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
+
+     return args;
+   };
+
+    var build_dosbox_arguments = function (emulator_start, files) {
+      var args = [];
+
+      var len = files.length;
+      for (var i = 0; i < len; i++) {
+        if ('mountpoint' in files[i]) {
+          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint);
+        }
+      }
+
+      var path = emulator_start.split(/\\|\//); // I have LTS already
+      args.push('-c', /^[a-zA-Z]:$/.test(path[0]) ? path.shift() : 'c:');
+      var prog = path.pop();
+      if (path && path.length)
+        args.push('-c', 'cd '+ path.join('/'));
+      args.push('-c', prog);
+
+      return args;
+    };
 
    function Emulator(canvas, callback, loadFiles) {
      var js_url;
@@ -1155,6 +1366,7 @@ var Module = null;
      var drawloadingtimer;
      var splashimg = new Image();
      var spinnerimg = new Image();
+     spinnerimg.src = '/images/spinner.png';
      // TODO: Have an enum value that communicates the current state of the emulator, e.g. 'initializing', 'loading', 'running'.
      var has_started = false;
      var loading = false;
@@ -1164,15 +1376,6 @@ var Module = null;
                     finished_loading: false,
                     colors: { foreground: 'black',
                               background: 'white' } };
-
-     var SAMPLE_RATE = (function () {
-       var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
-       if (!audio_ctx) {
-         return false;
-       }
-       var sample = new audio_ctx;
-       return sample.sampleRate.toString();
-     }());
 
      var SDL_PauseAudio;
      this.mute = function (state) {
@@ -1187,9 +1390,24 @@ var Module = null;
      };
 
      var css_resolution, scale, aspectRatio;
+     // right off the bat we set the canvas's inner dimensions to
+     // whatever it's current css dimensions are; this isn't likely to be
+     // the same size that dosbox/jsmess will set it to, but it avoids
+     // the case where the size was left at the default 300x150
+     if (!canvas.hasAttribute("width")) {
+       canvas.width = canvas.style.width;
+       canvas.height = canvas.style.height;
+     }
 
      this.setScale = function(_scale) {
        scale = _scale;
+       return this;
+     };
+
+     this.setSplashImage = function(_splashimg) {
+       if (_splashimg) {
+         splashimg.src = _splashimg;
+       }
        return this;
      };
 
@@ -1230,28 +1448,30 @@ var Module = null;
        loading.then(function (_game_data) {
                       game_data = _game_data;
                       game_data.fs = new BrowserFS.FileSystem.MountableFileSystem();
-                      game_data.mounts = [];
                       var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
 
                       function fetch(file) {
                         if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
                           return Promise.resolve(file.data);
                         }
-                        return fetch_file(file.title, file.url);
+                        return fetch_file(file.title, file.url, null, null, file.optional);
                       }
 
                       function mountat(drive) {
                         return function (data) {
-                          drive = drive.toLowerCase();
-                          var mountpoint = '/'+ drive;
-                          game_data.mounts.push({ drive: drive, mountpoint: mountpoint });
-                          game_data.fs.mount(mountpoint, BFSOpenZip(new Buffer(data)));
+                          if (data !== null) {
+                            drive = drive.toLowerCase();
+                            var mountpoint = '/'+ drive;
+                            game_data.fs.mount(mountpoint, BFSOpenZip(new Buffer(data)));
+                          }
                         };
                       }
 
                       function saveat(filename) {
                         return function (data) {
-                          game_data.fs.writeFileSync(filename, new Buffer(data));
+                          if (data !== null) {
+                            game_data.fs.writeFileSync(filename, new Buffer(data), null, flag_w, 0x1a4);
+                          }
                         };
                       }
 
@@ -1259,8 +1479,8 @@ var Module = null;
                                                                if (f && f.file)
                                                                  if (f.drive) {
                                                                    return fetch(f.file).then(mountat(f.drive));
-                                                                 } else if (f.filename) {
-                                                                   return fetch(f.file).then(saveat(f.filename));
+                                                                 } else if (f.mountpoint) {
+                                                                   return fetch(f.file).then(saveat(f.mountpoint));
                                                                  }
                                                                return null;
                                                              }));
@@ -1298,10 +1518,10 @@ var Module = null;
                       canvas.requestPointerLock = getpointerlockenabler();
 
                       moveConfigToRoot(game_data.fs);
-                      Module = init_module(game_data.emulatorStart, game_data.mounts, game_data.fs, game_data.locateAdditionalJS);
+                      Module = init_module(game_data.emulator_arguments, game_data.fs, game_data.locateAdditionalJS);
 
                       if (game_data.emulatorJS) {
-                        splash.loading_text = 'Launching DosBox';
+                        splash.loading_text = 'Launching Emulator';
                         attach_script(game_data.emulatorJS);
                       } else {
                         splash.loading_text = 'Non-system disk or disk error';
@@ -1315,11 +1535,30 @@ var Module = null;
      };
      this.start = start;
 
-     var progress_fetch_file = function (e) {
-
+     var init_module = function(args, fs, locateAdditionalJS) {
+       return { arguments: args,
+                screenIsReadOnly: true,
+                print: function (text) { console.log(text); },
+                canvas: canvas,
+                noInitialRun: false,
+                locateFile: locateAdditionalJS,
+                preInit: function () {
+                           splash.loading_text = 'Loading game file(s) into file system';
+                           // Re-initialize BFS to just use the writable in-memory storage.
+                           BrowserFS.initialize(fs);
+                           var BFS = new BrowserFS.EmscriptenFS();
+                           // Mount the file system into Emscripten.
+                           FS.mkdir('/emulator');
+                           FS.mount(BFS, {root: '/'}, '/emulator');
+                           splash.finished_loading = true;
+                           if (callback) {
+                               window.setTimeout(function() { callback(this); }, 0);
+                           }
+                         }
+              };
      };
 
-     var fetch_file = function(title, url, rt, raw, unmanaged) {
+     var fetch_file = function(title, url, rt, raw, optional) {
        var table = document.getElementById("dosbox-progress-indicator");
        var row, cell;
        if (!table) {
@@ -1342,71 +1581,22 @@ var Module = null;
                             xhr.responseType = rt ? rt : 'arraybuffer';
                             xhr.onload = function(e) {
                                            if (xhr.status === 200) {
-                                             if (!unmanaged) {
-                                               xhr.progress = 1.0;
-                                             }
                                              cell.textContent = '✔';
                                              resolve(raw ? xhr.response
                                                          : new Int8Array(xhr.response));
                                            }
                                          };
                             xhr.onerror = function (e) {
-                                            cell.textContent = '✘';
-                                            reject();
+                                            if (optional) {
+                                              cell.textContent = '?';
+                                              resolve(null);
+                                            } else {
+                                              cell.textContent = '✘';
+                                              reject();
+                                            }
                                           };
-                            if (!unmanaged) {
-                              xhr.onprogress = progress_fetch_file;
-                              xhr.title = title;
-                              xhr.progress = 0;
-                              xhr.total = 0;
-                              xhr.loaded = 0;
-                              xhr.lengthComputable = false;
-                              requests.push(xhr);
-                            }
                             xhr.send();
                           });
-     };
-
-     var build_dosbox_arguments = function (emulator_start, mounts) {
-       splash.loading_text = 'Building arguments';
-       var args = [];
-
-       var len = mounts.length;
-       for (var i = 0; i < len; i++) {
-         args.push('-c', 'mount '+ mounts[i].drive +' /emulator'+ mounts[i].mountpoint);
-       }
-
-       var path = emulator_start.split(/\\|\//); // I have LTS already
-       args.push('-c', /^[a-zA-Z]:$/.test(path[0]) ? path.shift() : 'c:');
-       var prog = path.pop();
-       if (path && path.length)
-         args.push('-c', 'cd '+ path.join('/'));
-       args.push('-c', prog);
-
-       return args;
-     };
-
-     var init_module = function(emulator_start, mounts, fs, locateAdditionalJS) {
-       return { arguments: build_dosbox_arguments(emulator_start, mounts),
-                screenIsReadOnly: true,
-                print: function (text) { console.log(text); },
-                canvas: canvas,
-                noInitialRun: false,
-                locateFile: locateAdditionalJS,
-                preInit: function () {
-                           splash.loading_text = 'Loading game file(s) into file system';
-                           // Re-initialize BFS to just use the writable in-memory storage.
-                           BrowserFS.initialize(fs);
-                           var BFS = new BrowserFS.EmscriptenFS();
-                           // Mount the file system into Emscripten.
-                           FS.mkdir('/emulator');
-                           FS.mount(BFS, {root: '/'}, '/emulator');
-                           splash.finished_loading = true;
-                           if (callback) {
-                               window.setTimeout(function() { callback(this); }, 0);
-                           }
-                         }
-              };
      };
 
      function keyevent(resolve) {
@@ -1430,12 +1620,18 @@ var Module = null;
      var drawsplash = function () {
        canvas.setAttribute('moz-opaque', '');
        var context = canvas.getContext('2d');
-       splashimg.onload = function () {
-                            draw_loading_status(0);
-                            animLoop(draw_loading_status);
-                          };
-       splashimg.src = '/images/dosbox.png';
-       spinnerimg.src = '/images/spinner.png';
+       if (splashimg.src && splashimg.complete) {
+         draw_loading_status(0);
+         animLoop(draw_loading_status);
+       } else {
+           splashimg.onload = function () {
+                                draw_loading_status(0);
+                                animLoop(draw_loading_status);
+                              };
+           if (!splashimg.src) {
+             splashimg.src = '/images/dosbox.png';
+           }
+       }
      };
 
      var draw_loading_status = function (deltaT) {
@@ -1461,10 +1657,12 @@ var Module = null;
        context.restore();
 
        var table = document.getElementById("dosbox-progress-indicator");
-       table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
+       if (table) {
+         table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
+       }
 
-       if (splash.finished_loading) {
-         document.getElementById("dosbox-progress-indicator").style.display = 'none';
+       if (splash.finished_loading && table) {
+         table.style.display = 'none';
        }
        if (splash.finished_loading || splash.failed_loading) {
          return false;
@@ -1662,6 +1860,8 @@ var Module = null;
 
    window.IALoader = IALoader;
    window.DosBoxLoader = DosBoxLoader;
+   window.JSMESSLoader = JSMESSLoader;
+   window.JSMAMELoader = JSMAMELoader;
    window.Emulator = Emulator;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
 
@@ -1703,3 +1903,7 @@ var Module = null;
 //           // return false; will stop the loop
 //         },
 //         animWrapper);
+
+// legacy
+var JSMESS = JSMESS || {};
+JSMESS.ready = function (f) { f(); };

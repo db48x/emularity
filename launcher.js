@@ -13,15 +13,19 @@
   function ready() {
     var game = loader_game === 'NONE' ? null : loader_game,
         scale = get('scale') ? parseFloat(get('scale')) : 1,
-        canvas = document.getElementById('canvas');
+        canvas = document.getElementById('canvas'),
+        module = get('module');
 
-    emulator = new IALoader(canvas, game, null, scale).start();
+    emulator = new IALoader(canvas, game, null, scale,
+                            (module.indexOf('dosbox') == 0 ? '/images/dosbox.png' : '/images/mame.png')).start();
 
     var fullscreenbutton = document.getElementById('gofullscreen');
-    if (emulator.isfullscreensupported()) {
-      fullscreenbutton.addEventListener('click', function () { emulator.requestFullScreen(); });
-    } else {
-      fullscreenbutton.disabled = true;
+    if (fullscreenbutton) {
+      if (emulator.isfullscreensupported()) {
+        fullscreenbutton.addEventListener('click', function () { emulator.requestFullScreen(); });
+      } else {
+        fullscreenbutton.disabled = true;
+      }
     }
 
     // Gamepad text
