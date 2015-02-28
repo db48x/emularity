@@ -8,9 +8,11 @@ The goal of this little project is to make it easy to embed a javascript-based e
 
 To use this project you'll need to provide it with a canvas element, styled as necessary so that it has the correct size on screen (the program will be scaled up automatically to fit, controlling for aspect ratio). You will also likely want to provide a simple UI for entering full-screen mode or muting the audio; these can simply call methods on the emulator when activated.
 
-# Examples #
+# Configuration #
 
-## Arcade game ##
+## Examples ##
+
+### Arcade game ###
 
 Loads the emulator for the arcade game 1943, and gives it a compressed copy of the rom (assumes that this is in games/1943.zip).
 
@@ -20,7 +22,7 @@ Loads the emulator for the arcade game 1943, and gives it a compressed copy of t
                                                  JSMAMELoader.mountFile("1943.zip",
                                                                         JSMAMELoader.fetchFile("Game File", "games/1943.zip"))))
 
-## Console game for Atari 2600 ##
+### Console game for Atari 2600 ###
 
 Loads the emulator for the Atari 2600 console, and an image of a catridge for Pitfall. Notice how we download the image, storing it in a file, then set up a "cart" peripheral so that the emulator can find it. We also load a configuration file that preconfigures some keybindings needed to use the 2600.
 
@@ -35,7 +37,7 @@ Loads the emulator for the Atari 2600 console, and an image of a catridge for Pi
                                                                                                "emulators/a2600.cfg")),
                                                  JSMESSLoader.peripheral("cart", "atari_2600_pitfall_1983_cce_c-813.bin")))
 
-## DOS game ##
+### DOS game ###
 
 Here we load the dosbox emulator, and a zip file containing the game ZZT which we mount as the C drive. We also tell DosBox to immediately start running zzt.exe.
 
@@ -44,13 +46,13 @@ Here we load the dosbox emulator, and a zip file containing the game ZZT which w
                                                  DosBoxLoader.mountZip("c", DosBoxLoader.fetchFile("Game File", "games/zzt.zip")),
                                                  DosBoxLoader.startExe("zzt.exe")))
 
-# Configuration API #
+## Configuration API ##
 
 Currently there are two supported emulators, JSMESS and EM-DosBox. JSMESS provides emulation for arcade games, consoles, and early personal computers. As this emulator supports such a wide variety of hardware it has been broken up into several dozen emulators each supporting one machine lest the resulting javascript be intractably large (60+ megabytes). EM-DosBox provides emulation for software that runs on x86 PCs using the DOS operating systems common to the era.
 
 Each of these is configured by calling a constructor function and providing it with arguments formed by calling static methods on that same constructor.
 
-## Common ##
+### Common ###
 
 * `emulatorJS(url)`
 * `mountZip(drive, file)`
@@ -59,28 +61,37 @@ Each of these is configured by calling a constructor function and providing it w
 * `fetchOptionalFile(url)`
 * `localFile(data)`
 
-## JSMESS ##
+### JSMESS ###
 
 * `driver(driverName)`
 * `extraArgs(args)`
 * `peripheral(name, filename)`
 
-## JSMAME ##
+### JSMAME ###
 
 * `driver(driverName)`
 * `extraArgs(args)`
 
-## EM-DosBox ##
+### EM-DosBox ###
 
-* startExe(filename)
+* `startExe(filename)`
 
-# Internet Archive #
+## Internet Archive ##
 
 There's also a helper for loading software from [the Internet Archive](https://archive.org/v2), `IALoader`. IALoader looks at the metadata associated with their items and uses that to build the configuration for the emulator.
 
 ## Examples ##
 
     var emulator = IALoader("#canvas", "atari_2600_pitfall_1983_cce_c-813/atari_2600_pitfall_1983_cce_c-813.bin");
+
+# Runtime API #
+
+Once you have an emulator object, there are several methods you can call.
+
+* `start()`
+* `requestFullScreen()`
+* `mute()`
+* others…
 
 # Known Bugs #
 
