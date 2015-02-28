@@ -52,29 +52,40 @@ Each of these is configured by calling a constructor function and providing it w
 
 ## Common ##
 
-* emulatorJS(url)
-* mountZip(drive, file)
-* mountFile(filename, file)
-* fetchFile(url)
-* fetchOptionalFile(url)
-* localFile(data)
+* `emulatorJS(url)`
+* `mountZip(drive, file)`
+* `mountFile(filename, file)`
+* `fetchFile(url)`
+* `fetchOptionalFile(url)`
+* `localFile(data)`
 
 ## JSMESS ##
 
-* driver(driverName)
-* extraArgs(args)
-* peripheral(name, filename)
+* `driver(driverName)`
+* `extraArgs(args)`
+* `peripheral(name, filename)`
 
 ## JSMAME ##
 
-* driver(driverName)
-* extraArgs(args)
+* `driver(driverName)`
+* `extraArgs(args)`
 
 ## EM-DosBox ##
 
 * startExe(filename)
 
+# Internet Archive #
+
+There's also a helper for loading software from [the Internet Archive](https://archive.org/v2), `IALoader`. IALoader looks at the metadata associated with their items and uses that to build the configuration for the emulator.
+
+## Examples ##
+
+    var emulator = IALoader("#canvas", "atari_2600_pitfall_1983_cce_c-813/atari_2600_pitfall_1983_cce_c-813.bin");
+
 # Known Bugs #
 
 * splash screen doesn't always fit inside the canvas
-* not enough indication of download progress
+* need to improve the download progress indicators
+* browser feature detection for volume/mute/full-screen
+* handling of aspect ratios, and their interaction with full-screen mode
+* finish API for volume/mute/full-screen requests
