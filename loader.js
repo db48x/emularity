@@ -471,7 +471,7 @@ var Module = null;
      };
 
      this.setSplashColors = function (colors) {
-       this.splash.colors = colors;
+       splash.colors = colors;
        return this;
      };
 
