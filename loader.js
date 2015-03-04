@@ -155,7 +155,7 @@ var Module = null;
                                                 get_zip_url(game))));
        files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
                                  cfgr.fetchOptionalFile("CFG File",
-                                                        get_zip_url(get_item_name(game) +'/'+ modulecfg['driver'] + '.cfg'))));
+                                                        get_other_emulator_config_url(module))));
        return files;
      }
 
@@ -175,7 +175,7 @@ var Module = null;
                                                 get_zip_url(game))));
        files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
                                  cfgr.fetchOptionalFile("CFG File",
-                                                        get_zip_url(get_item_name(game) +'/'+ modulecfg['driver'] + '.cfg'))));
+                                                        get_other_emulator_config_url(module))));
        return files;
      }
 
@@ -191,6 +191,10 @@ var Module = null;
      // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
      var get_emulator_config_url = function (module) {
        return '//archive.org/cors/jsmess_engine_v2/' + module + '.json';
+     };
+
+     var get_other_emulator_config_url = function (module) {
+       return '//archive.org/cors/jsmess_config_v2/' + module + '.cfg';
      };
 
      var get_meta_url = function (game_path) {
