@@ -439,8 +439,8 @@ var Module = null;
      // the same size that dosbox/jsmess will set it to, but it avoids
      // the case where the size was left at the default 300x150
      if (!canvas.hasAttribute("width")) {
-       canvas.width = canvas.style.width;
-       canvas.height = canvas.style.height;
+       canvas.width = parseInt(getComputedStyle(canvas).width, 10);
+       canvas.height = parseInt(getComputedStyle(canvas).height, 10);
      }
 
      this.setScale = function(_scale) {
