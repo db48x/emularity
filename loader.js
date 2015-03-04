@@ -488,7 +488,13 @@ var Module = null;
        var k, c, game_data;
        drawsplash();
 
-       var loading = loadFiles(fetch_file, splash);
+       var loading
+
+       if (typeof loadFiles === 'function') {
+         loading = loadFiles(fetch_file, splash);
+       } else {
+         loading = Promise.resolve(loadFiles);
+       }
        loading.then(function (_game_data) {
                       game_data = _game_data;
                       game_data.fs = new BrowserFS.FileSystem.MountableFileSystem();
