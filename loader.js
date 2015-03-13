@@ -2,6 +2,10 @@ var Module = null;
 
 (function (Promise) {
    function IALoader(canvas, game, callback, scale, splashimg) {
+     if (typeof game !== 'string') {
+       game = game.toString();
+     }
+
      var SAMPLE_RATE = (function () {
                           var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
                           if (!audio_ctx) {
@@ -713,6 +717,7 @@ var Module = null;
        var table = document.getElementById("dosbox-progress-indicator");
        if (table) {
          table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
+         table.style.left = canvas.offsetLeft + (64 + 32) +'px';
          table.style.color = "foreground" in splash.colors ? splash.colors.foreground : 'black';
        }
 
