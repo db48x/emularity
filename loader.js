@@ -713,6 +713,7 @@ var Module = null;
        var table = document.getElementById("dosbox-progress-indicator");
        if (table) {
          table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
+         table.style.color = "foreground" in splash.colors ? splash.colors.foreground : 'black';
        }
 
        if (splash.finished_loading && table) {
