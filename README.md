@@ -124,7 +124,8 @@ uses that to build the configuration for the emulator.
 
 ## Examples ##
 
-    var emulator = IALoader("#canvas", "Pitfall_Activision_1982/Pitfall_Activision_1982.bin");
+    var emulator = new IALoader(document.querySelector("#canvas"),
+                                "Pitfall_Activision_1982/Pitfall_Activision_1982.bin");
 
 # Runtime API #
 
