@@ -35,12 +35,13 @@ of a config.
 Loads the emulator for the arcade game 1943, and gives it a compressed
 copy of the rom (which it loads from examples/1943.zip).
 
-      var emulator = new Emulator(document.querySelector("#canvas"),
-                                  null,
-                                  new JSMAMELoader(JSMAMELoader.driver("1943"),
-                                                   JSMAMELoader.emulatorJS("emulators/mess1943.js.gz"),
-                                                   JSMAMELoader.mountFile("1943.zip",
-                                                                          JSMAMELoader.fetchFile("Game File", "examples/1943.zip"))))
+    var emulator = new Emulator(document.querySelector("#canvas"),
+                                null,
+                                new JSMAMELoader(JSMAMELoader.driver("1943"),
+                                                 JSMAMELoader.emulatorJS("emulators/mess1943.js"),
+                                                 JSMAMELoader.mountFile("1943.zip",
+                                                                        JSMAMELoader.fetchFile("Game File",
+                                                                                               "examples/1943.zip"))))
 
 ### Console game for Atari 2600 ###
 
@@ -50,17 +51,17 @@ a file, then set up a "cart" peripheral so that the emulator can find
 it. We also load a configuration file that preconfigures some
 keybindings needed to use the 2600.
 
-      var emulator = new Emulator(document.querySelector("#canvas"),
-                                  null,
-                                  new JSMESSLoader(JSMESSLoader.driver("a2600"),
-                                                   JSMESSLoader.emulatorJS("emulators/messa2600.js.gz"),
-                                                   JSMESSLoader.mountFile("Pitfall_Activision_1982.bin",
-                                                                          JSMESSLoader.fetchFile("Game File",
-                                                                                                 "examples/Pitfall_Activision_1982.bin")),
-                                                   JSMESSLoader.mountFile("a2600.cfg",
-                                                                          JSMESSLoader.fetchFile("Config File",
-                                                                                                 "emulators/a2600.cfg")),
-                                                   JSMESSLoader.peripheral("cart", "Pitfall_Activision_1982.bin")))
+    var emulator = new Emulator(document.querySelector("#canvas"),
+                                null,
+                                new JSMESSLoader(JSMESSLoader.driver("a2600"),
+                                                 JSMESSLoader.emulatorJS("emulators/messa2600.js"),
+                                                 JSMESSLoader.mountFile("Pitfall_Activision_1982.bin",
+                                                                        JSMESSLoader.fetchFile("Game File",
+                                                                                               "examples/Pitfall_Activision_1982.bin")),
+                                                 JSMESSLoader.mountFile("a2600.cfg",
+                                                                        JSMESSLoader.fetchFile("Config File",
+                                                                                               "emulators/a2600.cfg")),
+                                                 JSMESSLoader.peripheral("cart", "Pitfall_Activision_1982.bin")))
 
 ### DOS game ###
 
@@ -68,14 +69,13 @@ Here we load the dosbox emulator, and a zip file containing the game
 ZZT which we decompress and then mount as the C drive. We also tell
 DosBox to immediately start running zzt.exe, which is inside the zip.
 
-      var emulator = new Emulator(document.querySelector("#canvas"),
-                                  null,
-                                  new DosBoxLoader(DosBoxLoader.emulatorJS("emulators/dosbox.js.gz"),
-                                                   DosBoxLoader.mountZip("c",
-                                                                         DosBoxLoader.fetchFile("Game File",
-                                                                                                "examples/Zzt_1991_Epic_Megagames_Inc.zip")),
-                                                   DosBoxLoader.startExe("zzt.exe")))
-
+    var emulator = new Emulator(document.querySelector("#canvas"),
+                                null,
+                                new DosBoxLoader(DosBoxLoader.emulatorJS("emulators/dosbox.js"),
+                                                 DosBoxLoader.mountZip("c",
+                                                                       DosBoxLoader.fetchFile("Game File",
+                                                                                              "examples/Zzt_1991_Epic_Megagames_Inc.zip")),
+                                                 DosBoxLoader.startExe("zzt.exe")))
 ## Configuration API ##
 
 Currently there are two supported emulators, JSMESS and
