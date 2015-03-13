@@ -424,8 +424,8 @@ var Module = null;
                     spinning: true,
                     spinner_rotation: 0,
                     finished_loading: false,
-                    colors: { foreground: 'black',
-                              background: 'white' } };
+                    colors: { foreground: 'white',
+                              background: 'black' } };
 
      var SDL_PauseAudio;
      this.mute = function (state) {
