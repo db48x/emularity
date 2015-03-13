@@ -490,7 +490,7 @@ var Module = null;
        var k, c, game_data;
        drawsplash();
 
-       var loading
+       var loading;
 
        if (typeof loadFiles === 'function') {
          loading = loadFiles(fetch_file, splash);
@@ -522,7 +522,7 @@ var Module = null;
                       function saveat(filename) {
                         return function (data) {
                           if (data !== null) {
-                            game_data.fs.writeFileSync(filename, new Buffer(data), null, flag_w, 0x1a4);
+                            game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
                           }
                         };
                       }
