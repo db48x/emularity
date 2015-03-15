@@ -840,7 +840,7 @@ var Module = null;
        copyDirectory(oldDir, newDir);
        function copyDirectory(oldDir, newDir) {
            if (!fs.existsSync(newDir)) {
-               fs.mkdirSync(newDir);
+               fs.mkdirSync(newDir, 0777);
            }
            fs.readdirSync(oldDir).forEach(function(item) {
                var p = path.resolve(oldDir, item),
@@ -855,7 +855,7 @@ var Module = null;
        function copyFile(oldFile, newFile) {
            fs.writeFileSync(newFile,
                             fs.readFileSync(oldFile, null, flag_r),
-                            null, flag_w, 0x1a4);
+                            null, flag_w, 0644);
        }
    };
 
