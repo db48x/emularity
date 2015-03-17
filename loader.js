@@ -486,10 +486,13 @@ var Module = null;
        return this;
      };
 
-     var start = function () {
+     var start = function (options) {
        if (has_started)
          return false;
        has_started = true;
+       if (typeof options !== 'object') {
+         options = {};
+       }
 
        var k, c, game_data;
        drawsplash();
@@ -542,14 +545,17 @@ var Module = null;
                                                              }));
                     })
               .then(function (game_files) {
-                      return new Promise(function (resolve, reject) {
-                                           splash.loading_text = 'Press any key to continue...';
-                                           splash.spinning = false;
+                      if (options.waitAfterDownloading) {
+                        return new Promise(function (resolve, reject) {
+                                             splash.loading_text = 'Press any key to continue...';
+                                             splash.spinning = false;
 
-                                           // stashes these event listeners so that we can remove them after
-                                           window.addEventListener('keypress', k = keyevent(resolve));
-                                           canvas.addEventListener('click', c = resolve);
-                                         });
+                                             // stashes these event listeners so that we can remove them after
+                                             window.addEventListener('keypress', k = keyevent(resolve));
+                                             canvas.addEventListener('click', c = resolve);
+                                           });
+                      }
+                      return Promise.resolve();
                     },
                     function () {
                       splash.loading_text = 'Failed to download game data!';
