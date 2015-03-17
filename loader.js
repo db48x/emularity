@@ -626,7 +626,7 @@ var Module = null;
          table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
          table.style.left = canvas.offsetLeft + (64 + 32) +'px';
          table.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
-         document.documentElement.appendChild(table);
+         canvas.parentElement.appendChild(table);
        }
        row = table.insertRow(-1);
        cell = row.insertCell(-1);
