@@ -26,7 +26,7 @@ var Module = null;
        return new Promise(function (resolve, reject) {
                             var loading = fetch_file('Game Metadata',
                                                      get_meta_url(game),
-                                                     'document', true);
+                                                     'document');
                             loading.then(function (data) {
                                            metadata = data;
                                            splash.loading_text = 'Downloading emulator metadata...';
@@ -35,7 +35,7 @@ var Module = null;
                                                             .textContent;
                                            return fetch_file('Emulator Metadata',
                                                              get_emulator_config_url(module),
-                                                             'text', true, true);
+                                                             'text', true);
                                          },
                                          function () {
                                            splash.loading_text = 'Failed to download metadata!';
@@ -510,7 +510,7 @@ var Module = null;
                         if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
                           return Promise.resolve(file.data);
                         }
-                        return fetch_file(file.title, file.url, null, null, file.optional);
+                        return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
                       }
 
                       function mountat(drive) {
@@ -616,7 +616,7 @@ var Module = null;
               };
      };
 
-     var fetch_file = function(title, url, rt, raw, optional) {
+     var fetch_file = function(title, url, rt, optional) {
        var table = document.getElementById("dosbox-progress-indicator");
        var row, cell;
        if (!table) {
@@ -640,8 +640,7 @@ var Module = null;
                             xhr.onload = function(e) {
                                            if (xhr.status === 200) {
                                              cell.textContent = '✔';
-                                             resolve(raw ? xhr.response
-                                                         : new Int8Array(xhr.response));
+                                             resolve(xhr.response);
                                            }
                                          };
                             xhr.onerror = function (e) {
