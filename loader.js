@@ -391,7 +391,7 @@ var Module = null;
    };
 
     var build_dosbox_arguments = function (emulator_start, files) {
-      var args = [];
+      var args = ['-conf', '/emulator/dosbox.conf'];
 
       var len = files.length;
       for (var i = 0; i < len; i++) {
