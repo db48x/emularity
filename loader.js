@@ -622,9 +622,24 @@ var Module = null;
               };
      };
 
-     var fetch_file = function(title, url, rt, optional) {
+     var formatSize = function (event) {
+       if (event.lengthComputable)
+         return "("+ formatBytes(event.loaded) +" of "+ formatBytes(event.total) +")";
+       return "("+ formatBytes(event.loaded) +")";
+     };
+
+     var formatBytes = function (bytes, base10) {
+         var unit = base10 ? 1000 : 1024,
+             units = base10 ? ["B", "kB","MB","GB","TB","PB","EB","ZB","YB"]
+                            : ["B", "KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"],
+             exp = parseInt((Math.log(bytes) / Math.log(unit))),
+             size = bytes / Math.pow(unit, exp);
+         return size.toFixed(1) +' '+ units[exp];
+     };
+
+     var fetch_file = function (title, url, rt, optional) {
        var table = document.getElementById("dosbox-progress-indicator");
-       var row, cell;
+       var row, statusCell, titleCell, sizeCell;
        if (!table) {
          table = document.createElement('table');
          table.setAttribute('id', "dosbox-progress-indicator");
@@ -635,26 +650,37 @@ var Module = null;
          canvas.parentElement.appendChild(table);
        }
        row = table.insertRow(-1);
-       cell = row.insertCell(-1);
-       cell.textContent = '—';
-       row.insertCell(-1).textContent = title;
+       statusCell = row.insertCell(-1);
+       statusCell.textContent = '—';
+       statusCell.style.width = "1.5em";
+       titleCell = row.insertCell(-1);
+       titleCell.textContent = title;
+       titleCell.style.paddingRight = "1em";
+       sizeCell = row.insertCell(-1);
+       sizeCell.textContent = '—';
+       sizeCell.style.fontSize = "smaller";
 
        return new Promise(function (resolve, reject) {
                             var xhr = new XMLHttpRequest();
                             xhr.open('GET', url, true);
                             xhr.responseType = rt ? rt : 'arraybuffer';
-                            xhr.onload = function(e) {
+                            xhr.onprogress = function (e) {
+                                               sizeCell.textContent = formatSize(e);
+                                             };
+                            xhr.onload = function (e) {
+                                           sizeCell.textContent = formatSize(e);
                                            if (xhr.status === 200) {
-                                             cell.textContent = '✔';
+                                             statusCell.textContent = '✔';
                                              resolve(xhr.response);
                                            }
                                          };
                             xhr.onerror = function (e) {
+                                            sizeCell.textContent = formatSize(e);
                                             if (optional) {
-                                              cell.textContent = '?';
+                                              statusCell.textContent = '?';
                                               resolve(null);
                                             } else {
-                                              cell.textContent = '✘';
+                                              statusCell.textContent = '✘';
                                               reject();
                                             }
                                           };
