@@ -491,7 +491,7 @@ var Module = null;
          return false;
        has_started = true;
        if (typeof options !== 'object') {
-         options = {};
+         options = { waitAfterDownloading: false };
        }
 
        var k, c, game_data;
