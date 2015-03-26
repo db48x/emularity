@@ -629,6 +629,8 @@ var Module = null;
      };
 
      var formatBytes = function (bytes, base10) {
+         if (bytes === 0)
+           return "0 B";
          var unit = base10 ? 1000 : 1024,
              units = base10 ? ["B", "kB","MB","GB","TB","PB","EB","ZB","YB"]
                             : ["B", "KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"],
