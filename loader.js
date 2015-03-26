@@ -624,7 +624,10 @@ var Module = null;
 
      var formatSize = function (event) {
        if (event.lengthComputable)
-         return "("+ formatBytes(event.loaded) +" of "+ formatBytes(event.total) +")";
+         return "("+ (event.total ? (event.loaded / event.total * 100).toFixed(0)
+                                  : "100") +
+                "%; "+ formatBytes(event.loaded) +
+                " of "+ formatBytes(event.total) +")";
        return "("+ formatBytes(event.loaded) +")";
      };
 
