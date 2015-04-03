@@ -4,7 +4,7 @@
     <title>example arcade game</title>
   </head>
   <body>
-    <canvas id="canvas" style="width: 50%; height: 50%"/>
+    <canvas id="canvas" style="width: 50%; height: 50%"></canvas>
     <script type="text/javascript" src="es6-promise.js"></script>
     <script type="text/javascript" src="browserfs.js"></script>
     <script type="text/javascript" src="loader.js"></script>
@@ -12,10 +12,12 @@
       var emulator = new Emulator(document.querySelector("#canvas"),
                                   null,
                                   new JSMAMELoader(JSMAMELoader.driver("1943"),
+                                                   JSMAMELoader.nativeResolution(224, 256),
                                                    JSMAMELoader.emulatorJS("emulators/mess1943.js"),
                                                    JSMAMELoader.mountFile("1943.zip",
                                                                           JSMAMELoader.fetchFile("Game File",
                                                                                                  "examples/1943.zip"))))
+      emulator.setScale(3);
       emulator.start();
     </script>
   </body>

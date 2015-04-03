@@ -250,7 +250,7 @@ var Module = null;
    BaseLoader.nativeResolution = function (width, height) {
      if (typeof width !== 'number' || typeof height !== 'number')
        throw new Error("Width and height must be numbers");
-     return { width: Math.floor(width), height: Math.floor(height) };
+     return { nativeResolution: { width: Math.floor(width), height: Math.floor(height) } };
    };
 
    BaseLoader.aspectRatio = function (ratio) {
@@ -306,8 +306,8 @@ var Module = null;
    function JSMESSLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mess_arguments(config.muted, config.mess_driver,
-                                                      [config.width, config.height], config.sample_rate,
-                                                      config.peripheral, config.extra_mess_args);
+                                                      [config.nativeResolution.width, config.nativeResolution.height],
+                                                      config.sample_rate, config.peripheral, config.extra_mess_args);
      config.needs_jsmess_webaudio = true;
      return config;
    }
@@ -328,8 +328,8 @@ var Module = null;
    function JSMAMELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mame_arguments(config.muted, config.mess_driver,
-                                                      [config.width, config.height], config.sample_rate,
-                                                      config.extra_mess_args);
+                                                      [config.nativeResolution.width, config.nativeResolution.height],
+                                                      config.sample_rate, config.extra_mess_args);
      config.needs_jsmess_webaudio = true;
      return config;
    }
@@ -570,10 +570,6 @@ var Module = null;
                       blockSomeKeys();
                       setupFullScreen();
                       disableRightClickContextMenu(canvas);
-                      resizeCanvas(canvas,
-                                   scale = game_data.scale || scale,
-                                   css_resolution = game_data.nativeResolution || css_resolution,
-                                   aspectRatio = game_data.aspectRatio || aspectRatio);
                       if (game_data.needs_jsmess_webaudio)
                         setup_jsmess_webaudio();
 
@@ -582,7 +578,8 @@ var Module = null;
                       canvas.requestPointerLock = getpointerlockenabler();
 
                       moveConfigToRoot(game_data.fs);
-                      Module = init_module(game_data.emulator_arguments, game_data.fs, game_data.locateAdditionalJS);
+                      Module = init_module(game_data.emulator_arguments, game_data.fs, game_data.locateAdditionalJS,
+                                           game_data.nativeResolution, game_data.aspectRatio);
 
                       if (game_data.emulatorJS) {
                         splash.loading_text = 'Launching Emulator';
@@ -599,7 +596,7 @@ var Module = null;
      };
      this.start = start;
 
-     var init_module = function(args, fs, locateAdditionalJS) {
+     var init_module = function(args, fs, locateAdditionalJS, nativeResolution, aspectRatio) {
        return { arguments: args,
                 screenIsReadOnly: true,
                 print: function (text) { console.log(text); },
@@ -615,6 +612,12 @@ var Module = null;
                            FS.mkdir('/emulator');
                            FS.mount(BFS, {root: '/'}, '/emulator');
                            splash.finished_loading = true;
+                           setTimeout(function () {
+                                        resizeCanvas(canvas,
+                                                     scale = scale || scale,
+                                                     css_resolution = nativeResolution || css_resolution,
+                                                     aspectRatio = aspectRatio || aspectRatio);
+                                      });
                            if (callback) {
                                window.setTimeout(function() { callback(this); }, 0);
                            }
@@ -706,8 +709,18 @@ var Module = null;
 
      var resizeCanvas = function (canvas, scale, resolution, aspectRatio) {
        if (scale && resolution) {
-         canvas.style.width = resolution.css_width * scale +'px';
-         canvas.style.height = resolution.css_height * scale +'px';
+         canvas.style.imageRendering = 'optimizeSpeed';
+         canvas.style.imageRendering = '-moz-crisp-edges';
+         canvas.style.imageRendering = '-o-crisp-edges';
+         canvas.style.imageRendering = '-webkit-optimize-contrast';
+         canvas.style.imageRendering = 'optimize-contrast';
+         canvas.style.imageRendering = 'crisp-edges';
+         canvas.style.imageRendering = 'pixelated';
+
+         canvas.style.width = resolution.width * scale +'px';
+         canvas.style.height = resolution.height * scale +'px';
+         canvas.width = resolution.width;
+         canvas.height = resolution.height;
        }
      };
 
