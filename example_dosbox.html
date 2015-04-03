@@ -12,11 +12,12 @@
       var emulator = new Emulator(document.querySelector("#canvas"),
                                   null,
                                   new DosBoxLoader(DosBoxLoader.emulatorJS("emulators/dosbox.js"),
+                                                   DosBoxLoader.nativeResolution(640, 400),
                                                    DosBoxLoader.mountZip("c",
                                                                          DosBoxLoader.fetchFile("Game File",
                                                                                                 "examples/Zzt_1991_Epic_Megagames_Inc.zip")),
                                                    DosBoxLoader.startExe("zzt.exe")))
-      emulator.start();
+      emulator.start({ waitAfterDownloading: true });
     </script>
   </body>
 </html>
