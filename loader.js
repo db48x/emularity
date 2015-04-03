@@ -306,8 +306,8 @@ var Module = null;
    function JSMESSLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mess_arguments(config.muted, config.mess_driver,
-                                                      [config.nativeResolution.width, config.nativeResolution.height],
-                                                      config.sample_rate, config.peripheral, config.extra_mess_args);
+                                                      config.nativeResolution, config.sample_rate,
+                                                      config.peripheral, config.extra_mess_args);
      config.needs_jsmess_webaudio = true;
      return config;
    }
@@ -328,8 +328,8 @@ var Module = null;
    function JSMAMELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mame_arguments(config.muted, config.mess_driver,
-                                                      [config.nativeResolution.width, config.nativeResolution.height],
-                                                      config.sample_rate, config.extra_mess_args);
+                                                      config.nativeResolution, config.sample_rate,
+                                                      config.extra_mess_args);
      config.needs_jsmess_webaudio = true;
      return config;
    }
@@ -348,8 +348,11 @@ var Module = null;
                  '-verbose',
                  '-rompath', 'emulator',
                  '-window',
-                 '-resolution', native_resolution.join('x'),
                  '-nokeepaspect'];
+
+     if (native_resolution && "width" in native_resolution && "height" in native_resolution) {
+       args.push('-resolution', [native_resolution.width, native_resolution.height].join('x'));
+     }
 
      if (muted) {
        args.push('-sound', 'none');
@@ -374,8 +377,11 @@ var Module = null;
                  '-verbose',
                  '-rompath', 'emulator',
                  '-window',
-                 '-resolution', native_resolution.join('x'),
                  '-nokeepaspect'];
+
+     if (native_resolution && "width" in native_resolution && "height" in native_resolution) {
+       args.push('-resolution', [native_resolution.width, native_resolution.height].join('x'));
+     }
 
      if (muted) {
        args.push('-sound', 'none');
