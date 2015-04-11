@@ -12,10 +12,10 @@ var Module = null;
        return img;
      }
 
-     var logos = { ia: img("https://blog.archive.org/wp-content/uploads/2015/03/ia-logo-220x221-150x150.png"),
-                   mame: img("https://archive.org/images/mame.png"),
-                   mess: img("https://archive.org/images/mess.png"),
-                   dosbox: img("https://archive.org/images/dosbox.png")
+     var logos = { ia: img("other_logos/ia-logo-150x150.png"),
+                   mame: img("other_logos/mame.png"),
+                   mess: img("other_logos/mess.png"),
+                   dosbox: img("other_logos/dosbox.png")
                  };
 
      var SAMPLE_RATE = (function () {
