@@ -85,7 +85,7 @@ var Module = null;
                                                           cfgr.nativeResolution(nr[0], nr[1]),
                                                           cfgr.aspectRatio(nr[0] / nr[1]),
                                                           cfgr.sampleRate(SAMPLE_RATE),
-                                                          cfgr.muted(!($.cookie && $.cookie('unmute')))];
+                                                          cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')))];
 
                                            if (module && module.indexOf("dosbox") === 0) {
                                                config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
