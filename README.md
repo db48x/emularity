@@ -1,7 +1,4 @@
-# Name #
-
-js-emulators
-
+![Emularity](https://github.com/db48x/emularity/master/logo/emularity_light.png)
 # Synopsis #
 
 The goal of this little project is to make it easy to embed a
