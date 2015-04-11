@@ -770,7 +770,9 @@ var Module = null;
        var context = canvas.getContext('2d');
        context.fillStyle = "background" in splash.colors ? splash.colors.background : 'white';
        context.fillRect(0, 0, canvas.width, canvas.height);
-       context.drawImage(splashimg, canvas.width / 2 - (splashimg.width / 2), canvas.height / 3 - (splashimg.height / 2));
+       context.drawImage(splashimg,
+                         (canvas.width / 2) - (splashimg.width / 2),
+                         (canvas.height / 4) - (splashimg.height / 2));
 
        var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
        context.save();
