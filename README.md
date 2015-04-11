@@ -1,4 +1,4 @@
-![Emularity](https://github.com/db48x/emularity/master/logo/emularity_light.png)
+![Emularity](https://raw.githubusercontent.com/db48x/emularity/master/logo/emularity_light.png)
 # Synopsis #
 
 The goal of this little project is to make it easy to embed a
