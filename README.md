@@ -1,3 +1,4 @@
+# Welcome to the Emularity #
 ![Emularity](https://raw.githubusercontent.com/db48x/emularity/master/logo/emularity_light.png)
 # Synopsis #
 
