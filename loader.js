@@ -1,10 +1,22 @@
 var Module = null;
 
 (function (Promise) {
-   function IALoader(canvas, game, callback, scale, splashimg) {
+   function IALoader(canvas, game, callback, scale) {
      if (typeof game !== 'string') {
        game = game.toString();
      }
+
+     function img(src) {
+       var img = new Image();
+       img.src = src;
+       return img;
+     }
+
+     var logos = { ia: img("https://archive.org/images/glogo.png"),
+                   mame: img("https://archive.org/images/mame.png"),
+                   mess: img("https://archive.org/images/mess.png"),
+                   dosbox: img("https://archive.org/images/dosbox.png")
+                 };
 
      var SAMPLE_RATE = (function () {
                           var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
@@ -17,7 +29,7 @@ var Module = null;
 
      var metadata, module, modulecfg, config_args,
          emulator = new Emulator(canvas).setScale(scale)
-                                        .setSplashImage(splashimg)
+                                        .setSplashImage(logos.ia)
                                         .setLoad(loadFiles)
                                         .setcallback(callback);
      var cfgr;
@@ -48,14 +60,17 @@ var Module = null;
                                            var get_files;
 
                                            if (module && module.indexOf("dosbox") === 0) {
+                                             emulator.setSplashImage(logos.dosbox);
                                              cfgr = DosBoxLoader;
                                              get_files = get_dosbox_files;
                                            }
                                            else if (module) {
                                              if (mame) {
+                                               emulator.setSplashImage(logos.mame);
                                                cfgr = JSMAMELoader;
                                                get_files = get_mame_files;
                                              } else {
+                                               emulator.setSplashImage(logos.mess);
                                                cfgr = JSMESSLoader;
                                                get_files = get_mess_files;
                                              }
@@ -462,7 +477,11 @@ var Module = null;
 
      this.setSplashImage = function(_splashimg) {
        if (_splashimg) {
-         splashimg.src = _splashimg;
+         if (_splashimg instanceof Image) {
+           splashimg = _splashimg;
+         } else {
+           splashimg.src = _splashimg;
+         }
        }
        return this;
      };
@@ -742,7 +761,7 @@ var Module = null;
                                 animLoop(draw_loading_status);
                               };
            if (!splashimg.src) {
-             splashimg.src = '/images/dosbox.png';
+             splashimg.src = '/logo/emularity_color_small.png';
            }
        }
      };
