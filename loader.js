@@ -2,6 +2,8 @@ var Module = null;
 
 (function (Promise) {
    function IALoader(canvas, game, callback, scale) {
+     // IA actually gives us an object here, and we really ought to be
+     // looking things up from it instead.
      if (typeof game !== 'string') {
        game = game.toString();
      }
@@ -12,11 +14,22 @@ var Module = null;
        return img;
      }
 
-     var logos = { ia: img("other_logos/ia-logo-150x150.png"),
-                   mame: img("other_logos/mame.png"),
-                   mess: img("other_logos/mess.png"),
-                   dosbox: img("other_logos/dosbox.png")
-                 };
+     // yea, this is a hack
+     if (document.location.hostname === "archive.org") {
+       var images = { ia: img("/images/ia-logo-150x150.png"),
+                      mame: img("/images/mame.png"),
+                      mess: img("/images/mess.png"),
+                      dosbox: img("/images/dosbox.png"),
+                      spinner: img("/images/spinner.png")
+                    };
+     } else {
+       images = { ia: img("other_logos/ia-logo-150x150.png"),
+                  mame: img("other_logos/mame.png"),
+                  mess: img("other_logos/mess.png"),
+                  dosbox: img("other_logos/dosbox.png"),
+                  spinner: img("images/spinner.png")
+                };
+     }
 
      var SAMPLE_RATE = (function () {
                           var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
@@ -29,7 +42,8 @@ var Module = null;
 
      var metadata, module, modulecfg, config_args,
          emulator = new Emulator(canvas).setScale(scale)
-                                        .setSplashImage(logos.ia)
+                                        .setSplashImage(images.ia)
+                                        .setSpinnerImage(images.spinner)
                                         .setLoad(loadFiles)
                                         .setcallback(callback);
      var cfgr;
@@ -60,17 +74,17 @@ var Module = null;
                                            var get_files;
 
                                            if (module && module.indexOf("dosbox") === 0) {
-                                             emulator.setSplashImage(logos.dosbox);
+                                             emulator.setSplashImage(images.dosbox);
                                              cfgr = DosBoxLoader;
                                              get_files = get_dosbox_files;
                                            }
                                            else if (module) {
                                              if (mame) {
-                                               emulator.setSplashImage(logos.mame);
+                                               emulator.setSplashImage(images.mame);
                                                cfgr = JSMAMELoader;
                                                get_files = get_mame_files;
                                              } else {
-                                               emulator.setSplashImage(logos.mess);
+                                               emulator.setSplashImage(images.mess);
                                                cfgr = JSMESSLoader;
                                                get_files = get_mess_files;
                                              }
@@ -437,7 +451,6 @@ var Module = null;
      var drawloadingtimer;
      var splashimg = new Image();
      var spinnerimg = new Image();
-     spinnerimg.src = '/images/spinner.png';
      // TODO: Have an enum value that communicates the current state of the emulator, e.g. 'initializing', 'loading', 'running'.
      var has_started = false;
      var loading = false;
@@ -481,6 +494,17 @@ var Module = null;
            splashimg = _splashimg;
          } else {
            splashimg.src = _splashimg;
+         }
+       }
+       return this;
+     };
+
+     this.setSpinnerImage = function(_img) {
+       if (_img) {
+         if (_img instanceof Image) {
+           spinnerimg = _img;
+         } else {
+           spinnerimg.src = _img;
          }
        }
        return this;
@@ -749,38 +773,42 @@ var Module = null;
        }
      };
 
+     var clearCanvas = function () {
+       var context = canvas.getContext('2d');
+       context.fillStyle = "background" in splash.colors ? splash.colors.background : 'white';
+       context.fillRect(0, 0, canvas.width, canvas.height);
+       console.log("canvas cleared");
+     };
+
      var drawsplash = function () {
        canvas.setAttribute('moz-opaque', '');
-       var context = canvas.getContext('2d');
-       if (splashimg.src && splashimg.complete) {
-         draw_loading_status(0);
-         animLoop(draw_loading_status);
-       } else {
-           splashimg.onload = function () {
-                                draw_loading_status(0);
-                                animLoop(draw_loading_status);
-                              };
-           if (!splashimg.src) {
-             splashimg.src = '/logo/emularity_color_small.png';
-           }
+       if (!splashimg.src) {
+         splashimg.src = 'logo/emularity_color_small.png';
        }
+       draw_loading_status(0);
+       animLoop(draw_loading_status);
      };
 
      var draw_loading_status = function (deltaT) {
        var context = canvas.getContext('2d');
        context.fillStyle = "background" in splash.colors ? splash.colors.background : 'white';
        context.fillRect(0, 0, canvas.width, canvas.height);
-       context.drawImage(splashimg,
-                         (canvas.width / 2) - (splashimg.width / 2),
-                         (canvas.height / 4) - (splashimg.height / 2));
 
-       var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
-       context.save();
-       context.translate((64/2) + 16, spinnerpos);
-       context.rotate(splash.spinning ? (splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT)
-                                      : 0);
-       context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
-       context.restore();
+       if (splashimg.src && splashimg.complete) {
+         context.drawImage(splashimg,
+                           (canvas.width / 2) - (splashimg.width / 2),
+                           (canvas.height / 4) - (splashimg.height / 2));
+       }
+
+       if (spinnerimg.src && spinnerimg.complete) {
+         var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
+         context.save();
+         context.translate((64/2) + 16, spinnerpos);
+         context.rotate(splash.spinning ? (splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT)
+                                        : 0);
+         context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
+         context.restore();
+       }
 
        context.save();
        context.font = '18px sans-serif';
