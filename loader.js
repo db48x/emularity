@@ -795,9 +795,11 @@ var Module = null;
        context.fillRect(0, 0, canvas.width, canvas.height);
 
        if (splashimg.src && splashimg.complete) {
-         context.drawImage(splashimg,
-                           (canvas.width / 2) - (splashimg.width / 2),
-                           (canvas.height / 4) - (splashimg.height / 2));
+         try {
+           context.drawImage(splashimg,
+                             (canvas.width / 2) - (splashimg.width / 2),
+                             (canvas.height / 4) - (splashimg.height / 2));
+         } catch (x) {}
        }
 
        if (spinnerimg.src && spinnerimg.complete) {
@@ -806,7 +808,9 @@ var Module = null;
          context.translate((64/2) + 16, spinnerpos);
          context.rotate(splash.spinning ? (splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT)
                                         : 0);
-         context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
+         try {
+           context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
+         } catch (x) {}
          context.restore();
        }
 
