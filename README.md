@@ -6,15 +6,36 @@ The goal of this little project is to make it easy to embed a
 javascript-based emulator in your own webpage. It downloads the files
 you specify (with aprogress ui to show what is happening), arranges
 them to form a filesystem, constructs the necessary arguments for the
-emulator, handles transitions to and from full-screen mode, and
-detects and enables game pads.
+emulator, and handles transitions to and from full-screen mode.
 
 To use this project you'll need to provide it with a canvas element,
 styled as necessary so that it has the correct size on screen (the
-program will be scaled up automatically to fit, controlling for aspect
-ratio). You will also likely want to provide a simple UI for entering
-full-screen mode or muting the audio; these can simply call methods on
-the emulator when activated.
+emulated program will be scaled up automatically to fit, controlling
+for aspect ratio). You will also likely want to provide a simple UI
+for entering full-screen mode or muting the audio; these can simply
+call methods on the emulator when activated.
+
+# The Emulators #
+
+Currently works with two emulators:
+
+## JSMESS ##
+
+[JSMESS](https://github.com/jsmess/jsmess) is a port of the Multi
+Emulator Super System (MESS) and the Multiple Arcade Machine Emulator
+(MAME) projects to Javascript. MESS and MAME support hundreds of
+different machines; producing a single javascript file which supports
+all of them turns out to be infeasible. Instead the JSMESS developers
+have split each machine out into a separate js file.
+
+## EM-DOSBox ##
+
+[EM-DOSBox](https://github.com/dreamlayers/em-dosbox/) is a port of
+DosBox to Javascript. DOSBox emulates an IBM PC compatible running
+DOS. There are two versions of this emulator, dosbox.js and
+dosbox-sync.js. Use the former by default, and the latter if you need
+the emulator to support console input, batch files, or programs that
+run other programs.
 
 # Emulator API #
 
@@ -145,6 +166,7 @@ Once you have an emulator object, there are several methods you can call.
 
 # Known Bugs #
 
+* documentation is quite poor
 * splash screen doesn't always fit inside the canvas
 * need to improve the download progress indicators
 * browser feature detection for volume/mute/full-screen
