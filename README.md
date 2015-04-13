@@ -2,11 +2,11 @@
 ![Emularity](https://raw.githubusercontent.com/db48x/emularity/master/logo/emularity_light.png)
 # Synopsis #
 
-The goal of this little project is to make it easy to embed a
-javascript-based emulator in your own webpage. It downloads the files
-you specify (with aprogress ui to show what is happening), arranges
-them to form a filesystem, constructs the necessary arguments for the
-emulator, and handles transitions to and from full-screen mode.
+Emularity (also called "The Emularity") is a loader designed to be used with a family of in-browser emulation systems. It is meant to ease the use of in-browser-based javascript emulation by handling housekeeping functions, making it easy to embed emulators in your website, blogs, intranet or local filesystem. The components of each aspect of the software being emulated (including the .js emulator, the program files, and operating system) can be pulled from local filesystems or through URLs.
+
+Emularity downloads the files you specify (with a Progress screen that shows both emulator logos and what is being loaded), arranges them to form a filesystem, constructs the necessary arguments for the emulator, and handles transitions to and from full-screen mode.
+
+This system has been accessed by millions of users at the [Internet Archive](https://archive.org). 
 
 # The Emulators #
 
