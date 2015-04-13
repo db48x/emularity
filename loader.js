@@ -1,11 +1,25 @@
 var Module = null;
 
 (function (Promise) {
-   function IALoader(canvas, game, callback, scale) {
+   function IALoader(canvas, game, callbacks, scale) {
      // IA actually gives us an object here, and we really ought to be
      // looking things up from it instead.
      if (typeof game !== 'string') {
        game = game.toString();
+     }
+     if (!callbacks || typeof callbacks !== 'object') {
+       callbacks = { before_emulator: updateLogo,
+                     before_run: callbacks };
+     } else {
+       if (typeof callbacks.before_emulator === 'function') {
+         var func = callbacks.before_emulator;
+         callbacks.before_emulator = function () {
+                                       updateLogo();
+                                       func();
+                                     };
+       } else {
+         callbacks.before_emulator = updateLogo;
+       }
      }
 
      function img(src) {
@@ -31,6 +45,12 @@ var Module = null;
                 };
      }
 
+     function updateLogo() {
+         if (emulator_logo) {
+           emulator.setSplashImage(emulator_logo);
+         }
+     }
+
      var SAMPLE_RATE = (function () {
                           var audio_ctx = window.AudioContext || window.webkitAudioContext || false;
                           if (!audio_ctx) {
@@ -40,12 +60,13 @@ var Module = null;
                           return sample.sampleRate.toString();
                         }());
 
-     var metadata, module, modulecfg, config_args,
+     var metadata, module, modulecfg, config_args, emulator_logo,
          emulator = new Emulator(canvas).setScale(scale)
                                         .setSplashImage(images.ia)
                                         .setSpinnerImage(images.spinner)
                                         .setLoad(loadFiles)
-                                        .setcallback(callback);
+                                        .setCallbacks(callbacks);
+
      var cfgr;
      function loadFiles(fetch_file, splash) {
        splash.loading_text = 'Downloading game metadata...';
@@ -74,17 +95,17 @@ var Module = null;
                                            var get_files;
 
                                            if (module && module.indexOf("dosbox") === 0) {
-                                             emulator.setSplashImage(images.dosbox);
+                                             emulator_logo = images.dosbox;
                                              cfgr = DosBoxLoader;
                                              get_files = get_dosbox_files;
                                            }
                                            else if (module) {
                                              if (mame) {
-                                               emulator.setSplashImage(images.mame);
+                                               emulator_logo = images.mame;
                                                cfgr = JSMAMELoader;
                                                get_files = get_mame_files;
                                              } else {
-                                               emulator.setSplashImage(images.mess);
+                                               emulator_logo = images.mess;
                                                cfgr = JSMESSLoader;
                                                get_files = get_mess_files;
                                              }
@@ -445,7 +466,11 @@ var Module = null;
       return args;
     };
 
-   function Emulator(canvas, callback, loadFiles) {
+   function Emulator(canvas, callbacks, loadFiles) {
+     if (typeof callbacks !== 'object') {
+       callbacks = { before_emulator: null,
+                     before_run: callbacks };
+     }
      var js_url;
      var requests = [];
      var drawloadingtimer;
@@ -520,8 +545,13 @@ var Module = null;
        return this;
      };
 
-     this.setcallback = function(_callback) {
-       callback = _callback;
+     this.setCallbacks = function(_callbacks) {
+       if (typeof _callbacks !== 'object') {
+         callbacks = { before_emulator: null,
+                       before_run: _callbacks };
+       } else {
+         callbacks = _callbacks;
+       }
        return this;
      };
 
@@ -630,6 +660,13 @@ var Module = null;
                       Module = init_module(game_data.emulator_arguments, game_data.fs, game_data.locateAdditionalJS,
                                            game_data.nativeResolution, game_data.aspectRatio);
 
+                      if (callbacks && callbacks.before_emulator) {
+                        try {
+                          callbacks.before_emulator();
+                        } catch (x) {
+                          console.log(x);
+                        }
+                      }
                       if (game_data.emulatorJS) {
                         splash.loading_text = 'Launching Emulator';
                         attach_script(game_data.emulatorJS);
@@ -667,8 +704,8 @@ var Module = null;
                                                      css_resolution = nativeResolution || css_resolution,
                                                      aspectRatio = aspectRatio || aspectRatio);
                                       });
-                           if (callback) {
-                               window.setTimeout(function() { callback(this); }, 0);
+                           if (callbacks && callbacks.before_run) {
+                               window.setTimeout(function() { callbacks.before_run(); }, 0);
                            }
                          }
               };
