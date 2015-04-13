@@ -6,7 +6,7 @@ Emularity (also called "The Emularity") is a loader designed to be used with a f
 
 Emularity downloads the files you specify (with a Progress screen that shows both emulator logos and what is being loaded), arranges them to form a filesystem, constructs the necessary arguments for the emulator, and handles transitions to and from full-screen mode.
 
-This system has been accessed by millions of users at the [Internet Archive](https://archive.org). 
+The Emularity system has been used by millions of users at the [Internet Archive](https://archive.org). 
 
 # The Emulators #
 
