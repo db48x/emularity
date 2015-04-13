@@ -14,21 +14,11 @@ Currently works with two emulators:
 
 ## JSMESS ##
 
-[JSMESS](https://github.com/jsmess/jsmess) is a port of the Multi
-Emulator Super System (MESS) and the Multiple Arcade Machine Emulator
-(MAME) projects to Javascript. MESS and MAME support hundreds of
-different machines; producing a single javascript file which supports
-all of them turns out to be infeasible. Instead the JSMESS developers
-have split each machine out into a separate js file.
+[JSMESS](https://github.com/jsmess/jsmess) is a port of the Multi Emulator Super System (MESS) and the Multiple Arcade Machine Emulator (MAME) projects to Javascript. MESS and MAME support thousands of different machines including game consoles, arcade machines and computer platforms.
 
 ## EM-DOSBox ##
 
-[EM-DOSBox](https://github.com/dreamlayers/em-dosbox/) is a port of
-DosBox to Javascript. DOSBox emulates an IBM PC compatible running
-DOS. There are two versions of this emulator, dosbox.js and
-dosbox-sync.js. Use the former by default, and the latter if you need
-the emulator to support console input, batch files, or programs that
-run other programs.
+[EM-DOSBox](https://github.com/dreamlayers/em-dosbox/) is a port of DosBox to Javascript. DOSBox emulates an IBM PC compatible running DOS. There are two versions of this emulator, dosbox.js (Standard EM-DOSBOX) and dosbox-sync.js (EM-DOSBOX with considerations for in-program execution of other programs). 
 
 # Known Bugs #
 
