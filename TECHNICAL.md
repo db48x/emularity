@@ -5,10 +5,8 @@ To use this project you'll need to provide it with a canvas element, styled as n
 # Emulator API #
 
 The `Emulator` constructor takes three arguments: a canvas element, an
-optional callback (which will be called after fully initializing the
-emulator but just before it starts running the emulated program), and
-a config (as detailed below) or a function which returns a `Promise`
-of a config.
+optional set of callbacks, and a config (as detailed below) or a
+function which returns a `Promise` of a config.
 
 # Configuration #
 
@@ -54,7 +52,7 @@ keybindings needed to use the 2600.
 
 ### DOS game ###
 
-Here we load the dosbox emulator, and a zip file containing the game
+Here we load the DOSBox emulator, and a zip file containing the game
 ZZT which we decompress and then mount as the C drive. We also tell
 DosBox to immediately start running zzt.exe, which is inside the zip.
 
@@ -71,11 +69,11 @@ DosBox to immediately start running zzt.exe, which is inside the zip.
 ## Configuration API ##
 
 Currently there are two supported emulators, JSMESS and
-EM-DosBox. JSMESS provides emulation for arcade games, consoles, and
+EM-DOSBox. JSMESS provides emulation for arcade games, consoles, and
 early personal computers. As this emulator supports such a wide
 variety of hardware it has been broken up into several dozen emulators
 each supporting one machine lest the resulting javascript be
-intractably large (60+ megabytes). EM-DosBox provides emulation for
+intractably large (60+ megabytes). EM-DOSBox provides emulation for
 software that runs on x86 PCs using the DOS operating systems common
 to the era.
 
@@ -103,7 +101,7 @@ same constructor.
 * `driver(driverName)`
 * `extraArgs(args)`
 
-### EM-DosBox ###
+### EM-DOSBox ###
 
 * `startExe(filename)`
 

@@ -1,19 +1,21 @@
 
 <!-- The Emularity: An Example Arcade Machine Loader -->
-<!-- For use with The Emularity, downloadable at http://www.emularity.com -->
+<!-- For use with The Emularity, downloadable at http://www.emularity.com/ -->
 
 <!-- For a collection of Arcade ROMs to download and test this script, visit http://mamedev.org/roms/ -->
 
-<!-- SIMPLE STEPS to starting your arcade (using the 1980 Exidy Arcade Game TARG -->
+<!-- SIMPLE STEPS to starting your arcade (using the 1980 Exidy Arcade Game TARG) -->
 
-<!-- * Put this example_arcade.html file in your browser-accessible directory.              -->
-<!-- * Put es6-promise.js, browserfs.js, and loader.js into the same directory.             -->
-<!-- * Put emularity_color_small.png into a "logo" subdirectory.                            -->
-<!-- * Create an "emulators" sub-directory and put in the right emulator from:              -->
-<!--   https://archive.org/download/emularity_engine_jsmame (example: messexidy.js          -->
-<!-- * Download the Targ ROM files from http://mamedev.org/roms/targ/                       -->
-<!-- * Place the Targ ROM .zip file in an "examples" subdirectory.                          -->
-<!-- * Visit your example_arcade.html file with a modern Javascript-capable browser.        -->
+<!-- * Check out this repository in your browser-accessible directory;
+       this file as well as es6-promise.js, browserfs.js and loader.js are
+       required. The logo and images directories are optional, but the
+       splash screen looks quite a lot better when they're available. -->
+<!-- * Use "git annex get <file>" to download emulators/jsmess/messexidy.js;
+       if you don't have git-annex you can download it from IA manually
+       (https://archive.org/download/emularity_engine_jsmame/messexidy.js.gz) -->
+<!-- * Download the Targ ROM files from http://mamedev.org/roms/targ/ -->
+<!-- * Place the Targ ROM .zip file in an "examples" subdirectory. -->
+<!-- * Visit your example_arcade.html file with a modern Javascript-capable browser. -->
 
 <html>
   <head>
@@ -30,7 +32,7 @@
                                   null,
                                   new JSMAMELoader(JSMAMELoader.driver("targ"),
                                                    JSMAMELoader.nativeResolution(256, 256),
-                                                   JSMAMELoader.emulatorJS("emulators/messexidy.js"),
+                                                   JSMAMELoader.emulatorJS("emulators/jsmess/messexidy.js"),
                                                    JSMAMELoader.mountFile("targ.zip",
                                                                           JSMAMELoader.fetchFile("Game File",
                                                                                                  "examples/targ.zip"))))
