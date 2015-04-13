@@ -3,6 +3,16 @@
 <!-- For use with The Emularity, downloadable at http://www.emularity.com -->
 <!-- For a collection of Arcade ROMs to download and test this script, visit http://mamedev.org/roms/ -->
 
+<!-- SIMPLE STEPS to starting your arcade -->
+
+<!-- * Put this example_arcade.html file in your browser-accessible directory.              -->
+<!-- * Put es6-promise.js, browserfs.js, and loader.js into the same directory.             -->
+<!-- * Create an "emulators" sub-directory and put in the right emulator from:              --> 
+<!--   https://archive.org/download/emularity_engine_jsmame (example: messexidy.js.gz       -->
+<!-- * Download the Targ ROM files from http://mamedev.org/roms/targ/                       -->
+<!-- * Place the Targ ROM .zip file in an "examples" subdirectory.                          -->
+<!-- * Visit your example_arcade.html file with a modern Javascript-capable browser.        -->
+
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -16,13 +26,13 @@
     <script type="text/javascript">
       var emulator = new Emulator(document.querySelector("#canvas"),
                                   null,
-                                  new JSMAMELoader(JSMAMELoader.driver("1943"),
-                                                   JSMAMELoader.nativeResolution(224, 256),
-                                                   JSMAMELoader.emulatorJS("emulators/mess1943.js"),
-                                                   JSMAMELoader.mountFile("1943.zip",
+                                  new JSMAMELoader(JSMAMELoader.driver("targ"),
+                                                   JSMAMELoader.nativeResolution(256, 256),
+                                                   JSMAMELoader.emulatorJS("emulators/messexidy.js.gz"),
+                                                   JSMAMELoader.mountFile("targ.zip",
                                                                           JSMAMELoader.fetchFile("Game File",
-                                                                                                 "examples/1943.zip"))))
-      emulator.setScale(3);
+                                                                                                 "examples/targ.zip"))))
+      emulator.setScale(2);
       emulator.start({ waitAfterDownloading: true });
     </script>
   </body>
