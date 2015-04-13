@@ -20,11 +20,15 @@ Currently works with two emulators:
 
 [EM-DOSBox](https://github.com/dreamlayers/em-dosbox/) is a port of DosBox to Javascript. DOSBox emulates an IBM PC compatible running DOS. There are two versions of this emulator, dosbox.js (Standard EM-DOSBOX) and dosbox-sync.js (EM-DOSBOX with considerations for in-program execution of other programs).
 
-# Known Bugs #
+# Credits #
 
-* the documentation is quite poor
-* splash screen doesn't always fit inside the canvas
-* need to improve the download progress indicators (progress bar?)
-* browser feature detection for volume/mute/full-screen
-* handling of aspect ratios, and their interaction with full-screen mode
-* finish API for volume/mute/full-screen requests
+Primary work on Emularity is by Daniel Brooks, with contributions of code or concepts from John Vilk, Andre D, Justin Kerk, Vitorio Miliano, and Jason Scott.
+
+# Some Open Issues #
+
+* Documentation can be improved
+* Splash Screen occasionally overflows canvas
+* Progress bars can stand to be improved
+* Should add browser-specific detections for unusual behaviors and volume/full-screen actions
+* Handling of aspect ratios, and their interaction with full-screen mode
+* Finish API for volume/mute/full-screen requests
