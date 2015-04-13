@@ -8,13 +8,6 @@ you specify (with aprogress ui to show what is happening), arranges
 them to form a filesystem, constructs the necessary arguments for the
 emulator, and handles transitions to and from full-screen mode.
 
-To use this project you'll need to provide it with a canvas element,
-styled as necessary so that it has the correct size on screen (the
-emulated program will be scaled up automatically to fit, controlling
-for aspect ratio). You will also likely want to provide a simple UI
-for entering full-screen mode or muting the audio; these can simply
-call methods on the emulator when activated.
-
 # The Emulators #
 
 Currently works with two emulators:
