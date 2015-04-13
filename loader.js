@@ -16,7 +16,7 @@ var Module = null;
 
      // yea, this is a hack
      if (document.location.hostname === "archive.org") {
-       var images = { ia: img("/images/ia-logo-150x150.png"),
+       var images = { ia: img("/images/ialogo.png"),
                       mame: img("/images/mame.png"),
                       mess: img("/images/mess.png"),
                       dosbox: img("/images/dosbox.png"),
