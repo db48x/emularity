@@ -1,0 +1,44 @@
+<!-- The Emularity: An Example Computer Loader -->
+<!-- For use with The Emularity, downloadable at http://www.emularity.com/ -->
+
+<!-- SIMPLE STEPS to trying an emulated computer ("Beagle Bag" for the Apple IIe) -->
+
+<!-- * Check out this repository in your browser-accessible directory;
+       this file as well as es6-promise.js, browserfs.js and loader.js are
+       required. The logo and images directories are optional, but the
+       splash screen looks quite a lot better when they're available. -->
+<!-- * Use "git annex get <file>" to download emulators/jsmess/messnapple2e.js.gz;
+       if you don't have git-annex you can download it from IA manually
+       (https://archive.org/download/emularity_engine_jsmess/messnapple2e.js.gz) -->
+<!-- * Download the Beagle Bag from:                                             -->
+<!--   https://archive.org/download/a2_Beagle_Bag_1982_Beagle_Bros/Beagle_Bag_1982_Beagle_Bros.do -->
+<!-- * Place the Beagle_Bag_1982_Beagle_Bros.do file in an "examples" subdirectory. -->
+<!-- * Visit your example_computer.html file with a modern Javascript-capable browser. -->
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>example computr program</title>
+  </head>
+  <body>
+    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"/>
+    <script type="text/javascript" src="es6-promise.js"></script>
+    <script type="text/javascript" src="browserfs.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <script type="text/javascript">
+      var emulator = new Emulator(document.querySelector("#canvas"),
+                                  null,
+                                  new JSMESSLoader(JSMESSLoader.driver("apple2e"),
+                                                   JSMESSLoader.nativeResolution(560, 384),
+                                                   JSMESSLoader.emulatorJS("emulators/jsmess/messa2600.js"),
+                                                   JSMESSLoader.mountFile("Beagle_Bag_1982_Beagle_Bros.do",
+                                                                          JSMESSLoader.fetchFile("Game File",
+                                                                                                 "examples/Beagle_Bag_1982_Beagle_Bros.do")),
+                                                   JSMESSLoader.mountFile("apple2e.cfg",
+                                                                          JSMESSLoader.fetchFile("Config File",
+                                                                                                 "examples/a2600.cfg")),
+                                                   JSMESSLoader.peripheral("flop1", "Beagle_Bag_1982_Beagle_Bros.do")))
+      emulator.setScale(3).start({ waitAfterDownloading: true });
+    </script>
+  </body>
+</html>
