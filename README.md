@@ -1,5 +1,10 @@
 # Welcome to the Emularity #
 ![Emularity](https://raw.githubusercontent.com/db48x/emularity/master/logo/emularity_light.png)
+
+# Beta Warning #
+
+The Emularity should be considered in beta. We welcome feedback and suggestions as we finish 1.0.
+
 # Synopsis #
 
 Emularity (also called "The Emularity") is a loader designed to be used with a family of in-browser emulation systems. It is meant to ease the use of in-browser-based javascript emulation by handling housekeeping functions, making it easy to embed emulators in your website, blogs, intranet or local filesystem. The components of each aspect of the software being emulated (including the .js emulator, the program files, and operating system) can be pulled from local filesystems or through URLs.
