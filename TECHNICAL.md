@@ -8,6 +8,14 @@ The `Emulator` constructor takes three arguments: a canvas element, an
 optional set of callbacks, and a config (as detailed below) or a
 function which returns a `Promise` of a config.
 
+# Acquiring Emulators #
+
+The Internet Archive is currently maintaining three sets of emulators - one for JSMESS, one for JSMAME and one for EM-DOSBOX. They can be found at:
+
+* [Emularity Engines: Arcade (JSMAME)](https://archive.org/details/emularity_engine_jsmame)
+* [Emularity Engines: Computers and Consoles (JSMESS)](https://archive.org/details/emularity_engine_jsmess)
+* [Emularity Engines: MS-DOS (EM-DOSBOX)](https://archive.org/details/emularity_engine_emdosbox)
+
 # Configuration #
 
 ## Examples ##
