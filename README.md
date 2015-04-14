@@ -25,9 +25,11 @@ Currently works with two emulators:
 
 [EM-DOSBox](https://github.com/dreamlayers/em-dosbox/) is a port of DosBox to Javascript. DOSBox emulates an IBM PC compatible running DOS. There are two versions of this emulator, dosbox.js (Standard EM-DOSBOX) and dosbox-sync.js (EM-DOSBOX with considerations for in-program execution of other programs).
 
-# Credits #
+# Credits and Components#
 
 Primary work on Emularity is by Daniel Brooks, with contributions of code or concepts from John Vilk, Andre D, Justin Kerk, Vitorio Miliano, and Jason Scott.
+
+Emularity makes use of [BrowserFS](https://github.com/jvilk/BrowserFS) by John Vilk, an in-browser filesystem that emulates the Node JS filesystem API and supports storing and retrieving files from various backends. It also utilizes [ES6-Promise](https://github.com/jakearchibald/es6-promise), a polyfill of the ES6 Promise. Both are implemented and included without modification; consult these original repositories for information or verification.
 
 # Some Open Issues #
 
