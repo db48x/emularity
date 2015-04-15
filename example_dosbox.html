@@ -1,3 +1,33 @@
+<!--
+ The Emularity: An Example Computer Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer ("Doom (shareware
+ edition)" for the PC).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.js and loader.js are
+   required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Use "git annex get emulators/em-dosbox/dosbox-sync.js.gz" to download
+   the compiled emulator; if you don't have git-annex you can download
+   it from IA manually.
+   (https://archive.org/download/emularity_engine_dosbox/dosbox-sync.js.gz)
+
+ * Use "git annex get emulators/em-dosbox/dosbox-sync.mem.gz" to
+   download the compiled emulator's memory initialization file; if you
+   don't have git-annex you can download it from IA manually.
+   (https://archive.org/download/emularity_engine_dosbox/dosbox-sync.mem.gz)
+
+ * Use "git annex get examples/DoomV1.9sw1995idSoftwareInc.action.zip"
+   to download the Doom v1.9 binaries; these can be downloaded from IA manually.
+   (https://archive.org/download/DoomsharewareEpisode/DoomV1.9sw1995idSoftwareInc.action.zip)
+
+ * Visit your example_dosbox.html file with a modern
+   Javascript-capable browser.
+-->
+
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -11,13 +41,21 @@
     <script type="text/javascript">
       var emulator = new Emulator(document.querySelector("#canvas"),
                                   null,
-                                  new DosBoxLoader(DosBoxLoader.emulatorJS("emulators/em-dosbox/dosbox.js"),
-                                                   DosBoxLoader.nativeResolution(640, 400),
+                                  new DosBoxLoader(DosBoxLoader.emulatorJS("emulators/em-dosbox/dosbox-sync.js"),
+                                                   DosBoxLoader.locateAdditionalEmulatorJS(locateAdditionalFiles),
+                                                   DosBoxLoader.nativeResolution(640, 480),
                                                    DosBoxLoader.mountZip("c",
                                                                          DosBoxLoader.fetchFile("Game File",
-                                                                                                "examples/Zzt_1991_Epic_Megagames_Inc.zip")),
-                                                   DosBoxLoader.startExe("zzt.exe")))
+                                                                                                "examples/DoomV1.9sw1995idSoftwareInc.action.zip")),
+                                                   DosBoxLoader.startExe("doom.exe")))
       emulator.start({ waitAfterDownloading: true });
+
+      function locateAdditionalFiles(filename) {
+        if (filename === "dosbox.html.mem") {
+          return "emulators/em-dosbox/dosbox-sync.mem";
+        }
+        return "emulators/em-dosbox/"+ filename;
+      }
     </script>
   </body>
 </html>
