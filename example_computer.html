@@ -10,9 +10,13 @@
 <!-- * Use "git annex get <file>" to download emulators/jsmess/messnapple2e.js.gz;
        if you don't have git-annex you can download it from IA manually
        (https://archive.org/download/emularity_engine_jsmess/messnapple2e.js.gz) -->
+<!-- * Download the Apple 2e BIOS from -->
+<!--   https://archive.org/download/jsmess_bios_v2/apple2e.zip -->
+<!-- * Download the MAME config file for the Apple 2e from -->
+<!--   https://archive.org/download/jsmess_config_v2/apple2e.cfg
 <!-- * Download the Beagle Bag from:                                             -->
 <!--   https://archive.org/download/a2_Beagle_Bag_1982_Beagle_Bros/Beagle_Bag_1982_Beagle_Bros.do -->
-<!-- * Place the Beagle_Bag_1982_Beagle_Bros.do file in an "examples" subdirectory. -->
+<!-- * Place apple2e.zip and Beagle_Bag_1982_Beagle_Bros.do in an "examples" subdirectory. -->
 <!-- * Visit your example_computer.html file with a modern Javascript-capable browser. -->
 
 <html>
@@ -30,14 +34,18 @@
                                   null,
                                   new JSMESSLoader(JSMESSLoader.driver("apple2e"),
                                                    JSMESSLoader.nativeResolution(560, 384),
-                                                   JSMESSLoader.emulatorJS("emulators/jsmess/messa2600.js"),
+                                                   JSMESSLoader.emulatorJS("emulators/jsmess/messnapple2e.js"),
+                                                   JSMESSLoader.mountFile("apple2e.zip",
+                                                                          JSMESSLoader.fetchFile("Bios",
+                                                                                                 "examples/apple2e.zip")),
                                                    JSMESSLoader.mountFile("Beagle_Bag_1982_Beagle_Bros.do",
-                                                                          JSMESSLoader.fetchFile("Game File",
+                                                                          JSMESSLoader.fetchFile("Game",
                                                                                                  "examples/Beagle_Bag_1982_Beagle_Bros.do")),
                                                    JSMESSLoader.mountFile("apple2e.cfg",
-                                                                          JSMESSLoader.fetchFile("Config File",
-                                                                                                 "examples/a2600.cfg")),
-                                                   JSMESSLoader.peripheral("flop1", "Beagle_Bag_1982_Beagle_Bros.do")))
+                                                                          JSMESSLoader.fetchFile("Config",
+                                                                                                 "examples/apple2e.cfg")),
+                                                   JSMESSLoader.peripheral("flop1", "Beagle_Bag_1982_Beagle_Bros.do"),
+                                                   JSMESSLoader.extraArgs(["-sl6", "diskii", "-sl4", '""'])))
       emulator.setScale(3).start({ waitAfterDownloading: true });
     </script>
   </body>
