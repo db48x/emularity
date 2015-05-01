@@ -242,13 +242,13 @@ var Module = null;
      };
 
      // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
-     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari
+     // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari  (tracey@archive)
      var get_emulator_config_url = function (module) {
-       return '//archive.org/cors/jsmess_engine_v2/' + module + '.json';
+       return '//cors.archive.org/cors/jsmess_engine_v2/' + module + '.json';
      };
 
      var get_other_emulator_config_url = function (module) {
-       return '//archive.org/cors/jsmess_config_v2/' + module + '.cfg';
+       return '//cors.archive.org/cors/jsmess_config_v2/' + module + '.cfg';
      };
 
      var get_meta_url = function (game_path) {
