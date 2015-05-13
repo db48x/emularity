@@ -34,14 +34,14 @@ var Module = null;
                       mame: img("/images/mame.png"),
                       mess: img("/images/mess.png"),
                       dosbox: img("/images/dosbox.png"),
-                      spinner: img("/images/spinner.png")
+                      spinner: img("/images/11971247621441025513Sabathius_3.5_Floppy_Disk_Blue_Labelled.svg")
                     };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
                   mame: img("other_logos/mame.png"),
                   mess: img("other_logos/mess.png"),
                   dosbox: img("other_logos/dosbox.png"),
-                  spinner: img("images/spinner.png")
+                  spinner: img("images/11971247621441025513Sabathius_3.5_Floppy_Disk_Blue_Labelled.svg")
                 };
      }
 
