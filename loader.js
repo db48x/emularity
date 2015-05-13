@@ -69,14 +69,14 @@ var Module = null;
 
      var cfgr;
      function loadFiles(fetch_file, splash) {
-       splash.loading_text = 'Downloading game metadata...';
+       splash.setTitle("Downloading game metadata...");
        return new Promise(function (resolve, reject) {
                             var loading = fetch_file('Game Metadata',
                                                      get_meta_url(game),
                                                      'document');
                             loading.then(function (data) {
                                            metadata = data;
-                                           splash.loading_text = 'Downloading emulator metadata...';
+                                           splash.setTitle("Downloading emulator metadata...");
                                            module = metadata.getElementsByTagName("emulator")
                                                             .item(0)
                                                             .textContent;
@@ -85,7 +85,7 @@ var Module = null;
                                                              'text', true);
                                          },
                                          function () {
-                                           splash.loading_text = 'Failed to download metadata!';
+                                           splash.setTitle("Failed to download metadata!");
                                            splash.failed_loading = true;
                                            reject(1);
                                          })
@@ -135,11 +135,11 @@ var Module = null;
                                              }
                                            }
 
-                                           splash.loading_text = 'Downloading game data...';
+                                           splash.setTitle("Downloading game data...");
                                            return Promise.all(get_files(cfgr, metadata, modulecfg));
                                          },
                                          function () {
-                                           splash.loading_text = 'Failed to download metadata!';
+                                           splash.setTitle("Failed to download metadata!");
                                            splash.failed_loading = true;
                                            reject(2);
                                          })
@@ -147,7 +147,7 @@ var Module = null;
                                            resolve(cfgr.apply(null, extend(config_args, game_files)));
                                          },
                                          function () {
-                                           splash.loading_text = 'Failed to download game data!';
+                                           splash.setTitle("Failed to download game data!");
                                            splash.failed_loading = true;
                                            reject(3);
                                          });
@@ -474,8 +474,6 @@ var Module = null;
      var js_url;
      var requests = [];
      var drawloadingtimer;
-     var splashimg = new Image();
-     var spinnerimg = new Image();
      // TODO: Have an enum value that communicates the current state of the emulator, e.g. 'initializing', 'loading', 'running'.
      var has_started = false;
      var loading = false;
@@ -484,7 +482,11 @@ var Module = null;
                     spinner_rotation: 0,
                     finished_loading: false,
                     colors: { foreground: 'white',
-                              background: 'black' } };
+                              background: 'black' },
+                    table: null,
+                    splashimg: new Image(),
+                    spinnerimg: new Image() };
+     setupSplash(canvas, splash);
 
      var SDL_PauseAudio;
      this.mute = function (state) {
@@ -516,9 +518,13 @@ var Module = null;
      this.setSplashImage = function(_splashimg) {
        if (_splashimg) {
          if (_splashimg instanceof Image) {
-           splashimg = _splashimg;
+           if (splash.splashimg.parentNode) {
+             splash.splashimg.src = _splashimg.src;
+           } else {
+             splash.splashimg = _splashimg;
+           }
          } else {
-           splashimg.src = _splashimg;
+           splash.splashimg.src = _splashimg;
          }
        }
        return this;
@@ -527,9 +533,13 @@ var Module = null;
      this.setSpinnerImage = function(_img) {
        if (_img) {
          if (_img instanceof Image) {
-           spinnerimg = _img;
+           if (splash.spinnerimg.parentNode) {
+             splash.spinnerimg.src = _img.src;
+           } else {
+             splash.spinnerimg = _img;
+           }
          } else {
-           spinnerimg.src = _img;
+           splash.spinnerimg.src = _img;
          }
        }
        return this;
@@ -626,24 +636,26 @@ var Module = null;
               .then(function (game_files) {
                       if (options.waitAfterDownloading) {
                         return new Promise(function (resolve, reject) {
-                                             splash.loading_text = 'Press any key to continue...';
+                                             splash.setTitle("Press any key to continue...");
                                              splash.spinning = false;
 
                                              // stashes these event listeners so that we can remove them after
                                              window.addEventListener('keypress', k = keyevent(resolve));
                                              canvas.addEventListener('click', c = resolve);
+                                             splash.splashElt.addEventListener('click', c);
                                            });
                       }
                       return Promise.resolve();
                     },
                     function () {
-                      splash.loading_text = 'Failed to download game data!';
+                      splash.setTitle("Failed to download game data!");
                       splash.failed_loading = true;
                     })
               .then(function () {
                       splash.spinning = true;
                       window.removeEventListener('keypress', k);
                       canvas.removeEventListener('click', c);
+                      splash.splashElt.removeEventListener('click', c);
 
                       // Don't let arrow, pg up/down, home, end affect page position
                       blockSomeKeys();
@@ -668,14 +680,14 @@ var Module = null;
                         }
                       }
                       if (game_data.emulatorJS) {
-                        splash.loading_text = 'Launching Emulator';
+                        splash.setTitle("Launching Emulator");
                         attach_script(game_data.emulatorJS);
                       } else {
-                        splash.loading_text = 'Non-system disk or disk error';
+                        splash.setTitle("Non-system disk or disk error");
                       }
                     },
                     function () {
-                      splash.loading_text = 'Invalid media, track 0 bad or unusable';
+                      splash.setTitle("Invalid media, track 0 bad or unusable");
                       splash.failed_loading = true;
                     });
        return this;
@@ -690,7 +702,7 @@ var Module = null;
                 noInitialRun: false,
                 locateFile: locateAdditionalJS,
                 preInit: function () {
-                           splash.loading_text = 'Loading game file(s) into file system';
+                           splash.setTitle("Loading game file(s) into file system");
                            // Re-initialize BFS to just use the writable in-memory storage.
                            BrowserFS.initialize(fs);
                            var BFS = new BrowserFS.EmscriptenFS();
@@ -698,6 +710,7 @@ var Module = null;
                            FS.mkdir('/emulator');
                            FS.mount(BFS, {root: '/'}, '/emulator');
                            splash.finished_loading = true;
+                           splash.hide();
                            setTimeout(function () {
                                         resizeCanvas(canvas,
                                                      scale = scale || scale,
@@ -732,28 +745,9 @@ var Module = null;
      };
 
      var fetch_file = function (title, url, rt, optional) {
-       var table = document.getElementById("dosbox-progress-indicator");
-       var row, statusCell, titleCell, sizeCell;
-       if (!table) {
-         table = document.createElement('table');
-         table.setAttribute('id', "dosbox-progress-indicator");
-         table.style.position = 'absolute';
-         table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
-         table.style.left = canvas.offsetLeft + (64 + 32) +'px';
-         table.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
-         canvas.parentElement.appendChild(table);
-       }
-       row = table.insertRow(-1);
-       statusCell = row.insertCell(-1);
-       statusCell.textContent = '—';
-       statusCell.style.width = "1.5em";
-       titleCell = row.insertCell(-1);
+       var row = addRow(splash.table);
+       var statusCell = row[0], titleCell = row[1], sizeCell = row[2];
        titleCell.textContent = title;
-       titleCell.style.paddingRight = "1em";
-       sizeCell = row.insertCell(-1);
-       sizeCell.textContent = '—';
-       sizeCell.style.fontSize = "smaller";
-
        return new Promise(function (resolve, reject) {
                             var xhr = new XMLHttpRequest();
                             xhr.open('GET', url, true);
@@ -817,57 +811,92 @@ var Module = null;
        console.log("canvas cleared");
      };
 
+     function setupSplash(canvas, splash) {
+       splash.splashElt = document.getElementById("emularity-splash-screen");
+       if (!splash.splashElt) {
+         splash.splashElt = document.createElement('div');
+         splash.splashElt.setAttribute('id', "emularity-splash-screen");
+         splash.splashElt.style.position = 'absolute';
+         splash.splashElt.style.top = canvas.offsetTop +'px';
+         splash.splashElt.style.left = canvas.offsetLeft +'px';
+         splash.splashElt.style.width = canvas.offsetWidth +'px';
+         splash.splashElt.style.height = canvas.offsetHeight +'px';
+         splash.splashElt.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
+         splash.splashElt.style.backgroundColor = 'background' in splash.colors ? splash.colors.background : 'white';
+         canvas.parentElement.appendChild(splash.splashElt);
+       }
+
+       splash.splashimg.setAttribute('id', "emularity-splash-image");
+       splash.splashimg.style.display = 'block';
+       splash.splashimg.style.marginLeft = 'auto';
+       splash.splashimg.style.marginRight = 'auto';
+       splash.splashElt.appendChild(splash.splashimg);
+
+       splash.titleElt = document.createElement('span');
+       splash.titleElt.setAttribute('id', "emularity-splash-title");
+       splash.titleElt.style.display = 'block';
+       splash.titleElt.style.width = '100%';
+       splash.titleElt.style.margin = "1em";
+       splash.titleElt.style.textAlign = 'center';
+       splash.titleElt.style.font = "24px sans-serif";
+       splash.titleElt.textContent = " ";
+       splash.splashElt.appendChild(splash.titleElt);
+
+       splash.spinnerimg.setAttribute('id', "emularity-spinner-image");
+       splash.spinnerimg.style.float = 'left';
+       splash.spinnerimg.style.margin = "1em";
+       splash.spinnerimg.setAttribute('width', "64px");
+       splash.spinnerimg.setAttribute('height', "64px");
+       splash.splashElt.appendChild(splash.spinnerimg);
+
+       var table = document.getElementById("dosbox-progress-indicator");
+       if (!table) {
+         table = document.createElement('table');
+         table.setAttribute('id', "dosbox-progress-indicator");
+         table.style.color = 'inherit';
+         splash.splashElt.appendChild(table);
+       }
+       splash.table = table;
+     }
+
+     splash.setTitle = function (title) {
+       splash.titleElt.textContent = title;
+     };
+
+     splash.hide = function () {
+       splash.splashElt.style.display = 'none';
+     };
+
+     var addRow = function (table) {
+       var row = table.insertRow(-1);
+       var statusCell = row.insertCell(-1);
+       statusCell.textContent = '—';
+       statusCell.style.width = "1.5em";
+       var titleCell = row.insertCell(-1);
+       titleCell.textContent = '—';
+       titleCell.style.paddingRight = "1em";
+       var sizeCell = row.insertCell(-1);
+       sizeCell.textContent = '—';
+       sizeCell.style.fontSize = "smaller";
+       return [statusCell, titleCell, sizeCell];
+     };
+
      var drawsplash = function () {
        canvas.setAttribute('moz-opaque', '');
-       if (!splashimg.src) {
-         splashimg.src = 'logo/emularity_color_small.png';
+       if (!splash.splashimg.src) {
+         splash.splashimg.src = "logo/emularity_color_small.png";
+       }
+       if (!splash.spinnerimg.src) {
+         splash.spinnerimg.src = "images/11971247621441025513Sabathius_3.5_Floppy_Disk_Blue_Labelled.svg";
        }
        draw_loading_status(0);
        animLoop(draw_loading_status);
      };
 
      var draw_loading_status = function (deltaT) {
-       var context = canvas.getContext('2d');
-       context.fillStyle = "background" in splash.colors ? splash.colors.background : 'white';
-       context.fillRect(0, 0, canvas.width, canvas.height);
-
-       if (splashimg.src && splashimg.complete) {
-         try {
-           context.drawImage(splashimg,
-                             (canvas.width / 2) - (splashimg.width / 2),
-                             (canvas.height / 4) - (splashimg.height / 2));
-         } catch (x) {}
-       }
-
-       if (spinnerimg.src && spinnerimg.complete) {
-         var spinnerpos = (canvas.height / 2 + splashimg.height / 2) + 16;
-         context.save();
-         context.translate((64/2) + 16, spinnerpos);
-         context.rotate(splash.spinning ? (splash.spinner_rotation += 2 * (2*Math.PI/1000) * deltaT)
-                                        : 0);
-         try {
-           context.drawImage(spinnerimg, -(64/2), -(64/2), 64, 64);
-         } catch (x) {}
-         context.restore();
-       }
-
-       context.save();
-       context.font = '18px sans-serif';
-       context.fillStyle = "foreground" in splash.colors ? splash.colors.foreground : 'black';
-       context.textAlign = 'center';
-       context.fillText(splash.loading_text, canvas.width / 2, (canvas.height / 2) + (splashimg.height / 4));
-
-       context.restore();
-
-       var table = document.getElementById("dosbox-progress-indicator");
-       if (table) {
-         table.style.top = (canvas.offsetTop + (canvas.height / 2 + splashimg.height / 2) + 16 - (64/2)) +'px';
-         table.style.left = canvas.offsetLeft + (64 + 32) +'px';
-         table.style.color = "foreground" in splash.colors ? splash.colors.foreground : 'black';
-       }
-
-       if (splash.finished_loading && table) {
-         table.style.display = 'none';
+       if (splash.spinnerimg.src && splash.spinnerimg.complete) {
+         var angle = (splash.spinner_rotation += (2*Math.PI/1000) * deltaT) % (2*Math.PI);
+         splash.spinnerimg.style.transform = 'rotate('+ (splash.spinning ? angle : 0) +'rad)';
        }
        if (splash.finished_loading || splash.failed_loading) {
          return false;
