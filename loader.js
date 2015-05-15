@@ -820,7 +820,6 @@ var Module = null;
          splash.splashElt.style.top = canvas.offsetTop +'px';
          splash.splashElt.style.left = canvas.offsetLeft +'px';
          splash.splashElt.style.width = canvas.offsetWidth +'px';
-         splash.splashElt.style.height = canvas.offsetHeight +'px';
          splash.splashElt.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
          splash.splashElt.style.backgroundColor = 'background' in splash.colors ? splash.colors.background : 'white';
          canvas.parentElement.appendChild(splash.splashElt);
@@ -836,7 +835,8 @@ var Module = null;
        splash.titleElt.setAttribute('id', "emularity-splash-title");
        splash.titleElt.style.display = 'block';
        splash.titleElt.style.width = '100%';
-       splash.titleElt.style.margin = "1em";
+       splash.titleElt.style.marginTop = "1em";
+       splash.titleElt.style.marginBottom = "1em";
        splash.titleElt.style.textAlign = 'center';
        splash.titleElt.style.font = "24px sans-serif";
        splash.titleElt.textContent = " ";
@@ -853,7 +853,8 @@ var Module = null;
        if (!table) {
          table = document.createElement('table');
          table.setAttribute('id', "dosbox-progress-indicator");
-         table.style.color = 'inherit';
+         table.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
+         table.style.backgroundColor = 'background' in splash.colors ? splash.colors.background : 'white';
          splash.splashElt.appendChild(table);
        }
        splash.table = table;
