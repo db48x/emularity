@@ -33,15 +33,13 @@ var Module = null;
        var images = { ia: img("/images/ialogo.png"),
                       mame: img("/images/mame.png"),
                       mess: img("/images/mess.png"),
-                      dosbox: img("/images/dosbox.png"),
-                      spinner: img("/images/11971247621441025513Sabathius_3.5_Floppy_Disk_Blue_Labelled.svg")
+                      dosbox: img("/images/dosbox.png")
                     };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
                   mame: img("other_logos/mame.png"),
                   mess: img("other_logos/mess.png"),
-                  dosbox: img("other_logos/dosbox.png"),
-                  spinner: img("images/11971247621441025513Sabathius_3.5_Floppy_Disk_Blue_Labelled.svg")
+                  dosbox: img("other_logos/dosbox.png")
                 };
      }
 
@@ -63,7 +61,6 @@ var Module = null;
      var metadata, module, modulecfg, config_args, emulator_logo,
          emulator = new Emulator(canvas).setScale(scale)
                                         .setSplashImage(images.ia)
-                                        .setSpinnerImage(images.spinner)
                                         .setLoad(loadFiles)
                                         .setCallbacks(callbacks);
 
@@ -479,13 +476,11 @@ var Module = null;
      var loading = false;
      var splash = { loading_text: "",
                     spinning: true,
-                    spinner_rotation: 0,
                     finished_loading: false,
                     colors: { foreground: 'white',
                               background: 'black' },
                     table: null,
-                    splashimg: new Image(),
-                    spinnerimg: new Image() };
+                    splashimg: new Image() };
      setupSplash(canvas, splash);
 
      var SDL_PauseAudio;
@@ -525,21 +520,6 @@ var Module = null;
            }
          } else {
            splash.splashimg.src = _splashimg;
-         }
-       }
-       return this;
-     };
-
-     this.setSpinnerImage = function(_img) {
-       if (_img) {
-         if (_img instanceof Image) {
-           if (splash.spinnerimg.parentNode) {
-             splash.spinnerimg.src = _img.src;
-           } else {
-             splash.spinnerimg = _img;
-           }
-         } else {
-           splash.spinnerimg.src = _img;
          }
        }
        return this;
@@ -887,22 +867,6 @@ var Module = null;
        if (!splash.splashimg.src) {
          splash.splashimg.src = "logo/emularity_color_small.png";
        }
-       if (!splash.spinnerimg.src) {
-         splash.spinnerimg.src = "images/11971247621441025513Sabathius_3.5_Floppy_Disk_Blue_Labelled.svg";
-       }
-       draw_loading_status(0);
-       animLoop(draw_loading_status);
-     };
-
-     var draw_loading_status = function (deltaT) {
-       if (splash.spinnerimg.src && splash.spinnerimg.complete) {
-         var angle = (splash.spinner_rotation += (2*Math.PI/1000) * deltaT) % (2*Math.PI);
-         splash.spinnerimg.style.transform = 'rotate('+ (splash.spinning ? angle : 0) +'rad)';
-       }
-       if (splash.finished_loading || splash.failed_loading) {
-         return false;
-       }
-       return true;
      };
 
      function attach_script(js_url) {
@@ -1099,45 +1063,6 @@ var Module = null;
    window.JSMAMELoader = JSMAMELoader;
    window.Emulator = Emulator;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
-
-// Cross browser, backward compatible solution
-(function(window, Date) {
-   // feature testing
-   var raf = window.requestAnimationFrame ||
-             window.mozRequestAnimationFrame ||
-             window.webkitRequestAnimationFrame ||
-             window.msRequestAnimationFrame ||
-             window.oRequestAnimationFrame;
-
-   window.animLoop = function (render, element) {
-                       var running, lastFrame = +new Date;
-                       function loop (now) {
-                         if (running !== false) {
-                           // fallback to setTimeout if requestAnimationFrame wasn't found
-                           raf ? raf(loop, element)
-                               : setTimeout(loop, 1000 / 60);
-                           // Make sure to use a valid time, since:
-                           // - Chrome 10 doesn't return it at all
-                           // - setTimeout returns the actual timeout
-                           now = now && now > 1E4 ? now : +new Date;
-                           var deltaT = now - lastFrame;
-                           // do not render frame when deltaT is too high
-                           if (deltaT < 160) {
-                             running = render(deltaT, now);
-                           }
-                           lastFrame = now;
-                         }
-                       }
-                       loop();
-                     };
-})(window, Date);
-
-// Usage
-//animLoop(function (deltaT, now) {
-//           // rendering code goes here
-//           // return false; will stop the loop
-//         },
-//         animWrapper);
 
 // legacy
 var JSMESS = JSMESS || {};
