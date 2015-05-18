@@ -740,6 +740,12 @@ var Module = null;
                                            if (xhr.status === 200) {
                                              success();
                                              resolve(xhr.response);
+                                           } else if (optional) {
+                                             success();
+                                             resolve(null);
+                                           } else {
+                                             failure();
+                                             reject();
                                            }
                                          };
                             xhr.onerror = function (e) {
