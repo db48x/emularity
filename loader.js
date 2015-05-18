@@ -738,25 +738,31 @@ var Module = null;
                                              };
                             xhr.onload = function (e) {
                                            if (xhr.status === 200) {
-                                             titleCell.textContent = title;
-                                             titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
-                                             titleCell.parentNode.style.color = splash.getColor('background');
+                                             success();
                                              resolve(xhr.response);
                                            }
                                          };
                             xhr.onerror = function (e) {
                                             if (optional) {
-                                              titleCell.textContent = title;
-                                              titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
-                                              titleCell.parentNode.style.color = splash.getColor('background');
+                                              success();
                                               resolve(null);
                                             } else {
-                                              titleCell.textContent = title;
-                                              titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
-                                              titleCell.parentNode.style.color = splash.getColor('background');
+                                              failure();
                                               reject();
                                             }
                                           };
+                            function success() {
+                              titleCell.textContent = title;
+                              titleCell.style.fontWeight = 'bold';
+                              titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
+                              titleCell.parentNode.style.color = splash.getColor('background');
+                            }
+                            function failure() {
+                              titleCell.textContent = title;
+                              titleCell.style.fontWeight = 'bold';
+                              titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
+                              titleCell.parentNode.style.color = splash.getColor('background');
+                            }
                             xhr.send();
                           });
      };
