@@ -775,8 +775,6 @@ var Module = null;
 
      function keyevent(resolve) {
        return function (e) {
-                if (typeof loader_game === 'object')
-                  return; // game will start with click-to-play instead of [SPACE] char
                 if (e.which == 32) {
                   e.preventDefault();
                   resolve();
