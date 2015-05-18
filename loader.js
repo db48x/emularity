@@ -822,13 +822,6 @@ var Module = null;
        splash.titleElt.textContent = " ";
        splash.splashElt.appendChild(splash.titleElt);
 
-       splash.spinnerimg.setAttribute('id', "emularity-spinner-image");
-       splash.spinnerimg.style.float = 'left';
-       splash.spinnerimg.style.margin = "1em";
-       splash.spinnerimg.setAttribute('width', "64px");
-       splash.spinnerimg.setAttribute('height', "64px");
-       splash.splashElt.appendChild(splash.spinnerimg);
-
        var table = document.getElementById("dosbox-progress-indicator");
        if (!table) {
          table = document.createElement('table');
