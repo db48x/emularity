@@ -727,30 +727,33 @@ var Module = null;
      };
 
      var fetch_file = function (title, url, rt, optional) {
-       var row = addRow(splash.table);
-       var statusCell = row[0], titleCell = row[1], sizeCell = row[2];
+       var titleCell = addRow(splash.table);
        titleCell.textContent = title;
        return new Promise(function (resolve, reject) {
                             var xhr = new XMLHttpRequest();
                             xhr.open('GET', url, true);
                             xhr.responseType = rt ? rt : 'arraybuffer';
                             xhr.onprogress = function (e) {
-                                               sizeCell.textContent = formatSize(e);
+                                               titleCell.textContent = title +" "+ formatSize(e);
                                              };
                             xhr.onload = function (e) {
-                                           sizeCell.textContent = formatSize(e);
                                            if (xhr.status === 200) {
-                                             statusCell.textContent = '✔';
+                                             titleCell.textContent = title;
+                                             titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
+                                             titleCell.parentNode.style.color = splash.getColor('background');
                                              resolve(xhr.response);
                                            }
                                          };
                             xhr.onerror = function (e) {
-                                            sizeCell.textContent = formatSize(e);
                                             if (optional) {
-                                              statusCell.textContent = '?';
+                                              titleCell.textContent = title;
+                                              titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
+                                              titleCell.parentNode.style.color = splash.getColor('background');
                                               resolve(null);
                                             } else {
-                                              statusCell.textContent = '✘';
+                                              titleCell.textContent = title;
+                                              titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
+                                              titleCell.parentNode.style.color = splash.getColor('background');
                                               reject();
                                             }
                                           };
@@ -828,8 +831,13 @@ var Module = null;
        if (!table) {
          table = document.createElement('table');
          table.setAttribute('id', "dosbox-progress-indicator");
+         table.style.width = "50%";
          table.style.color = splash.getColor('foreground');
          table.style.backgroundColor = splash.getColor('background');
+         table.style.marginLeft = 'auto';
+         table.style.marginRight = 'auto';
+         table.style.borderCollapse = 'separate';
+         table.style.borderSpacing = "2px";
          splash.splashElt.appendChild(table);
        }
        splash.table = table;
@@ -850,16 +858,12 @@ var Module = null;
 
      var addRow = function (table) {
        var row = table.insertRow(-1);
-       var statusCell = row.insertCell(-1);
-       statusCell.textContent = '—';
-       statusCell.style.width = "1.5em";
+       row.style.textAlign = 'center';
        var titleCell = row.insertCell(-1);
        titleCell.textContent = '—';
-       titleCell.style.paddingRight = "1em";
-       var sizeCell = row.insertCell(-1);
-       sizeCell.textContent = '—';
-       sizeCell.style.fontSize = "smaller";
-       return [statusCell, titleCell, sizeCell];
+       titleCell.style.verticalAlign = 'center';
+       titleCell.style.minHeight = "24px";
+       return titleCell;
      };
 
      var drawsplash = function () {
