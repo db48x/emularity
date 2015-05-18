@@ -727,7 +727,8 @@ var Module = null;
      };
 
      var fetch_file = function (title, url, rt, optional) {
-       var titleCell = addRow(splash.table);
+       var row = addRow(splash.table);
+       var titleCell = row[0], statusCell = row[1];
        titleCell.textContent = title;
        return new Promise(function (resolve, reject) {
                             var xhr = new XMLHttpRequest();
@@ -758,12 +759,14 @@ var Module = null;
                                             }
                                           };
                             function success() {
+                              statusCell.textContent = "✔";
                               titleCell.textContent = title;
                               titleCell.style.fontWeight = 'bold';
                               titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
                               titleCell.parentNode.style.color = splash.getColor('background');
                             }
                             function failure() {
+                              statusCell.textContent = "✘";
                               titleCell.textContent = title;
                               titleCell.style.fontWeight = 'bold';
                               titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
@@ -869,11 +872,19 @@ var Module = null;
      var addRow = function (table) {
        var row = table.insertRow(-1);
        row.style.textAlign = 'center';
-       var titleCell = row.insertCell(-1);
+       var cell = row.insertCell(-1);
+       cell.style.position = 'relative';
+       var titleCell = document.createElement('span');
        titleCell.textContent = '—';
        titleCell.style.verticalAlign = 'center';
        titleCell.style.minHeight = "24px";
-       return titleCell;
+       cell.appendChild(titleCell);
+       var statusCell = document.createElement('span');
+       statusCell.style.position = 'absolute';
+       statusCell.style.left = "0";
+       statusCell.style.paddingLeft = "0.5em";
+       cell.appendChild(statusCell);
+       return [titleCell, statusCell];
      };
 
      var drawsplash = function () {
