@@ -474,14 +474,15 @@ var Module = null;
      // TODO: Have an enum value that communicates the current state of the emulator, e.g. 'initializing', 'loading', 'running'.
      var has_started = false;
      var loading = false;
+     var defaultSplashColors = { foreground: 'white',
+                                 background: 'black',
+                                 failure: 'red' };
      var splash = { loading_text: "",
                     spinning: true,
                     finished_loading: false,
-                    colors: { foreground: 'white',
-                              background: 'black' },
+                    colors: defaultSplashColors,
                     table: null,
                     splashimg: new Image() };
-     setupSplash(canvas, splash);
 
      var SDL_PauseAudio;
      this.mute = function (state) {
@@ -564,6 +565,7 @@ var Module = null;
        }
 
        var k, c, game_data;
+       setupSplash(canvas, splash);
        drawsplash();
 
        var loading;
@@ -786,7 +788,7 @@ var Module = null;
 
      var clearCanvas = function () {
        var context = canvas.getContext('2d');
-       context.fillStyle = "background" in splash.colors ? splash.colors.background : 'white';
+       context.fillStyle = splash.getColor('background');
        context.fillRect(0, 0, canvas.width, canvas.height);
        console.log("canvas cleared");
      };
@@ -800,8 +802,8 @@ var Module = null;
          splash.splashElt.style.top = canvas.offsetTop +'px';
          splash.splashElt.style.left = canvas.offsetLeft +'px';
          splash.splashElt.style.width = canvas.offsetWidth +'px';
-         splash.splashElt.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
-         splash.splashElt.style.backgroundColor = 'background' in splash.colors ? splash.colors.background : 'white';
+         splash.splashElt.style.color = splash.getColor('foreground');
+         splash.splashElt.style.backgroundColor = splash.getColor('background');
          canvas.parentElement.appendChild(splash.splashElt);
        }
 
@@ -826,8 +828,8 @@ var Module = null;
        if (!table) {
          table = document.createElement('table');
          table.setAttribute('id', "dosbox-progress-indicator");
-         table.style.color = 'foreground' in splash.colors ? splash.colors.foreground : 'black';
-         table.style.backgroundColor = 'background' in splash.colors ? splash.colors.background : 'white';
+         table.style.color = splash.getColor('foreground');
+         table.style.backgroundColor = splash.getColor('background');
          splash.splashElt.appendChild(table);
        }
        splash.table = table;
@@ -839,6 +841,11 @@ var Module = null;
 
      splash.hide = function () {
        splash.splashElt.style.display = 'none';
+     };
+
+     splash.getColor = function (name) {
+       return name in splash.colors ? splash.colors[name]
+                                    : defaultSplashColors[name];
      };
 
      var addRow = function (table) {
