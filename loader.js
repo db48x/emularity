@@ -62,7 +62,8 @@ var Module = null;
          emulator = new Emulator(canvas).setScale(scale)
                                         .setSplashImage(images.ia)
                                         .setLoad(loadFiles)
-                                        .setCallbacks(callbacks);
+                                        .setCallbacks(callbacks)
+                                        .setFileSystemName(game);
 
      var cfgr;
      function loadFiles(fetch_file, splash) {
@@ -483,6 +484,7 @@ var Module = null;
                     colors: defaultSplashColors,
                     table: null,
                     splashimg: new Image() };
+     var fileSystemName = "emularity";
 
      var SDL_PauseAudio;
      this.mute = function (state) {
@@ -555,6 +557,11 @@ var Module = null;
        loadFiles = loadFunc;
        return this;
      };
+     
+     this.setFileSystemName = function(name) {
+       fileSystemName = name;
+       return this;
+     };
 
      var start = function (options) {
        if (has_started)
@@ -595,9 +602,7 @@ var Module = null;
                                 }
                               });
                             }
-                          }, "name")
-                          // ^ TODO: Use name from file so each file gets a unique file system.
-                          // TODO2: Or make FS adapter for directories...
+                          }, fileSystemName)
                         );
                       } else {
                         finish();
