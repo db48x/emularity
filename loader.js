@@ -62,8 +62,7 @@ var Module = null;
          emulator = new Emulator(canvas).setScale(scale)
                                         .setSplashImage(images.ia)
                                         .setLoad(loadFiles)
-                                        .setCallbacks(callbacks)
-                                        .setFileSystemName(game);
+                                        .setCallbacks(callbacks);
 
      var cfgr;
      function loadFiles(fetch_file, splash) {
@@ -115,6 +114,7 @@ var Module = null;
                                            var nr = modulecfg['native_resolution'];
                                            config_args = [cfgr.emulatorJS(get_js_url(modulecfg.js_filename)),
                                                           cfgr.locateAdditionalEmulatorJS(locateAdditionalJS),
+                                                          cfgr.fileSystemKey(game),
                                                           cfgr.nativeResolution(nr[0], nr[1]),
                                                           cfgr.aspectRatio(nr[0] / nr[1]),
                                                           cfgr.sampleRate(SAMPLE_RATE),
@@ -293,6 +293,10 @@ var Module = null;
 
    BaseLoader.locateAdditionalEmulatorJS = function (func) {
      return { locateAdditionalJS: func };
+   };
+
+   BaseLoader.fileSystemKey = function (key) {
+     return { fileSystemKey: key };
    };
 
    BaseLoader.nativeResolution = function (width, height) {
@@ -484,7 +488,6 @@ var Module = null;
                     colors: defaultSplashColors,
                     table: null,
                     splashimg: new Image() };
-     var fileSystemName = "emularity";
 
      var SDL_PauseAudio;
      this.mute = function (state) {
@@ -555,11 +558,6 @@ var Module = null;
 
      this.setLoad = function (loadFunc) {
        loadFiles = loadFunc;
-       return this;
-     };
-     
-     this.setFileSystemName = function(name) {
-       fileSystemName = name;
        return this;
      };
 
