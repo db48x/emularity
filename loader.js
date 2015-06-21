@@ -583,81 +583,82 @@ var Module = null;
          loading = Promise.resolve(loadFiles);
        }
        loading.then(function (_game_data) {
-                    return new Promise(function(resolve, reject) {
-                      var deltaFS = new BrowserFS.FileSystem.InMemory();                      
-                      // If the browser supports IndexedDB storage, mirror writes to that storage
-                      // for persistence purposes.
-                      if (BrowserFS.FileSystem.IndexedDB.isAvailable()) {
-                        deltaFS = new BrowserFS.FileSystem.AsyncMirrorFS(
-                          deltaFS, new BrowserFS.FileSystem.IndexedDB(function(e, fs) {
-                            if (e) {
-                              reject(e);
-                            } else {
-                              // Initialize deltaFS by copying files from async storage to sync storage.
-                              deltaFS.initialize(function(e) {
-                                if (e) {
-                                  reject(e);
-                                } else {
-                                  finish();
-                                }
-                              });
+                      return new Promise(function(resolve, reject) {
+                        var deltaFS = new BrowserFS.FileSystem.InMemory();
+                        // If the browser supports IndexedDB storage, mirror writes to that storage
+                        // for persistence purposes.
+                        if (BrowserFS.FileSystem.IndexedDB.isAvailable()) {
+                          var AsyncMirrorFS = BrowserFS.FileSystem.AsyncMirrorFS,
+                              IndexedDB = BrowserFS.FileSystem.IndexedDB;
+                          deltaFS = new AsyncMirrorFS(deltaFS,
+                                                      new IndexedDB(function(e, fs) {
+                                                                      if (e) {
+                                                                        reject(e);
+                                                                      } else {
+                                                                        // Initialize deltaFS by copying files from async storage to sync storage.
+                                                                        deltaFS.initialize(function(e) {
+                                                                                             if (e) {
+                                                                                               reject(e);
+                                                                                             } else {
+                                                                                               finish();
+                                                                                             }
+                                                                                           });
+                                                                      }
+                                                                    },
+                                                                    "fileSystemKey" in _game_data ? _game_data.fileSystemKey
+                                                                                                  : "emularity"));
+                        } else {
+                          finish();
+                        }
+
+                        function finish() {
+                          game_data = _game_data;
+
+                          // Any file system writes to MountableFileSystem will be written to the
+                          // deltaFS, letting us mount read-only zip files into the MountableFileSystem
+                          // while being able to "write" to them.
+                          game_data.fs = new BrowserFS.FileSystem.OverlayFS(deltaFS,
+                                                                            new BrowserFS.FileSystem.MountableFileSystem());
+                          var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
+
+                          function fetch(file) {
+                            if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
+                              return Promise.resolve(file.data);
                             }
-                          }, fileSystemName)
-                        );
-                      } else {
-                        finish();
-                      }
-                      
-                      
-                      function finish() {
-                        game_data = _game_data;
-                        
-                        // Any file system writes to MountableFileSystem will be written to the 
-                        // deltaFS, letting us mount read-only zip files into the MountableFileSystem
-                        // while being able to "write" to them.
-                        game_data.fs = new BrowserFS.FileSystem.OverlayFS(
-                          deltaFS,
-                          new BrowserFS.FileSystem.MountableFileSystem()
-                        );
-                        var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
-  
-                        function fetch(file) {
-                          if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
-                            return Promise.resolve(file.data);
+                            return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
                           }
-                          return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
+
+                          function mountat(drive) {
+                            return function (data) {
+                              if (data !== null) {
+                                drive = drive.toLowerCase();
+                                var mountpoint = '/'+ drive;
+                                // Mount into RO MFS.
+                                game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, BFSOpenZip(new Buffer(data)));
+                              }
+                            };
+                          }
+
+                          function saveat(filename) {
+                            return function (data) {
+                              if (data !== null) {
+                                game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
+                              }
+                            };
+                          }
+                          Promise.all(game_data.files.map(function (f) {
+                                                                   if (f && f.file)
+                                                                     if (f.drive) {
+                                                                       return fetch(f.file).then(mountat(f.drive));
+                                                                     } else if (f.mountpoint) {
+                                                                       return fetch(f.file).then(saveat(f.mountpoint));
+                                                                     }
+                                                                   return null;
+                                                                 })).then(resolve);
                         }
-  
-                        function mountat(drive) {
-                          return function (data) {
-                            if (data !== null) {
-                              drive = drive.toLowerCase();
-                              var mountpoint = '/'+ drive;
-                              // Mount into RO MFS.
-                              game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, BFSOpenZip(new Buffer(data)));
-                            }
-                          };
-                        }
-  
-                        function saveat(filename) {
-                          return function (data) {
-                            if (data !== null) {
-                              game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
-                            }
-                          };
-                        }
-                        Promise.all(game_data.files.map(function (f) {
-                                                                 if (f && f.file)
-                                                                   if (f.drive) {
-                                                                     return fetch(f.file).then(mountat(f.drive));
-                                                                   } else if (f.mountpoint) {
-                                                                     return fetch(f.file).then(saveat(f.mountpoint));
-                                                                   }
-                                                                 return null;
-                                                               })).then(resolve);
-                      }
-                    });
-              }).then(function (game_files) {
+                      });
+                    })
+              .then(function (game_files) {
                       if (options.waitAfterDownloading) {
                         return new Promise(function (resolve, reject) {
                                              splash.setTitle("Press any key to continue...");
