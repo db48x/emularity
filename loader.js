@@ -1061,6 +1061,9 @@ var Module = null;
      // Recursively search for dosbox.conf.
      function searchDirectory(dirPath) {
        fs.readdirSync(dirPath).forEach(function(item) {
+         if (dosboxConfPath) {
+           return;
+         }
          // Avoid infinite recursion by ignoring these entries, which exist at
          // the root.
          if (item === '.' || item === '..') {
