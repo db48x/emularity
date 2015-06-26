@@ -660,15 +660,18 @@ var Module = null;
                               }
                             };
                           }
-                          Promise.all(game_data.files.map(function (f) {
-                                                                   if (f && f.file)
-                                                                     if (f.drive) {
-                                                                       return fetch(f.file).then(mountat(f.drive));
-                                                                     } else if (f.mountpoint) {
-                                                                       return fetch(f.file).then(saveat(f.mountpoint));
-                                                                     }
-                                                                   return null;
-                                                                 })).then(resolve);
+                          Promise.all(game_data.files
+                                               .map(function (f) {
+                                                      if (f && f.file) {
+                                                        if (f.drive) {
+                                                          return fetch(f.file).then(mountat(f.drive));
+                                                        } else if (f.mountpoint) {
+                                                          return fetch(f.file).then(saveat(f.mountpoint));
+                                                        }
+                                                      }
+                                                      return null;
+                                                    }))
+                                               .then(resolve);
                         }
                       });
                     })
