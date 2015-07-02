@@ -85,13 +85,19 @@ var Module = null;
                                                              'text', true);
                                          },
                                          function () {
-                                           splash.setTitle("Failed to download metadata!");
+                                           splash.setTitle("Failed to download IA item metadata!");
                                            splash.failed_loading = true;
                                            reject(1);
                                          })
                                    .then(function (data) {
+                                           if (splash.failed_loading) {
+                                             return;
+                                           }
+
                                            modulecfg = JSON.parse(data);
-                                           var mame = 'arcade' in modulecfg && parseInt(modulecfg['arcade'], 10);
+                                           var mame = modulecfg &&
+                                                      'arcade' in modulecfg &&
+                                                      parseInt(modulecfg['arcade'], 10);
                                            var get_files;
 
                                            if (module && module.indexOf("dosbox") === 0) {
@@ -140,15 +146,24 @@ var Module = null;
                                            return Promise.all(get_files(cfgr, metadata, modulecfg));
                                          },
                                          function () {
-                                           splash.setTitle("Failed to download metadata!");
+                                           if (splash.failed_loading) {
+                                             return;
+                                           }
+                                           splash.setTitle("Failed to download emulator metadata!");
                                            splash.failed_loading = true;
                                            reject(2);
                                          })
                                    .then(function (game_files) {
+                                           if (splash.failed_loading) {
+                                             return;
+                                           }
                                            resolve(cfgr.apply(null, extend(config_args, game_files)));
                                          },
                                          function () {
-                                           splash.setTitle("Failed to download game data!");
+                                           if (splash.failed_loading) {
+                                             return;
+                                           }
+                                           splash.setTitle("Failed to configure emulator!");
                                            splash.failed_loading = true;
                                            reject(3);
                                          });
@@ -671,11 +686,14 @@ var Module = null;
                                                       }
                                                       return null;
                                                     }))
-                                               .then(resolve);
+                                               .then(resolve, reject);
                         }
                       });
                     })
               .then(function (game_files) {
+                      if (!game_data || splash.failed_loading) {
+                        return;
+                      }
                       if (options.waitAfterDownloading) {
                         return new Promise(function (resolve, reject) {
                                              splash.setTitle("Press any key to continue...");
@@ -690,10 +708,16 @@ var Module = null;
                       return Promise.resolve();
                     },
                     function () {
+                      if (splash.failed_loading) {
+                        return;
+                      }
                       splash.setTitle("Failed to download game data!");
                       splash.failed_loading = true;
                     })
               .then(function () {
+                      if (!game_data || splash.failed_loading) {
+                        return;
+                      }
                       splash.spinning = true;
                       window.removeEventListener('keypress', k);
                       canvas.removeEventListener('click', c);
@@ -729,6 +753,9 @@ var Module = null;
                       }
                     },
                     function () {
+                      if (splash.failed_loading) {
+                        return;
+                      }
                       splash.setTitle("Invalid media, track 0 bad or unusable");
                       splash.failed_loading = true;
                     });
