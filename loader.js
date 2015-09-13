@@ -622,7 +622,8 @@ var Module = null;
                           deltaFS = new AsyncMirrorFS(deltaFS,
                                                       new IndexedDB(function(e, fs) {
                                                                       if (e) {
-                                                                        reject(e);
+                                                                        // we probably weren't given access; private window for example. don't fail completely, just don't use indexeddb
+                                                                        finish();
                                                                       } else {
                                                                         // Initialize deltaFS by copying files from async storage to sync storage.
                                                                         deltaFS.initialize(function(e) {
