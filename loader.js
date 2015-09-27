@@ -26,25 +26,24 @@ var Module = null;
      }
 
      function img(src) {
-       var img = new Image();
-       img.src = src;
-       return img;
+       var _img = new Image();
+       _img.src = src;
+       return _img;
      }
 
      // yea, this is a hack
-     if (/archive\.org$/.test(document.location.hostname)) {
-       var images = { ia: img("/images/ialogo.png"),
-                      mame: img("/images/mame.png"),
-                      mess: img("/images/mess.png"),
-                      dosbox: img("/images/dosbox.png")
-                    };
-     } else {
-       images = { ia: img("other_logos/ia-logo-150x150.png"),
-                  mame: img("other_logos/mame.png"),
-                  mess: img("other_logos/mess.png"),
-                  dosbox: img("other_logos/dosbox.png")
-                };
-     }
+     var images = (/archive\.org$/.test(document.location.hostname)) ? {
+                                                                         ia: img("/images/ialogo.png"),
+                                                                         mame: img("/images/mame.png"),
+                                                                         mess: img("/images/mess.png"),
+                                                                         dosbox: img("/images/dosbox.png")
+                                                                       }
+                                                                     : {
+                                                                         ia: img("other_logos/ia-logo-150x150.png"),
+                                                                         mame: img("other_logos/mame.png"),
+                                                                         mess: img("other_logos/mess.png"),
+                                                                         dosbox: img("other_logos/dosbox.png")
+                                                                       };
 
      function updateLogo() {
          if (emulator_logo) {
@@ -57,7 +56,7 @@ var Module = null;
                           if (!audio_ctx) {
                             return false;
                           }
-                          var sample = new audio_ctx;
+                          var sample = new audio_ctx();
                           return sample.sampleRate.toString();
                         }());
 
@@ -97,7 +96,7 @@ var Module = null;
                                            modulecfg = JSON.parse(data);
                                            var mame = modulecfg &&
                                                       'arcade' in modulecfg &&
-                                                      parseInt(modulecfg['arcade'], 10);
+                                                      parseInt(modulecfg.arcade, 10);
                                            var get_files;
 
                                            if (module && module.indexOf("dosbox") === 0) {
@@ -120,7 +119,7 @@ var Module = null;
                                              throw new Error("Unknown module type "+ module +"; cannot configure the emulator.");
                                            }
 
-                                           var nr = modulecfg['native_resolution'];
+                                           var nr = modulecfg.native_resolution;
                                            config_args = [cfgr.emulatorJS(get_js_url(modulecfg.js_filename)),
                                                           cfgr.locateAdditionalEmulatorJS(locateAdditionalJS),
                                                           cfgr.fileSystemKey(game),
@@ -181,8 +180,9 @@ var Module = null;
        // first get the urls
        var urls = [], files = [];
        var len = metadata.documentElement.childNodes.length, i;
+       var node;
        for (i = 0; i < len; i++) {
-         var node = metadata.documentElement.childNodes[i];
+         node = metadata.documentElement.childNodes[i];
          var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
          if (m) {
            urls.push(node);
@@ -190,12 +190,13 @@ var Module = null;
        }
 
        // and a count, then fetch them in
-       var len = urls.length;
+       len = urls.length;
+       var node;
        for (i = 0; i < len; i++) {
-         var node = urls[i],
-             drive = node.nodeName.split('_')[2],
-             title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
-             url = get_zip_url(node.textContent);
+         node = urls[i];
+         var drive = node.nodeName.split('_')[2],
+         title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
+         url = get_zip_url(node.textContent);
          files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
        }
 
@@ -211,7 +212,7 @@ var Module = null;
 
      function get_mess_files(cfgr, metadata, modulecfg) {
        var files = [],
-           bios_files = modulecfg['bios_filenames'];
+           bios_files = modulecfg.bios_filenames;
        bios_files.forEach(function (fname, i) {
                             if (fname) {
                               var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
@@ -223,7 +224,7 @@ var Module = null;
        files.push(cfgr.mountFile('/'+ get_game_name(game),
                                  cfgr.fetchFile("Game File",
                                                 get_zip_url(game))));
-       files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
+       files.push(cfgr.mountFile('/'+ modulecfg.driver + '.cfg',
                                  cfgr.fetchOptionalFile("CFG File",
                                                         get_other_emulator_config_url(module))));
        return files;
@@ -231,7 +232,7 @@ var Module = null;
 
      function get_mame_files(cfgr, metadata, modulecfg) {
        var files = [],
-           bios_files = modulecfg['bios_filenames'];
+           bios_files = modulecfg.bios_filenames;
        bios_files.forEach(function (fname, i) {
                             if (fname) {
                               var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
@@ -243,7 +244,7 @@ var Module = null;
        files.push(cfgr.mountFile('/'+ get_game_name(game),
                                  cfgr.fetchFile("Game File",
                                                 get_zip_url(game))));
-       files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
+       files.push(cfgr.mountFile('/'+ modulecfg.driver + '.cfg',
                                  cfgr.fetchOptionalFile("CFG File",
                                                         get_other_emulator_config_url(module))));
        return files;
@@ -365,11 +366,11 @@ var Module = null;
      return { title: title, data: data };
    };
 
-   function DosBoxLoader() {
+   var DosBoxLoader = function() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files);
      return config;
-   }
+   };
    DosBoxLoader.__proto__ = BaseLoader;
 
    DosBoxLoader.startExe = function (path) {
@@ -412,6 +413,7 @@ var Module = null;
      config.needs_jsmess_webaudio = true;
      return config;
    }
+
    JSMAMELoader.__proto__ = BaseLoader;
 
    JSMAMELoader.driver = function (driver) {
@@ -871,7 +873,7 @@ var Module = null;
                   resolve();
                 }
               };
-     };
+     }
 
      var resizeCanvas = function (canvas, scale, resolution, aspectRatio) {
        if (scale && resolution) {
@@ -1021,7 +1023,7 @@ var Module = null;
        } else if ('onwebkitfullscreenchange' in document) {
          document.addEventListener('webkitfullscreenchange', fullScreenChangeHandler);
        }
-     };
+     }
 
      this.requestFullScreen = function () {
        Module.requestFullScreen(1, 0);
@@ -1054,14 +1056,14 @@ var Module = null;
                                   }
                                 });
      }
-   };
+   }
 
    /**
     * misc
     */
    function BFSOpenZip(loadedData) {
        return new BrowserFS.FileSystem.ZipFS(loadedData);
-   };
+   }
 
    // This is such a hack. We're not calling the BrowserFS api
    // "correctly", so we have to synthesize these flags ourselves
@@ -1119,7 +1121,7 @@ var Module = null;
                         fs.readFileSync(dosboxConfPath, null, flag_r),
                         null, flag_w, 0x1a4);
      }
-   };
+   }
 
    function extend(a, b) {
      if (a === null)
@@ -1170,7 +1172,7 @@ var Module = null;
        gain_node = context.createGain();
        gain_node.gain.value = 1.0;
        gain_node.connect(context.destination);
-     };
+     }
 
      function set_mastervolume (
        // even though it's 'attenuation' the value is negative, so...
@@ -1193,7 +1195,7 @@ var Module = null;
          gain_web_audio = +1;
 
        gain_node.gain.value = gain_web_audio;
-     };
+     }
 
      function update_audio_stream (
        pBuffer,           // pointer into emscripten heap. int16 samples
@@ -1236,7 +1238,7 @@ var Module = null;
        pending_buffers.push(buffer);
 
        tick();
-     };
+     }
 
      function tick () {
        // Note: this is the time the web audio mixer has mixed up to,
@@ -1266,15 +1268,15 @@ var Module = null;
          : buffer_insert_point;
 
        if (pending_buffers.length) {
-         for (var i = 0, l = pending_buffers.length; i < l; i++) {
-           var buffer = pending_buffers[i];
+         for (var _i = 0, _l = pending_buffers.length; _i < _l; _i++) {
+           var _buffer = pending_buffers[_i];
 
            var source_node = context.createBufferSource();
-           source_node.buffer = buffer;
+           source_node.buffer = _buffer;
            source_node.connect(gain_node);
            source_node.start(insert_point);
 
-           insert_point += buffer.duration;
+           insert_point += _buffer.duration;
          }
 
          pending_buffers.length = 0;
@@ -1283,10 +1285,11 @@ var Module = null;
          if (buffer_insert_point <= now)
            buffer_insert_point = now;
        }
-     };
+     }
+
      function get_context() {
        return context;
-     };
+     }
 
      return {
        set_mastervolume: set_mastervolume,
