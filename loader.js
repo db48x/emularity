@@ -32,17 +32,18 @@ var Module = null;
      }
 
      // yea, this is a hack
-     var images = (/archive\.org$/.test(document.location.hostname)) ?
-        { ia: img("/images/ialogo.png"),
-            mame: img("/images/mame.png"),
-            mess: img("/images/mess.png"),
-            dosbox: img("/images/dosbox.png")
-        } : {
-            ia: img("other_logos/ia-logo-150x150.png"),
-            mame: img("other_logos/mame.png"),
-            mess: img("other_logos/mess.png"),
-            dosbox: img("other_logos/dosbox.png")
-     };
+     var images = (/archive\.org$/.test(document.location.hostname)) ? {
+                                                                         ia: img("/images/ialogo.png"),
+                                                                         mame: img("/images/mame.png"),
+                                                                         mess: img("/images/mess.png"),
+                                                                         dosbox: img("/images/dosbox.png")
+                                                                       }
+                                                                     : {
+                                                                         ia: img("other_logos/ia-logo-150x150.png"),
+                                                                         mame: img("other_logos/mame.png"),
+                                                                         mess: img("other_logos/mess.png"),
+                                                                         dosbox: img("other_logos/dosbox.png")
+                                                                       };
 
      function updateLogo() {
          if (emulator_logo) {
@@ -190,9 +191,10 @@ var Module = null;
 
        // and a count, then fetch them in
        len = urls.length;
+       var node;
        for (i = 0; i < len; i++) {
-         node = urls[i],
-         drive = node.nodeName.split('_')[2],
+         node = urls[i];
+         var drive = node.nodeName.split('_')[2],
          title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
          url = get_zip_url(node.textContent);
          files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
@@ -298,9 +300,9 @@ var Module = null;
    /**
     * BaseLoader
     */
-   var BaseLoader = function() {
+   function BaseLoader() {
      return Array.prototype.reduce.call(arguments, extend);
-   };
+   }
 
    BaseLoader.canvas = function (id) {
      var elem = id instanceof Element ? id : document.getElementById(id);
@@ -403,14 +405,14 @@ var Module = null;
    /**
     * JSMAMELoader
     */
-   var JSMAMELoader = function() {
+   function JSMAMELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mame_arguments(config.muted, config.mess_driver,
                                                       config.nativeResolution, config.sample_rate,
                                                       config.extra_mess_args);
      config.needs_jsmess_webaudio = true;
      return config;
-   };
+   }
 
    JSMAMELoader.__proto__ = BaseLoader;
 
@@ -1261,9 +1263,9 @@ var Module = null;
        //  chunk of prebuffered audio. At that point it seems like
        //  JSMESS never catches up and our sound glitches forever.
 
-       var insert_point = (buffer_insert_point === null) ?
-         now :
-         buffer_insert_point;
+       var insert_point = (buffer_insert_point === null)
+         ? now
+         : buffer_insert_point;
 
        if (pending_buffers.length) {
          for (var _i = 0, _l = pending_buffers.length; _i < _l; _i++) {
