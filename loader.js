@@ -1147,29 +1147,58 @@ var Module = null;
    }
 
    function setup_jsmess_webaudio() {
-     // jsmess web audio backend v0.2
+     // jsmess web audio backend v0.3
      // katelyn gadd - kg at luminance dot org ; @antumbral on twitter
+     //taisel working on it atm
 
      var jsmess_web_audio = (function () {
 
      var context = null;
      var gain_node = null;
-     var buffer_insert_point = null;
-     var pending_buffers = [];
-
-     var numChannels = 2; // constant in jsmess
+     var eventNode = null;
      var sampleScale = 32766;
-     var prebufferDuration = 100 / 1000;
+     var inputBuffer = new Float32Array(44100);
+     var bufferSize = 44100;
+     var start = 0;
+     var rear = 0;
 
      function lazy_init () {
-       if (context || typeof AudioContext == 'undefined')
+       //Make
+       if (context) {
+         //Return if already created:
          return;
-
-       context = new AudioContext();
-
+       }
+       if (typeof AudioContext != "undefined") {
+         //Standard context creation:
+         context = new AudioContext();
+       }
+       else if (typeof webkitAudioContext != "undefined") {
+         //Older webkit context creation:
+         context = new webkitAudioContext();
+       }
+       else {
+         //API not found!
+         return;
+       }
+       //Generate a volume control node:
        gain_node = context.createGain();
+       //Set initial volume to 1:
        gain_node.gain.value = 1.0;
+       //Connect volume node to output:
        gain_node.connect(context.destination);
+       //Generate a streaming node point:
+       if (typeof context.createScriptProcessor == "function") {
+         //Current standard compliant way:
+         eventNode = context.createScriptProcessor(4096, 0, 2);
+       }
+       else {
+         //Deprecated way:
+         eventNode = context.createJavaScriptNode(4096, 0, 2);
+       }
+       //Make our tick function the audio callback function:
+       eventNode.onaudioprocess = tick;
+       //Connect stream to volume control node:
+       eventNode.connect(gain_node);
      };
 
      function set_mastervolume (
@@ -1202,16 +1231,8 @@ var Module = null;
        lazy_init();
        if (!context) return;
 
-       var buffer = context.createBuffer(
-         numChannels, samples_this_frame,
-         // JSMESS already initializes its mixer to use the context sampling rate.
-         context.sampleRate
-       );
-
        for (
-         var channel_left  = buffer.getChannelData(0),
-             channel_right = buffer.getChannelData(1),
-             i = 0,
+         var i = 0,
              l = samples_this_frame | 0;
          i < l;
          i++
@@ -1229,61 +1250,39 @@ var Module = null;
          var left_sample_float = left_sample / sampleScale;
          var right_sample_float = right_sample / sampleScale;
 
-         channel_left[i] = left_sample_float;
-         channel_right[i] = right_sample_float;
-       }
-
-       pending_buffers.push(buffer);
-
-       tick();
-     };
-
-     function tick () {
-       // Note: this is the time the web audio mixer has mixed up to,
-       //  not the actual current time.
-       var now = context.currentTime;
-
-       // prebuffering
-       if (buffer_insert_point === null) {
-         var total_buffered_seconds = 0;
-
-         for (var i = 0, l = pending_buffers.length; i < l; i++) {
-           var buffer = pending_buffers[i];
-           total_buffered_seconds += buffer.duration;
+         inputBuffer[rear++] = left_sample_float;
+         inputBuffer[rear++] = right_sample_float;
+         if (rear == bufferSize) {
+           rear = 0;
          }
-
-         // Buffer not full enough? abort
-         if (total_buffered_seconds < prebufferDuration)
-           return;
-       }
-
-       // FIXME/TODO: It's possible for us to burn through the whole
-       //  chunk of prebuffered audio. At that point it seems like
-       //  JSMESS never catches up and our sound glitches forever.
-
-       var insert_point = (buffer_insert_point === null)
-         ? now
-         : buffer_insert_point;
-
-       if (pending_buffers.length) {
-         for (var i = 0, l = pending_buffers.length; i < l; i++) {
-           var buffer = pending_buffers[i];
-
-           var source_node = context.createBufferSource();
-           source_node.buffer = buffer;
-           source_node.connect(gain_node);
-           source_node.start(insert_point);
-
-           insert_point += buffer.duration;
+         if (start == rear) {
+           start += 2;
+           if (start == bufferSize) {
+             start = 0;
+           }
          }
-
-         pending_buffers.length = 0;
-         buffer_insert_point = insert_point;
-
-         if (buffer_insert_point <= now)
-           buffer_insert_point = now;
        }
      };
+     function tick (event) {
+       //Find all output channels:
+       for (var bufferCount = 0, buffers = []; bufferCount < 2; ++bufferCount) {
+         buffers[bufferCount] = event.outputBuffer.getChannelData(bufferCount);
+       }
+       //Copy samples from the input buffer to the Web Audio API:
+       for (var index = 0; index < 4096 && start != rear; ++index) {
+         buffers[0][index] = inputBuffer[start++];
+         buffers[1][index] = inputBuffer[start++];
+         if (start == bufferSize) {
+           start = 0;
+         }
+       }
+       //Pad with silence if we're underrunning:
+       while (index < 4096) {
+         buffers[0][index] = 0;
+         buffers[1][index++] = 0;
+       }
+     }
+
      function get_context() {
        return context;
      };
