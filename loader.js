@@ -1161,6 +1161,8 @@ var Module = null;
      var bufferSize = 44100;
      var start = 0;
      var rear = 0;
+     var watchDogDateLast = null;
+     var watchDogTimerEvent = null;
 
      function lazy_init () {
        //Make
@@ -1186,19 +1188,50 @@ var Module = null;
        gain_node.gain.value = 1.0;
        //Connect volume node to output:
        gain_node.connect(context.destination);
-       //Generate a streaming node point:
-       if (typeof context.createScriptProcessor == "function") {
-         //Current standard compliant way:
-         eventNode = context.createScriptProcessor(4096, 0, 2);
-       }
-       else {
-         //Deprecated way:
-         eventNode = context.createJavaScriptNode(4096, 0, 2);
-       }
-       //Make our tick function the audio callback function:
-       eventNode.onaudioprocess = tick;
-       //Connect stream to volume control node:
-       eventNode.connect(gain_node);
+       //Initialize the streaming event:
+       init_event();
+     };
+
+     function init_event() {
+         //Generate a streaming node point:
+         if (typeof context.createScriptProcessor == "function") {
+           //Current standard compliant way:
+           eventNode = context.createScriptProcessor(4096, 0, 2);
+         }
+         else {
+           //Deprecated way:
+           eventNode = context.createJavaScriptNode(4096, 0, 2);
+         }
+         //Make our tick function the audio callback function:
+         eventNode.onaudioprocess = tick;
+         //Connect stream to volume control node:
+         eventNode.connect(gain_node);
+         //WORKAROUND FOR FIREFOX BUG:
+         initializeWatchDogForFirefoxBug();
+     };
+
+     function initializeWatchDogForFirefoxBug() {
+         //TODO: decide if we want to user agent sniff firefox here,
+         //since Google Chrome doesn't need this:
+         watchDogDateLast = (new Date()).getTime();
+         if (watchDogTimerEvent === null) {
+             watchDogTimerEvent = setInterval(function () {
+                 var timeDiff = (new Date()).getTime() - watchDogDateLast;
+                 if (timeDiff > 500) {
+                     disconnect_old_event();
+                     init_event();
+                 }
+             }, 500);
+         }
+     };
+
+     function disconnect_old_event() {
+         //Disconnect from audio graph:
+         eventNode.disconnect();
+         //IIRC there was a firefox bug that did not GC this event when nulling the node itself:
+         eventNode.onaudioprocess = null;
+         //Null the glitched/unused node:
+         eventNode = null;
      };
 
      function set_mastervolume (
@@ -1281,22 +1314,45 @@ var Module = null;
          buffers[0][index] = 0;
          buffers[1][index++] = 0;
        }
+       //Deep inside the bowels of vendors bugs,
+       //we're using watchdog for a firefox bug,
+       //where the user agent decides to stop firing events
+       //if the user agent lags out due to system load.
+       //Don't even ask....
+       watchDogDateLast = (new Date()).getTime();
      }
 
      function get_context() {
        return context;
      };
 
+     function sample_count() {
+         //TODO get someone to call this from the emulator,
+         //so the emulator can do proper audio buffering by
+         //knowing how many samples are left:
+         if (!context) {
+             //Use impossible value as an error code:
+             return -1;
+         }
+         var count = rear - start;
+         if (start > rear) {
+             count += bufferSize;
+         }
+         return count;
+     }
+
      return {
        set_mastervolume: set_mastervolume,
        update_audio_stream: update_audio_stream,
-       get_context: get_context
+       get_context: get_context,
+       sample_count: sample_count
      };
 
      })();
 
      window.jsmess_set_mastervolume = jsmess_web_audio.set_mastervolume;
      window.jsmess_update_audio_stream = jsmess_web_audio.update_audio_stream;
+     window.jsmess_sample_count = jsmess_web_audio.sample_count;
      window.jsmess_web_audio = jsmess_web_audio;
    }
 
