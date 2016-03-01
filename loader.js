@@ -91,7 +91,7 @@ var Module = null;
                                          })
                                    .then(function (data) {
                                            if (splash.failed_loading) {
-                                             return;
+                                             return null;
                                            }
 
                                            modulecfg = JSON.parse(data);
@@ -710,7 +710,7 @@ var Module = null;
                     })
               .then(function (game_files) {
                       if (!game_data || splash.failed_loading) {
-                        return;
+                        return null;
                       }
                       if (options.waitAfterDownloading) {
                         return new Promise(function (resolve, reject) {
