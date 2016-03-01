@@ -531,6 +531,23 @@ var Module = null;
        return this;
      };
 
+     // This is the bare minimum that will allow gamepads to work. If
+     // we don't listen for them then the browser won't tell us about
+     // them.
+     // TODO: add hooks so that some kind of UI can be displayed.
+     window.addEventListener("gamepadconnected",
+                             function (e) {
+                               console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+                                           e.gamepad.index, e.gamepad.id,
+                                           e.gamepad.buttons.length, e.gamepad.axes.length);
+                             });
+
+     window.addEventListener("gamepaddisconnected",
+                             function (e) {
+                               console.log("Gamepad disconnected from index %d: %s",
+                                           e.gamepad.index, e.gamepad.id);
+                             });
+
      var css_resolution, scale, aspectRatio;
      // right off the bat we set the canvas's inner dimensions to
      // whatever it's current css dimensions are; this isn't likely to be
