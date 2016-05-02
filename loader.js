@@ -91,7 +91,7 @@ var Module = null;
                                          })
                                    .then(function (data) {
                                            if (splash.failed_loading) {
-                                             return null;
+                                             return;
                                            }
 
                                            modulecfg = JSON.parse(data);
@@ -260,11 +260,11 @@ var Module = null;
      // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
      // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari  (tracey@archive)
      var get_emulator_config_url = function (module) {
-       return '//cors.archive.org/cors/jsmess_engine_v2/' + module + '.json';
+       return '//cors.archive.org/cors/emularity_engine_v1/' + module + '.json';
      };
 
      var get_other_emulator_config_url = function (module) {
-       return '//cors.archive.org/cors/jsmess_config_v2/' + module + '.cfg';
+       return '//cors.archive.org/cors/emularity_config_v1/' + module + '.cfg';
      };
 
      var get_meta_url = function (game_path) {
@@ -277,11 +277,11 @@ var Module = null;
      };
 
      var get_js_url = function (js_filename) {
-       return "//cors.archive.org/cors/jsmess_engine_v2/"+ js_filename;
+       return "//cors.archive.org/cors/emularity_engine_v1/"+ js_filename;
      };
 
      var get_bios_url = function (bios_filename) {
-       return "//cors.archive.org/cors/jsmess_bios_v2/"+ bios_filename;
+       return "//cors.archive.org/cors/emularity_bios_v1/"+ bios_filename;
      };
 
      function mountat (drive) {
@@ -710,7 +710,7 @@ var Module = null;
                     })
               .then(function (game_files) {
                       if (!game_data || splash.failed_loading) {
-                        return null;
+                        return;
                       }
                       if (options.waitAfterDownloading) {
                         return new Promise(function (resolve, reject) {
