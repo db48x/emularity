@@ -35,13 +35,13 @@ var Module = null;
      if (/archive\.org$/.test(document.location.hostname)) {
        var images = { ia: img("/images/ialogo.png"),
                       mame: img("/images/mame.png"),
-                      mess: img("/images/mess.png"),
+                      mess: img("/images/mame.png"),
                       dosbox: img("/images/dosbox.png")
                     };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
                   mame: img("other_logos/mame.png"),
-                  mess: img("other_logos/mess.png"),
+                  mess: img("other_logos/mame.png"),
                   dosbox: img("other_logos/dosbox.png")
                 };
      }
