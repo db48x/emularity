@@ -61,7 +61,7 @@ var Module = null;
                           return sample.sampleRate.toString();
                         }());
 
-     var metadata, module, modulecfg, config_args, emulator_logo,
+     var metadata, filelist, module, modulecfg, config_args, emulator_logo,
          emulator = new Emulator(canvas).setScale(scale)
                                         .setSplashImage(images.ia)
                                         .setLoad(loadFiles)
@@ -76,6 +76,21 @@ var Module = null;
                                                      'document');
                             loading.then(function (data) {
                                            metadata = data;
+                                           splash.setTitle("Downloading game filelist...");
+                                           return fetch_file('Game File List',
+                                                             get_files_url(game),
+                                                             'document', true);
+                                         },
+                                         function () {
+                                           splash.setTitle("Failed to download IA item metadata!");
+                                           splash.failed_loading = true;
+                                           reject(1);
+                                         })
+                                   .then(function (data) {
+                                           if (splash.failed_loading) {
+                                             return;
+                                           }
+                                           filelist = data;
                                            splash.setTitle("Downloading emulator metadata...");
                                            module = metadata.getElementsByTagName("emulator")
                                                             .item(0)
@@ -85,9 +100,12 @@ var Module = null;
                                                              'text', true);
                                          },
                                          function () {
-                                           splash.setTitle("Failed to download IA item metadata!");
+                                           if (splash.failed_loading) {
+                                             return;
+                                           }
+                                           splash.setTitle("Failed to download file list!");
                                            splash.failed_loading = true;
-                                           reject(1);
+                                           reject(2);
                                          })
                                    .then(function (data) {
                                            if (splash.failed_loading) {
@@ -113,7 +131,7 @@ var Module = null;
                                              } else {
                                                emulator_logo = images.mess;
                                                cfgr = JSMESSLoader;
-                                               get_files = get_mess_files;
+                                               get_files = get_mame_files;
                                              }
                                            }
                                            else {
@@ -136,14 +154,10 @@ var Module = null;
                                            } else if (module) {
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
-                                             if (modulecfg.peripherals && modulecfg.peripherals[0]) {
-                                               config_args.push(cfgr.peripheral(modulecfg.peripherals[0],
-                                                                                get_game_name(game)));
-                                             }
                                            }
 
                                            splash.setTitle("Downloading game data...");
-                                           return Promise.all(get_files(cfgr, metadata, modulecfg));
+                                           return Promise.all(get_files(cfgr, metadata, modulecfg, filelist));
                                          },
                                          function () {
                                            if (splash.failed_loading) {
@@ -177,7 +191,7 @@ var Module = null;
        throw new Error("Don't know how to find file: "+ filename);
      }
 
-     function get_dosbox_files(cfgr, emulator, modulecfg) {
+     function get_dosbox_files(cfgr, emulator, modulecfg, filelist) {
        // first get the urls
        var urls = [], files = [];
        var len = metadata.documentElement.childNodes.length, i;
@@ -209,7 +223,7 @@ var Module = null;
        return files;
      }
 
-     function get_mess_files(cfgr, metadata, modulecfg) {
+     function get_mess_files(cfgr, metadata, modulecfg, filelist) {
        var files = [],
            bios_files = modulecfg['bios_filenames'];
        bios_files.forEach(function (fname, i) {
@@ -220,6 +234,7 @@ var Module = null;
                                                                        get_bios_url(fname))));
                             }
                           });
+
        files.push(cfgr.mountFile('/'+ get_game_name(game),
                                  cfgr.fetchFile("Game File",
                                                 get_zip_url(game))));
@@ -229,7 +244,7 @@ var Module = null;
        return files;
      }
 
-     function get_mame_files(cfgr, metadata, modulecfg) {
+     function get_mame_files(cfgr, metadata, modulecfg, filelist) {
        var files = [],
            bios_files = modulecfg['bios_filenames'];
        bios_files.forEach(function (fname, i) {
@@ -240,9 +255,32 @@ var Module = null;
                                                                        get_bios_url(fname))));
                             }
                           });
-       files.push(cfgr.mountFile('/'+ get_game_name(game),
-                                 cfgr.fetchFile("Game File",
-                                                get_zip_url(game))));
+
+       var ext = dict_from_xml(metadata).emulator_ext;
+       var game_files = list_from_xml(filelist).map(function (node) {
+                                                      if ("getAttribute" in node) {
+                                                        var file = dict_from_xml(node);
+                                                        file.name = node.getAttribute("name");
+                                                        return file;
+                                                      }
+                                                      return null;
+                                                    })
+                                               .filter(function (file) {
+                                                         return file && file.name.endsWith("." + ext);
+                                                       });
+       game_files.forEach(function (file, i) {
+                            if (file) {
+                              var title = "Game File ("+ (i+1) +" of "+ game_files.length +")";
+                              files.push(cfgr.mountFile('/'+ file.name,
+                                                        cfgr.fetchFile(title,
+                                                                       get_zip_url(file.name,
+                                                                                   get_item_name(game)))));
+                              if (modulecfg.peripherals && modulecfg.peripherals[0]) {
+                                files.push(cfgr.peripheral(modulecfg.peripherals[0],   // we're not pushing a file here
+                                                           file.name));                // but that's ok
+                              }
+                            }
+                          });
        files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
                                  cfgr.fetchOptionalFile("CFG File",
                                                         get_other_emulator_config_url(module))));
@@ -272,7 +310,15 @@ var Module = null;
        return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_meta.xml";
      };
 
-     var get_zip_url = function (game_path) {
+     var get_files_url = function (game_path) {
+       var path = game_path.split('/');
+       return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_files.xml";
+     };
+
+     var get_zip_url = function (game_path, item_path) {
+       if (item_path) {
+         return "//cors.archive.org/cors/"+ item_path +"/"+ game_path;
+       }
        return "//cors.archive.org/cors/"+ game_path;
      };
 
@@ -394,7 +440,9 @@ var Module = null;
    };
 
    JSMESSLoader.peripheral = function (peripheral, game) {
-     return { peripheral: [peripheral, game] };
+     var p = {}
+     p[peripheral] = [game];
+     return { peripheral: p };
    };
 
    JSMESSLoader.extraArgs = function (args) {
@@ -439,9 +487,13 @@ var Module = null;
        args.push('-samplerate', sample_rate);
      }
 
-     if (peripheral && peripheral[0]) {
-       args.push('-' + peripheral[0],
-                 '/emulator/'+ (peripheral[1].replace(/\//g,'_')));
+     if (peripheral) {
+       for (var p in peripheral) {
+         if (Object.prototype.propertyIsEnumerable.call(peripheral, p)) {
+           args.push('-' + p,
+                     '/emulator/'+ (peripheral[p][0].replace(/\//g,'_')))
+         }
+       }
      }
 
      if (extra_args) {
@@ -805,7 +857,7 @@ var Module = null;
                                                      aspectRatio = aspectRatio || aspectRatio);
                                       });
                            if (callbacks && callbacks.before_run) {
-                               window.setTimeout(function() { callbacks.before_run(); }, 0);
+                             window.setTimeout(function() { callbacks.before_run(); }, 0);
                            }
                          }
               };
@@ -1161,6 +1213,26 @@ var Module = null;
        return a;
      }
      return b;
+   }
+
+   function dict_from_xml(xml) {
+     if (xml instanceof XMLDocument) {
+       xml = xml.documentElement;
+     }
+     var dict = {};
+     var len = xml.childNodes.length, i;
+     for (i = 0; i < len; i++) {
+       var node = xml.childNodes[i];
+       dict[node.nodeName] = node.textContent;
+     }
+     return dict;
+   }
+
+   function list_from_xml(xml) {
+     if (xml instanceof XMLDocument) {
+       xml = xml.documentElement;
+     }
+     return Array.prototype.slice.call(xml.childNodes);
    }
 
    function setup_jsmess_webaudio() {
