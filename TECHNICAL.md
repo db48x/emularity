@@ -123,7 +123,7 @@ uses that to build the configuration for the emulator.
 ## Examples ##
 
     var emulator = new IALoader(document.querySelector("#canvas"),
-                                "Pitfall_Activision_1982/Pitfall_Activision_1982.bin");
+                                "Pitfall_Activision_1982");
 
 # Runtime API #
 
