@@ -620,8 +620,6 @@ var Module = null;
       this._cfg.floppy.drive[0].file.name = game_data.floppy[0];
       this._cfg.floppy.drive[0].file.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r).toArrayBuffer());
       this._cfg.floppy.drive[0].file.size = this._cfg.floppy.drive[0].file.data.length;
-
-      this._cfg.debug.level = SAEC_Config_Debug_Level_Log;
     }
 
     SAERunner.prototype.start = function () {
