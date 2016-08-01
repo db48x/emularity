@@ -36,20 +36,22 @@ var Module = null;
        var images = { ia: img("/images/ialogo.png"),
                       mame: img("/images/mame.png"),
                       mess: img("/images/mame.png"),
-                      dosbox: img("/images/dosbox.png")
+                      dosbox: img("/images/dosbox.png"),
+                      sae: img("/images/sae.png")
                     };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
                   mame: img("other_logos/mame.png"),
                   mess: img("other_logos/mame.png"),
-                  dosbox: img("other_logos/dosbox.png")
+                  dosbox: img("other_logos/dosbox.png"),
+                  sae: img("other_logos/sae.png")
                 };
      }
 
      function updateLogo() {
-         if (emulator_logo) {
-           emulator.setSplashImage(emulator_logo);
-         }
+       if (emulator_logo) {
+         emulator.setSplashImage(emulator_logo);
+       }
      }
 
      var SAMPLE_RATE = (function () {
@@ -120,6 +122,11 @@ var Module = null;
                                              cfgr = DosBoxLoader;
                                              get_files = get_dosbox_files;
                                            }
+                                           else if (module && module.indexOf("sae-") === 0) {
+                                             emulator_logo = images.sae;
+                                             cfgr = SAELoader;
+                                             get_files = get_sae_files;
+                                           }
                                            else if (module) {
                                              emulator_logo = images.mame;
                                              cfgr = MAMELoader;
@@ -142,6 +149,9 @@ var Module = null;
                                                config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
                                                                                       .item(0)
                                                                                       .textContent));
+                                           } else if (module && module.indexOf("sae-") === 0) {
+                                             config_args.push(cfgr.model(modulecfg.driver),
+                                                              cfgr.rom(modulecfg.bios_filenames));
                                            } else if (module) {
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
@@ -249,6 +259,47 @@ var Module = null;
                                 files.push(cfgr.peripheral(modulecfg.peripherals[0],   // we're not pushing a file here
                                                            file.name));                // but that's ok
                               }
+                            }
+                          });
+       files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
+                                 cfgr.fetchOptionalFile("CFG File",
+                                                        get_other_emulator_config_url(module))));
+       return files;
+     }
+
+     function get_sae_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
+                              files.push(cfgr.mountFile('/'+ fname,
+                                                        cfgr.fetchFile(title,
+                                                                       get_bios_url(fname))));
+                            }
+                          });
+
+       var ext = dict_from_xml(metadata).emulator_ext;
+       var game_files = list_from_xml(filelist).map(function (node) {
+                                                      if ("getAttribute" in node) {
+                                                        var file = dict_from_xml(node);
+                                                        file.name = node.getAttribute("name");
+                                                        return file;
+                                                      }
+                                                      return null;
+                                                    })
+                                               .filter(function (file) {
+                                                         return file && file.name.endsWith("." + ext);
+                                                       });
+       game_files.forEach(function (file, i) {
+                            if (file) {
+                              var title = "Game File ("+ (i+1) +" of "+ game_files.length +")";
+                              files.push(cfgr.mountFile('/'+ file.name,
+                                                        cfgr.fetchFile(title,
+                                                                       get_zip_url(file.name,
+                                                                                   get_item_name(game)))));
+                              files.push(cfgr.floppy(0,             // we're not pushing a file here
+                                                     file.name));   // but that's ok
                             }
                           });
        files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
@@ -381,6 +432,9 @@ var Module = null;
      return { title: title, data: data };
    };
 
+   /**
+    * DosBoxLoader
+    */
    function DosBoxLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files);
@@ -418,6 +472,41 @@ var Module = null;
    MAMELoader.extraArgs = function (args) {
      return { extra_mame_args: args };
    };
+
+   /**
+    * SAELoader
+    */
+
+   function SAELoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.runner = SAERunner;
+     return config;
+   }
+   SAELoader.__proto__ = BaseLoader;
+
+   SAELoader.model = function (model) {
+     return { amigaModel: model };
+   }
+
+   SAELoader.fastMemory = function (megabytes) {
+     return { fast_memory: megabytes << 20 };
+   }
+
+   SAELoader.rom = function (filenames) {
+     if (typeof filenames == "string")
+       filenames = [filenames];
+     return { rom: filenames[0], extRom: filenames[1] };
+   };
+
+   SAELoader.floppy = function (index, filename) {
+     var f = {}
+     f[index] = filename;
+     return { floppy: f };
+   };
+
+   SAELoader.ntsc = function (v) {
+     return { ntsc: !!v };
+   }
 
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args) {
      var args = [driver,
@@ -471,6 +560,81 @@ var Module = null;
 
       return args;
     };
+
+    function SAERunner(canvas, game_data) {
+      this._sae = new ScriptedAmigaEmulator();
+      this._cfg = this._sae.getConfig();
+
+      this._cfg.video.id = canvas.getAttribute("id");
+      var model = null;
+      switch (game_data.amigaModel) {
+        case "A500": model = SAEC_Model_A500; break;
+        case "A500P": model = SAEC_Model_A500P; break;
+        case "A600": model = SAEC_Model_A600; break;
+        case "A1000": model = SAEC_Model_A1000; break;
+        case "A1200": model = SAEC_Model_A1200; break;
+        case "A2000": model = SAEC_Model_A2000; break;
+        case "A3000": model = SAEC_Model_A3000; break;
+        case "A4000": model = SAEC_Model_A4000; break;
+        case "A4000T": model = SAEC_Model_A4000T; break;
+        /*  future. do not use. cd-emulation is not implemented yet.
+        case "CDTV": model = SAEC_Model_CDTV; break;
+        case "CD32": model = SAEC_Model_CD32; break; */
+      }
+      this._sae.setModel(model, 0);
+      this._cfg.memory.z2FastSize = game_data.fastMemory || 2 << 20;
+      this._cfg.floppy.speed = SAEC_Config_Floppy_Speed_Turbo;
+
+      if (game_data.nativeResolution && game_data.nativeResolution.height == 360 && game_data.nativeResolution.width == 284)
+      {
+        this._cfg.video.hresolution = SAEC_Config_Video_HResolution_LoRes;
+        this._cfg.video.vresolution = SAEC_Config_Video_VResolution_NonDouble;
+        this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH; /* 360 */
+        this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT; /* 284 */
+      }
+      else if (game_data.nativeResolution && game_data.nativeResolution.height == 1440 && game_data.nativeResolution.width == 568)
+      {
+        this._cfg.video.hresolution = SAEC_Config_Video_HResolution_SuperHiRes;
+        this._cfg.video.vresolution = SAEC_Config_Video_VResolution_Double;
+        this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH << 2; /* 1440 */
+        this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT << 1; /* 568 */
+      }
+      else
+      {
+        this._cfg.video.hresolution = SAEC_Config_Video_HResolution_HiRes;
+        this._cfg.video.vresolution = SAEC_Config_Video_VResolution_Double;
+        this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH << 1; /* 720 */
+        this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT << 1; /* 568 */
+      }
+
+      this._cfg.memory.rom.name = game_data.rom;
+      this._cfg.memory.rom.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.rom, null, flag_r).toArrayBuffer());
+      this._cfg.memory.rom.size = this._cfg.memory.rom.data.length;
+
+      if (game_data.extRom) {
+        this._cfg.memory.extRom.name = game_data.extRom;
+        this._cfg.memory.extRom.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.extRom, null, flag_r).toArrayBuffer());
+        this._cfg.memory.extRom.size = this._cfg.memory.extRom.data.length;
+      }
+
+      this._cfg.floppy.drive[0].file.name = game_data.floppy[0];
+      this._cfg.floppy.drive[0].file.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r).toArrayBuffer());
+      this._cfg.floppy.drive[0].file.size = this._cfg.floppy.drive[0].file.data.length;
+
+      this._cfg.debug.level = SAEC_Config_Debug_Level_Log;
+    }
+
+    SAERunner.prototype.start = function () {
+      var err = this._sae.start();
+    }
+
+    SAERunner.prototype.pause = function () {
+      this._sae.pause();
+    }
+
+    SAERunner.prototype.stop = function () {
+      this._sae.stop();
+    }
 
    /**
     * Emulator
@@ -742,17 +906,26 @@ var Module = null;
                       }
                       if (game_data.emulatorJS) {
                         splash.setTitle("Launching Emulator");
-                        attach_script(game_data.emulatorJS);
+                        return attach_script(game_data.emulatorJS);
                       } else {
                         splash.setTitle("Non-system disk or disk error");
                       }
+                      return null;
                     },
                     function () {
-                      if (splash.failed_loading) {
-                        return;
+                      if (!game_data || splash.failed_loading) {
+                        return null;
                       }
                       splash.setTitle("Invalid media, track 0 bad or unusable");
                       splash.failed_loading = true;
+                    })
+              .then(function () {
+                      if ("runner" in game_data) {
+                        var runner = new game_data.runner(canvas, game_data);
+                        runner.start();
+                        splash.finished_loading = true;
+                        splash.hide();
+                      }
                     });
        return this;
      };
@@ -980,13 +1153,32 @@ var Module = null;
      };
 
      function attach_script(js_url) {
-         if (js_url) {
-           var head = document.getElementsByTagName('head')[0];
-           var newScript = document.createElement('script');
-           newScript.type = 'text/javascript';
-           newScript.src = js_url;
-           head.appendChild(newScript);
-         }
+       return new Promise(function (resolve, reject) {
+                            var newScript;
+                            function loaded(e) {
+                              if (e.target == newScript) {
+                                newScript.removeEventListener("load", loaded);
+                                newScript.removeEventListener("error", failed);
+                                resolve();
+                              }
+                            }
+                            function failed(e) {
+                              if (e.target == newScript) {
+                                newScript.removeEventListener("load", loaded);
+                                newScript.removeEventListener("error", failed);
+                                reject();
+                              }
+                            }
+                            if (js_url) {
+                              var head = document.getElementsByTagName('head')[0];
+                              newScript = document.createElement('script');
+                              newScript.addEventListener("load", loaded);
+                              newScript.addEventListener("error", failed);
+                              newScript.type = 'text/javascript';
+                              newScript.src = js_url;
+                              head.appendChild(newScript);
+                            }
+                          });
      }
 
      function getpointerlockenabler() {
@@ -1374,13 +1566,14 @@ var Module = null;
      window.jsmame_update_audio_stream = jsmame_web_audio.update_audio_stream;
      window.jsmame_sample_count = jsmame_web_audio.sample_count;
      window.jsmame_web_audio = jsmame_web_audio;
-}
+   }
 
    window.IALoader = IALoader;
    window.DosBoxLoader = DosBoxLoader;
    window.JSMESSLoader = MAMELoader; // depreciated; just for backwards compatibility
    window.JSMAMELoader = MAMELoader; // ditto
    window.MAMELoader = MAMELoader;
+   window.SAELoader = SAELoader;
    window.Emulator = Emulator;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
 
