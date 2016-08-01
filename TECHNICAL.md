@@ -10,11 +10,16 @@ function which returns a `Promise` of a config.
 
 # Acquiring Emulators #
 
-The Internet Archive is currently maintaining three sets of emulators - one for JSMESS, one for JSMAME and one for EM-DOSBOX. They can be found at:
+The Internet Archive is currently maintaining two sets of emulators -
+one for MAME and one for EM-DOSBOX. They can be found at:
 
-* [Emularity Engines: Arcade (JSMAME)](https://archive.org/details/emularity_engine_jsmame)
-* [Emularity Engines: Computers and Consoles (JSMESS)](https://archive.org/details/emularity_engine_jsmess)
+* [Emularity Engines: Arcade (MAME)](https://archive.org/details/emularity_engine_jsmame)
+* [Emularity Engines: Computers and Consoles (MAME)](https://archive.org/details/emularity_engine_jsmess)
 * [Emularity Engines: MS-DOS (EM-DOSBOX)](https://archive.org/details/emularity_engine_emdosbox)
+
+Note that MESS and MAME used to be separate, if related,
+projects. They've recently been combined into a single source code
+repository and prjoject structure, and Emularity has changed to match.
 
 # Configuration #
 
@@ -27,12 +32,12 @@ copy of the rom (which it loads from examples/1943.zip).
 
       var emulator = new Emulator(document.querySelector("#canvas"),
                                   null,
-                                  new JSMAMELoader(JSMAMELoader.driver("1943"),
-                                                   JSMAMELoader.nativeResolution(224, 256),
-                                                   JSMAMELoader.emulatorJS("emulators/mess1943.js"),
-                                                   JSMAMELoader.mountFile("1943.zip",
-                                                                          JSMAMELoader.fetchFile("Game File",
-                                                                                                 "examples/1943.zip"))))
+                                  new MAMELoader(MAMELoader.driver("1943"),
+                                                 MAMELoader.nativeResolution(224, 256),
+                                                 MAMELoader.emulatorJS("emulators/mess1943.js"),
+                                                 MAMELoader.mountFile("1943.zip",
+                                                                      MAMELoader.fetchFile("Game File",
+                                                                                           "examples/1943.zip"))))
       emulator.setScale(3);
       emulator.start({ waitAfterDownloading: true });
 
@@ -46,16 +51,16 @@ keybindings needed to use the 2600.
 
       var emulator = new Emulator(document.querySelector("#canvas"),
                                   null,
-                                  new JSMESSLoader(JSMESSLoader.driver("a2600"),
-                                                   JSMESSLoader.nativeResolution(352, 223),
-                                                   JSMESSLoader.emulatorJS("emulators/messa2600.js"),
-                                                   JSMESSLoader.mountFile("Pitfall_Activision_1982.bin",
-                                                                          JSMESSLoader.fetchFile("Game File",
-                                                                                                 "examples/Pitfall_Activision_1982.bin")),
-                                                   JSMESSLoader.mountFile("a2600.cfg",
-                                                                          JSMESSLoader.fetchFile("Config File",
-                                                                                                 "examples/a2600.cfg")),
-                                                   JSMESSLoader.peripheral("cart", "Pitfall_Activision_1982.bin")))
+                                  new MAMELoader(MAMELoader.driver("a2600"),
+                                                 MAMELoader.nativeResolution(352, 223),
+                                                 MAMELoader.emulatorJS("emulators/messa2600.js"),
+                                                 MAMELoader.mountFile("Pitfall_Activision_1982.bin",
+                                                                      MAMELoader.fetchFile("Game File",
+                                                                                           "examples/Pitfall_Activision_1982.bin")),
+                                                 MAMELoader.mountFile("a2600.cfg",
+                                                                      MAMELoader.fetchFile("Config File",
+                                                                                           "examples/a2600.cfg")),
+                                                 MAMELoader.peripheral("cart", "Pitfall_Activision_1982.bin")))
       emulator.setScale(3).start({ waitAfterDownloading: true });
 
 ### DOS game ###
@@ -87,38 +92,42 @@ to the era.
 
 Each of these is configured by calling a constructor function and
 providing it with arguments formed by calling static methods on that
-same constructor.
+same constructor. In principle this configuration is just an object
+with various properties. Although the static methods are more
+indirect, they are intended to allow autocompletion in IDEs to
+function, and thus make writing them more convenient.
 
 ### Common ###
 
-* `emulatorJS(url)`
-* `mountZip(drive, file)`
-* `mountFile(filename, file)`
-* `fetchFile(url)`
-* `fetchOptionalFile(url)`
-* `localFile(data)`
+* `BaseLoader.emulatorJS(url)`
+* `BaseLoader.mountZip(drive, file)`
+* `BaseLoader.mountFile(filename, file)`
+* `BaseLoader.fetchFile(url)`
+* `BaseLoader.fetchOptionalFile(url)`
+* `BaseLoader.localFile(data)`
+
+### MAME ###
+
+* `MAMELoader.driver(driverName)`
+* `MAMELoader.extraArgs(args)`
+* `MAMELoader.peripheral(name, filename)`
 
 ### JSMESS ###
 
-* `driver(driverName)`
-* `extraArgs(args)`
-* `peripheral(name, filename)`
-
-### JSMAME ###
-
-* `driver(driverName)`
-* `extraArgs(args)`
+JSMESSLoader is merely a synonym for MAMELoader, and is provided so
+that we don't break existing users.
 
 ### EM-DOSBox ###
 
-* `startExe(filename)`
+* `DosBoxLoader.startExe(filename)`
 
 ## Internet Archive ##
 
 There's also a helper for loading software from
 [the Internet Archive](https://archive.org/v2), `IALoader`. IALoader
 looks at the metadata associated with an Internet Archive item and
-uses that to build the configuration for the emulator.
+uses that to build the configuration for the emulator by calling
+MAMELoader or DosBoxLoader as necessary.
 
 ## Examples ##
 

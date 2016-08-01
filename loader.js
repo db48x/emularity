@@ -113,9 +113,6 @@ var Module = null;
                                            }
 
                                            modulecfg = JSON.parse(data);
-                                           var mame = modulecfg &&
-                                                      'arcade' in modulecfg &&
-                                                      parseInt(modulecfg['arcade'], 10);
                                            var get_files;
 
                                            if (module && module.indexOf("dosbox") === 0) {
@@ -124,15 +121,9 @@ var Module = null;
                                              get_files = get_dosbox_files;
                                            }
                                            else if (module) {
-                                             if (mame) {
-                                               emulator_logo = images.mame;
-                                               cfgr = JSMAMELoader;
-                                               get_files = get_mame_files;
-                                             } else {
-                                               emulator_logo = images.mess;
-                                               cfgr = JSMESSLoader;
-                                               get_files = get_mame_files;
-                                             }
+                                             emulator_logo = images.mame;
+                                             cfgr = MAMELoader;
+                                             get_files = get_mame_files;
                                            }
                                            else {
                                              throw new Error("Unknown module type "+ module +"; cannot configure the emulator.");
@@ -220,27 +211,6 @@ var Module = null;
          files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
        }
 
-       return files;
-     }
-
-     function get_mess_files(cfgr, metadata, modulecfg, filelist) {
-       var files = [],
-           bios_files = modulecfg['bios_filenames'];
-       bios_files.forEach(function (fname, i) {
-                            if (fname) {
-                              var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
-                              files.push(cfgr.mountFile('/'+ fname,
-                                                        cfgr.fetchFile(title,
-                                                                       get_bios_url(fname))));
-                            }
-                          });
-
-       files.push(cfgr.mountFile('/'+ get_game_name(game),
-                                 cfgr.fetchFile("Game File",
-                                                get_zip_url(game))));
-       files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
-                                 cfgr.fetchOptionalFile("CFG File",
-                                                        get_other_emulator_config_url(module))));
        return files;
      }
 
@@ -423,54 +393,33 @@ var Module = null;
    };
 
    /**
-    * JSMESSLoader
+    * MAMELoader
     */
-   function JSMESSLoader() {
+   function MAMELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
-     config.emulator_arguments = build_mess_arguments(config.muted, config.mess_driver,
+     config.emulator_arguments = build_mame_arguments(config.muted, config.mame_driver,
                                                       config.nativeResolution, config.sample_rate,
-                                                      config.peripheral, config.extra_mess_args);
-     config.needs_jsmess_webaudio = true;
+                                                      config.extra_mame_args);
+     config.needs_jsmame_webaudio = true;
      return config;
    }
-   JSMESSLoader.__proto__ = BaseLoader;
+   MAMELoader.__proto__ = BaseLoader;
 
-   JSMESSLoader.driver = function (driver) {
-     return { mess_driver: driver };
+   MAMELoader.driver = function (driver) {
+     return { mame_driver: driver };
    };
 
-   JSMESSLoader.peripheral = function (peripheral, game) {
+   MAMELoader.peripheral = function (peripheral, game) {
      var p = {}
      p[peripheral] = [game];
      return { peripheral: p };
    };
 
-   JSMESSLoader.extraArgs = function (args) {
-     return { extra_mess_args: args };
+   MAMELoader.extraArgs = function (args) {
+     return { extra_mame_args: args };
    };
 
-   /**
-    * JSMAMELoader
-    */
-   function JSMAMELoader() {
-     var config = Array.prototype.reduce.call(arguments, extend);
-     config.emulator_arguments = build_mame_arguments(config.muted, config.mess_driver,
-                                                      config.nativeResolution, config.sample_rate,
-                                                      config.extra_mess_args);
-     config.needs_jsmess_webaudio = true;
-     return config;
-   }
-   JSMAMELoader.__proto__ = BaseLoader;
-
-   JSMAMELoader.driver = function (driver) {
-     return { mess_driver: driver };
-   };
-
-   JSMAMELoader.extraArgs = function (args) {
-     return { extra_mess_args: args };
-   };
-
-   var build_mess_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args) {
+   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args) {
      var args = [driver,
                  '-verbose',
                  '-rompath', 'emulator',
@@ -494,30 +443,6 @@ var Module = null;
                      '/emulator/'+ (peripheral[p][0].replace(/\//g,'_')))
          }
        }
-     }
-
-     if (extra_args) {
-       args = args.concat(extra_args);
-     }
-
-     return args;
-   };
-
-   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, extra_args) {
-     var args = [driver,
-                 '-verbose',
-                 '-rompath', 'emulator',
-                 '-window',
-                 '-nokeepaspect'];
-
-     if (native_resolution && "width" in native_resolution && "height" in native_resolution) {
-       args.push('-resolution', [native_resolution.width, native_resolution.height].join('x'));
-     }
-
-     if (muted) {
-       args.push('-sound', 'none');
-     } else if (sample_rate) {
-       args.push('-samplerate', sample_rate);
      }
 
      if (extra_args) {
@@ -603,7 +528,7 @@ var Module = null;
      var css_resolution, scale, aspectRatio;
      // right off the bat we set the canvas's inner dimensions to
      // whatever it's current css dimensions are; this isn't likely to be
-     // the same size that dosbox/jsmess will set it to, but it avoids
+     // the same size that dosbox/jsmame will set it to, but it avoids
      // the case where the size was left at the default 300x150
      if (!canvas.hasAttribute("width")) {
        var style = getComputedStyle(canvas);
@@ -762,7 +687,7 @@ var Module = null;
                     })
               .then(function (game_files) {
                       if (!game_data || splash.failed_loading) {
-                        return;
+                        return null;
                       }
                       if (options.waitAfterDownloading) {
                         return new Promise(function (resolve, reject) {
@@ -786,7 +711,7 @@ var Module = null;
                     })
               .then(function () {
                       if (!game_data || splash.failed_loading) {
-                        return;
+                        return null;
                       }
                       splash.spinning = true;
                       window.removeEventListener('keypress', k);
@@ -797,8 +722,8 @@ var Module = null;
                       blockSomeKeys();
                       setupFullScreen();
                       disableRightClickContextMenu(canvas);
-                      if (game_data.needs_jsmess_webaudio)
-                        setup_jsmess_webaudio();
+                      if (game_data.needs_jsmame_webaudio)
+                        setup_jsmame_webaudio();
 
                       // Emscripten doesn't use the proper prefixed functions for fullscreen requests,
                       // so let's map the prefixed versions to the correct function.
@@ -1235,12 +1160,12 @@ var Module = null;
      return Array.prototype.slice.call(xml.childNodes);
    }
 
-   function setup_jsmess_webaudio() {
-     // jsmess web audio backend v0.3
+   function setup_jsmame_webaudio() {
+     // jsmame web audio backend v0.3
      // katelyn gadd - kg at luminance dot org ; @antumbral on twitter
      //taisel working on it atm
 
-     var jsmess_web_audio = (function () {
+     var jsmame_web_audio = (function () {
 
      var context = null;
      var gain_node = null;
@@ -1334,7 +1259,7 @@ var Module = null;
        // seemingly incorrect/broken. figures. welcome to Web Audio
        // var gain_web_audio = 1.0 - Math.pow(10, 10 / attenuation_in_decibels);
 
-       // HACK: Max attenuation in JSMESS appears to be 32.
+       // HACK: Max attenuation in MAME appears to be 32.
        // Hit ' then left/right arrow to test.
        // FIXME: This is linear instead of log10 scale.
        var gain_web_audio = 1.0 + (+attenuation_in_decibels / +32);
@@ -1439,16 +1364,23 @@ var Module = null;
 
      })();
 
-     window.jsmess_set_mastervolume = jsmess_web_audio.set_mastervolume;
-     window.jsmess_update_audio_stream = jsmess_web_audio.update_audio_stream;
-     window.jsmess_sample_count = jsmess_web_audio.sample_count;
-     window.jsmess_web_audio = jsmess_web_audio;
-   }
+     // depreciated; just for backwards compatibility
+     window.jsmess_set_mastervolume = jsmame_web_audio.set_mastervolume;
+     window.jsmess_update_audio_stream = jsmame_web_audio.update_audio_stream;
+     window.jsmess_sample_count = jsmame_web_audio.sample_count;
+     window.jsmess_web_audio = jsmame_web_audio;
+
+     window.jsmame_set_mastervolume = jsmame_web_audio.set_mastervolume;
+     window.jsmame_update_audio_stream = jsmame_web_audio.update_audio_stream;
+     window.jsmame_sample_count = jsmame_web_audio.sample_count;
+     window.jsmame_web_audio = jsmame_web_audio;
+}
 
    window.IALoader = IALoader;
    window.DosBoxLoader = DosBoxLoader;
-   window.JSMESSLoader = JSMESSLoader;
-   window.JSMAMELoader = JSMAMELoader;
+   window.JSMESSLoader = MAMELoader; // depreciated; just for backwards compatibility
+   window.JSMAMELoader = MAMELoader; // ditto
+   window.MAMELoader = MAMELoader;
    window.Emulator = Emulator;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
 
