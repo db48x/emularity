@@ -989,7 +989,7 @@ var Module = null;
                             xhr.open('GET', url, true);
                             xhr.responseType = rt || 'arraybuffer';
                             xhr.onprogress = function (e) {
-                                               titleCell.textContent = title +" "+ formatSize(e);
+                                               titleCell.innerHTML = title +" <span style=\"font-size: smaller\">"+ formatSize(e) +"</span>";
                                              };
                             xhr.onload = function (e) {
                                            if (xhr.status === 200) {
@@ -1101,7 +1101,7 @@ var Module = null;
        if (!table) {
          table = document.createElement('table');
          table.setAttribute('id', "dosbox-progress-indicator");
-         table.style.width = "50%";
+         table.style.width = "75%";
          table.style.color = splash.getColor('foreground');
          table.style.backgroundColor = splash.getColor('background');
          table.style.marginLeft = 'auto';
@@ -1135,6 +1135,7 @@ var Module = null;
        titleCell.textContent = '—';
        titleCell.style.verticalAlign = 'center';
        titleCell.style.minHeight = "24px";
+       titleCell.style.whiteSpace = "nowrap";
        cell.appendChild(titleCell);
        var statusCell = document.createElement('span');
        statusCell.style.position = 'absolute';
