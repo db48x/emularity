@@ -920,6 +920,7 @@ var Module = null;
               .then(function () {
                       if ("runner" in game_data) {
                         var runner = new game_data.runner(canvas, game_data);
+                        resizeCanvas(canvas, 1, game_data.nativeResolution, game_data.aspectRatio);
                         runner.start();
                         splash.finished_loading = true;
                         splash.hide();
