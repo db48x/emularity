@@ -565,7 +565,6 @@ var Module = null;
       this._sae = new ScriptedAmigaEmulator();
       this._cfg = this._sae.getConfig();
 
-      this._cfg.video.id = canvas.getAttribute("id");
       var model = null;
       switch (game_data.amigaModel) {
         case "A500": model = SAEC_Model_A500; break;
@@ -584,6 +583,7 @@ var Module = null;
       this._sae.setModel(model, 0);
       this._cfg.memory.z2FastSize = game_data.fastMemory || 2 << 20;
       this._cfg.floppy.speed = SAEC_Config_Floppy_Speed_Turbo;
+      this._cfg.video.id = canvas.getAttribute("id");
 
       if (game_data.nativeResolution && game_data.nativeResolution.height == 360 && game_data.nativeResolution.width == 284)
       {
