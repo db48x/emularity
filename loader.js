@@ -918,6 +918,9 @@ var Module = null;
                       splash.failed_loading = true;
                     })
               .then(function () {
+                      if (!game_data || splash.failed_loading) {
+                        return null;
+                      }
                       if ("runner" in game_data) {
                         var runner = new game_data.runner(canvas, game_data);
                         resizeCanvas(canvas, 1, game_data.nativeResolution, game_data.aspectRatio);
