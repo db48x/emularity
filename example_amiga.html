@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>example computer program</title>
+  </head>
+  <body>
+    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"/>
+    <script type="text/javascript" src="es6-promise.js"></script>
+    <script type="text/javascript" src="browserfs.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <script type="text/javascript">
+      var emulator = new Emulator(document.querySelector("#canvas"),
+                                  null,
+                                  new SAELoader(SAELoader.model("A500"),
+                                                SAELoader.fastMemory(2),
+                                                SAELoader.nativeResolution(720, 568),
+                                                SAELoader.emulatorJS("emulators/sae/scriptedamigaemulator.js"),
+                                                SAELoader.mountFile("Kickstart v3.1 r40.63 (1993)(Commodore)(A500-A600-A2000)[!].rom",
+                                                                    SAELoader.fetchFile("Bios",
+                                                                                        "examples/Kickstart v3.1 r40.63 (1993)(Commodore)(A500-A600-A2000)[!].rom")),
+                                                SAELoader.rom("Kickstart v3.1 r40.63 (1993)(Commodore)(A500-A600-A2000)[!].rom"),
+                                                SAELoader.mountFile("17Bit-Cyclic.adf",
+                                                                    SAELoader.fetchFile("Game",
+                                                                                        "examples/17Bit-Cyclic.adf")),
+                                                SAELoader.floppy(0, "17Bit-Cyclic.adf")))
+      emulator.setScale(3).start({ waitAfterDownloading: true });
+    </script>
+  </body>
+</html>
