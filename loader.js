@@ -421,7 +421,7 @@ var Module = null;
    };
 
    BaseLoader.fetchFile = function (title, url) {
-     return { title: title, url: url };
+     return { title: title, url: url, optional: false };
    };
 
    BaseLoader.fetchOptionalFile = function (title, url) {
