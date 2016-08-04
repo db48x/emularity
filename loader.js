@@ -453,7 +453,7 @@ var Module = null;
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mame_arguments(config.muted, config.mame_driver,
                                                       config.nativeResolution, config.sample_rate,
-                                                      config.extra_mame_args);
+                                                      config.peripheral, config.extra_mame_args);
      config.needs_jsmame_webaudio = true;
      return config;
    }

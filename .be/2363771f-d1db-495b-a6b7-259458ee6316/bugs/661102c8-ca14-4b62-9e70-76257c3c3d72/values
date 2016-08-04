@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Todd Lehrfeld <tlehrfeld@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "check out why the loader sometimes fails to download a second game file, with a 417 error", 
+
+
+
+
+
+
+    "time": "Thu, 04 Aug 2016 00:14:08 +0000"
+
+
+
+
+
+
+}
