@@ -1325,7 +1325,7 @@ var Module = null;
        return a.concat(b);
      if (ta === 'object') {
        Object.keys(b).forEach(function (k) {
-                                a[k] = extend(a[k], b[k]);
+                                a[k] = extend(k in a ? a[k] : undefined, b[k]);
                               });
        return a;
      }
