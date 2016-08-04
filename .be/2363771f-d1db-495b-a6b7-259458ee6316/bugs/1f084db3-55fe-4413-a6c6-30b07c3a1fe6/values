@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "support Modularized Emscripten programs (probably at the expense of non-modularized ones)", 
+
+
+
+
+
+
+    "time": "Wed, 03 Aug 2016 23:51:11 +0000"
+
+
+
+
+
+
+}

@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "refactor emscripten vs sae code right at the end where we actually run the emulator", 
+
+
+
+
+
+
+    "time": "Wed, 03 Aug 2016 23:50:36 +0000"
+
+
+
+
+
+
+}

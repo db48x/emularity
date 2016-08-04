@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "MAME no longer requires us to set up the web audio stuff; we should probably drop it entirely (or perhaps consider leaving it available for other ported emulators that don't handle it automatically?)", 
+
+
+
+
+
+
+    "time": "Wed, 03 Aug 2016 23:57:23 +0000"
+
+
+
+
+
+
+}

@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "provide a better way to mute/unmute sound, when possible (easy in SAE, not yet possible in Emscripten)", 
+
+
+
+
+
+
+    "time": "Wed, 03 Aug 2016 23:54:35 +0000"
+
+
+
+
+
+
+}

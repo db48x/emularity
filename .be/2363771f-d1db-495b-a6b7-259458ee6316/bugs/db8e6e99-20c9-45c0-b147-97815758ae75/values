@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "clean up the use of git-annex for downloading emulators, in favor of a simple script to build them on command", 
+
+
+
+
+
+
+    "time": "Wed, 03 Aug 2016 23:52:28 +0000"
+
+
+
+
+
+
+}

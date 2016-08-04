@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "upgrade to the latest BrowserFS, which requires dealing with the new async initialization", 
+
+
+
+
+
+
+    "time": "Wed, 03 Aug 2016 23:54:05 +0000"
+
+
+
+
+
+
+}
