@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "mute/unmute doesn't work (expects SDL_PauseAudio to exist)", 
+
+
+
+
+
+
+    "time": "Sun, 07 Aug 2016 18:57:45 +0000"
+
+
+
+
+
+
+}
