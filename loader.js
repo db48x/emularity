@@ -633,6 +633,28 @@ var Module = null;
       this._sae.stop();
     }
 
+    SAERunner.prototype.mute = function () {
+      var err = this._sae.mute(true);
+      if (err) {
+        console.warn("unable to mute; SAE error number", err)
+      }
+    }
+
+    SAERunner.prototype.unmute = function () {
+      var err = this._sae.mute(false);
+      if (err) {
+        console.warn("unable to unmute; SAE error number", err)
+      }
+    }
+
+    SAERunner.prototype.onStarted = function (func) {
+      this._cfg.hook.event.started = func;
+    };
+
+    SAERunner.prototype.onReset = function (func) {
+      this._cfg.hook.event.reseted = func;
+    };
+
    /**
     * Emulator
     */
@@ -657,14 +679,31 @@ var Module = null;
                     table: null,
                     splashimg: new Image() };
 
+     var runner;
+
+     var muted = false;
      var SDL_PauseAudio;
-     this.mute = function (state) {
-       try {
-         if (!SDL_PauseAudio)
-           SDL_PauseAudio = Module.cwrap('SDL_PauseAudio', '', ['number']);
-         SDL_PauseAudio(state);
-       } catch (x) {
-         console.log("Unable to change audio state:", x);
+     this.isMuted = function () { return muted; }
+     this.mute = function () { return this.setMute(true); }
+     this.unmute = function () { return this.setMute(false); }
+     this.toggleMute = function () { return this.setMute(!muted); }
+     this.setMute = function (state) {
+       muted = state;
+       if (runner) {
+         if (state) {
+           runner.mute();
+         } else {
+           runner.unmute();
+         }
+       }
+       else {
+         try {
+           if (!SDL_PauseAudio)
+             SDL_PauseAudio = Module.cwrap('SDL_PauseAudio', '', ['number']);
+           SDL_PauseAudio(state);
+         } catch (x) {
+           console.log("Unable to change audio state:", x);
+         }
        }
        return this;
      };
@@ -921,11 +960,18 @@ var Module = null;
                         return null;
                       }
                       if ("runner" in game_data) {
-                        var runner = new game_data.runner(canvas, game_data);
+                        runner = new game_data.runner(canvas, game_data);
                         resizeCanvas(canvas, 1, game_data.nativeResolution, game_data.aspectRatio);
+                        runner.onStarted(function () {
+                                           splash.finished_loading = true;
+                                           splash.hide();
+                                         });
+                        runner.onReset(function () {
+                                         if (muted) {
+                                           runner.mute();
+                                         }
+                                       });
                         runner.start();
-                        splash.finished_loading = true;
-                        splash.hide();
                       }
                     });
        return this;
