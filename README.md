@@ -15,7 +15,7 @@ The Emularity system has been used by millions of users at the [Internet Archive
 
 # The Emulators #
 
-Currently works with two emulators:
+Currently works with three emulators:
 
 ## JSMESS ##
 
@@ -24,6 +24,12 @@ Currently works with two emulators:
 ## EM-DOSBox ##
 
 [EM-DOSBox](https://github.com/dreamlayers/em-dosbox/) is a port of DosBox to Javascript. DOSBox emulates an IBM PC compatible running DOS. There are two versions of this emulator, dosbox.js (Standard EM-DOSBOX) and dosbox-sync.js (EM-DOSBOX with considerations for in-program execution of other programs).
+
+## Scripted Amiga Emulator ##
+
+[SAE](https://github.com/naTmeg/ScriptedAmigaEmulator) is a Javascript
+port of WinUAE by [naTmeg](https://github.com/naTmeg). It emulates
+most of the Amiga models that were released.
 
 # Credits and Components #
 

@@ -15,14 +15,17 @@
                                                 SAELoader.fastMemory(2),
                                                 SAELoader.nativeResolution(720, 568),
                                                 SAELoader.emulatorJS("emulators/sae/scriptedamigaemulator.js"),
-                                                SAELoader.mountFile("Kickstart v3.1 r40.63 (1993)(Commodore)(A500-A600-A2000)[!].rom",
+                                                SAELoader.mountFile("aros-amiga-m68k-rom.bin",
                                                                     SAELoader.fetchFile("Bios",
-                                                                                        "examples/Kickstart v3.1 r40.63 (1993)(Commodore)(A500-A600-A2000)[!].rom")),
-                                                SAELoader.rom("Kickstart v3.1 r40.63 (1993)(Commodore)(A500-A600-A2000)[!].rom"),
-                                                SAELoader.mountFile("17Bit-Cyclic.adf",
+                                                                                        "examples/aros-amiga-m68k-rom.bin")),
+                                                SAELoader.mountFile("aros-amiga-m68k-ext.bin",
+                                                                    SAELoader.fetchFile("Bios",
+                                                                                        "examples/aros-amiga-m68k-ext.bin")),
+                                                SAELoader.rom(["aros-amiga-m68k-rom.bin", "aros-amiga-m68k-ext.bin"]),
+                                                SAELoader.mountFile("Cool_Demos_17.2_1989_Razor_1911.adf",
                                                                     SAELoader.fetchFile("Game",
-                                                                                        "examples/17Bit-Cyclic.adf")),
-                                                SAELoader.floppy(0, "17Bit-Cyclic.adf")))
+                                                                                        "examples/Cool_Demos_17.2_1989_Razor_1911.adf")),
+                                                SAELoader.floppy(0, "Cool_Demos_17.2_1989_Razor_1911")))
       emulator.setScale(3).start({ waitAfterDownloading: true });
     </script>
   </body>

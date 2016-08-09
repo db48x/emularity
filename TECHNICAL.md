@@ -79,16 +79,42 @@ DosBox to immediately start running zzt.exe, which is inside the zip.
                                                    DosBoxLoader.startExe("zzt.exe")))
       emulator.start({ waitAfterDownloading: true });
 
+### Amiga demo ###
+
+The Amiga is interesting because several models had a split bios,
+requiring two bios images. We have to download them both, and then
+provide their names in the right order.
+
+      var emulator = new Emulator(document.querySelector("#canvas"),
+                                  null,
+                                  new SAELoader(SAELoader.model("A500"),
+                                                SAELoader.fastMemory(2),
+                                                SAELoader.nativeResolution(720, 568),
+                                                SAELoader.emulatorJS("emulators/sae/scriptedamigaemulator.js"),
+                                                SAELoader.mountFile("aros-amiga-m68k-rom.bin",
+                                                                    SAELoader.fetchFile("Bios",
+                                                                                        "examples/aros-amiga-m68k-rom.bin")),
+                                                SAELoader.mountFile("aros-amiga-m68k-ext.bin",
+                                                                    SAELoader.fetchFile("Bios",
+                                                                                        "examples/aros-amiga-m68k-ext.bin")),
+                                                SAELoader.rom(["aros-amiga-m68k-rom.bin", "aros-amiga-m68k-ext.bin"]),
+                                                SAELoader.mountFile("Cool_Demos_17.2_1989_Razor_1911.adf",
+                                                                    SAELoader.fetchFile("Game",
+                                                                                        "examples/Cool_Demos_17.2_1989_Razor_1911.adf")),
+                                                SAELoader.floppy(0, "Cool_Demos_17.2_1989_Razor_1911")))
+      emulator.setScale(3).start({ waitAfterDownloading: true });
+
+
 ## Configuration API ##
 
-Currently there are two supported emulators, JSMESS and
-EM-DOSBox. JSMESS provides emulation for arcade games, consoles, and
-early personal computers. As this emulator supports such a wide
-variety of hardware it has been broken up into several dozen emulators
-each supporting one machine lest the resulting javascript be
-intractably large (60+ megabytes). EM-DOSBox provides emulation for
-software that runs on x86 PCs using the DOS operating systems common
-to the era.
+Currently there are three supported emulators, JSMESS, EM-DOSBox and
+SAE. JSMESS provides emulation for arcade games, consoles, and early
+personal computers. As this emulator supports such a wide variety of
+hardware it has been broken up into several dozen emulators each
+supporting one machine lest the resulting javascript be intractably
+large (60+ megabytes). EM-DOSBox provides emulation for software that
+runs on x86 PCs using the DOS operating systems common to the era. SAE
+emulates the Amiga computer system.
 
 Each of these is configured by calling a constructor function and
 providing it with arguments formed by calling static methods on that
@@ -121,13 +147,21 @@ that we don't break existing users.
 
 * `DosBoxLoader.startExe(filename)`
 
+### SAE ###
+
+* `SAELoader.model(modelname)`
+* `SAELoader.fastMemory(megabytes)`
+* `SAELoader.rom(filenames)`
+* `SAELoader.floppy(index, filename)`
+* `SAELoader.ntsc(boolean)`
+
 ## Internet Archive ##
 
 There's also a helper for loading software from
 [the Internet Archive](https://archive.org/v2), `IALoader`. IALoader
 looks at the metadata associated with an Internet Archive item and
 uses that to build the configuration for the emulator by calling
-MAMELoader or DosBoxLoader as necessary.
+one of the other loaders as necessary.
 
 ## Examples ##
 
@@ -141,5 +175,7 @@ Once you have an emulator object, there are several methods you can call.
 * `start()`
 * `requestFullScreen()`
 * `mute()`
+* `unmute()`
+* `toggleMute()`
 * `setSplashColors()`
 * others…

@@ -1,0 +1,1 @@
+Looks like we're filling up the IndexedDB. The browser is supposed to evict stuff on an LRU basis when we get to the quota, but perhaps that's changed recently? Unsure.
