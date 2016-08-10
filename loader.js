@@ -807,16 +807,20 @@ var Module = null;
        }
        loading.then(function (_game_data) {
                       return new Promise(function(resolve, reject) {
-                        var deltaFS = new BrowserFS.FileSystem.InMemory();
+                        var inMemoryFS = new BrowserFS.FileSystem.InMemory();
                         // If the browser supports IndexedDB storage, mirror writes to that storage
                         // for persistence purposes.
                         if (BrowserFS.FileSystem.IndexedDB.isAvailable()) {
                           var AsyncMirrorFS = BrowserFS.FileSystem.AsyncMirror,
                               IndexedDB = BrowserFS.FileSystem.IndexedDB;
-                          deltaFS = new AsyncMirrorFS(deltaFS,
+                          deltaFS = new AsyncMirrorFS(inMemoryFS,
                                                       new IndexedDB(function(e, fs) {
                                                                       if (e) {
-                                                                        // we probably weren't given access; private window for example. don't fail completely, just don't use indexeddb
+                                                                        // we probably weren't given access;
+                                                                        // private window for example.
+                                                                        // don't fail completely, just don't
+                                                                        // use indexeddb
+                                                                        deltaFS = inMemoryFS;
                                                                         finish();
                                                                       } else {
                                                                         // Initialize deltaFS by copying files from async storage to sync storage.
@@ -844,45 +848,50 @@ var Module = null;
                           game_data.fs = new BrowserFS.FileSystem.OverlayFS(deltaFS,
                                                                             new BrowserFS.FileSystem.MountableFileSystem());
                           game_data.fs.initialize(function (e) {
-                            var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
+                            if (e) {
+                              console.error("Failed to initialize the OverlayFS:", e);
+                              reject();
+                            } else {
+                              var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
 
-                            function fetch(file) {
-                              if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
-                                return Promise.resolve(file.data);
+                              function fetch(file) {
+                                if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
+                                  return Promise.resolve(file.data);
+                                }
+                                return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
                               }
-                              return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
-                            }
 
-                            function mountat(drive) {
-                              return function (data) {
-                                if (data !== null) {
-                                  drive = drive.toLowerCase();
-                                  var mountpoint = '/'+ drive;
-                                  // Mount into RO MFS.
-                                  game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, BFSOpenZip(new Buffer(data)));
-                                }
-                              };
-                            }
+                              function mountat(drive) {
+                                return function (data) {
+                                  if (data !== null) {
+                                    drive = drive.toLowerCase();
+                                    var mountpoint = '/'+ drive;
+                                    // Mount into RO MFS.
+                                    game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, BFSOpenZip(new Buffer(data)));
+                                  }
+                                };
+                              }
 
-                            function saveat(filename) {
-                              return function (data) {
-                                if (data !== null) {
-                                  game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
-                                }
-                              };
-                            }
-                            Promise.all(game_data.files
-                                                 .map(function (f) {
-                                                        if (f && f.file) {
-                                                          if (f.drive) {
-                                                            return fetch(f.file).then(mountat(f.drive));
-                                                          } else if (f.mountpoint) {
-                                                            return fetch(f.file).then(saveat(f.mountpoint));
+                              function saveat(filename) {
+                                return function (data) {
+                                  if (data !== null) {
+                                    game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
+                                  }
+                                };
+                              }
+                              Promise.all(game_data.files
+                                                   .map(function (f) {
+                                                          if (f && f.file) {
+                                                            if (f.drive) {
+                                                              return fetch(f.file).then(mountat(f.drive));
+                                                            } else if (f.mountpoint) {
+                                                              return fetch(f.file).then(saveat(f.mountpoint));
+                                                            }
                                                           }
-                                                        }
-                                                        return null;
-                                                      }))
-                                                 .then(resolve, reject);
+                                                          return null;
+                                                        }))
+                                                   .then(resolve, reject);
+                            }
                           });
                         }
                       });
