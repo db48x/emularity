@@ -17,9 +17,9 @@ The Emularity system has been used by millions of users at the [Internet Archive
 
 Currently works with three emulators:
 
-## JSMESS ##
+## MAME ##
 
-[JSMESS](https://github.com/jsmess/jsmess) is a port of the Multi Emulator Super System (MESS) and the Multiple Arcade Machine Emulator (MAME) projects to Javascript. MESS and MAME support thousands of different machines including game consoles, arcade machines and computer platforms.
+[MAME](https://github.com/mamedev/mame) is a port of the Multiple Arcade Machine Emulator (MAME) projects to Javascript. MAME supports over a thousand different machines including game consoles, arcade machines and computer platforms.
 
 ## EM-DOSBox ##
 

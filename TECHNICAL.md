@@ -10,8 +10,8 @@ function which returns a `Promise` of a config.
 
 # Acquiring Emulators #
 
-The Internet Archive is currently maintaining two sets of emulators -
-one for MAME and one for EM-DOSBOX. They can be found at:
+The Internet Archive is currently maintaining two sets of pre-built
+emulators - one for MAME and one for EM-DOSBOX. They can be found at:
 
 * [Emularity Engines: Arcade (MAME)](https://archive.org/details/emularity_engine_jsmame)
 * [Emularity Engines: Computers and Consoles (MAME)](https://archive.org/details/emularity_engine_jsmess)
@@ -20,6 +20,11 @@ one for MAME and one for EM-DOSBOX. They can be found at:
 Note that MESS and MAME used to be separate, if related,
 projects. They've recently been combined into a single source code
 repository and prjoject structure, and Emularity has changed to match.
+
+Instructions for building these yourself will be added in the future.
+
+[The Scripted Amiga Emulator](https://github.com/naTmeg/ScriptedAmigaEmulator)
+is much simpler to build, as it is already written in Javascript.
 
 # Configuration #
 
@@ -158,12 +163,15 @@ that we don't break existing users.
 ## Internet Archive ##
 
 There's also a helper for loading software from
-[the Internet Archive](https://archive.org/v2), `IALoader`. IALoader
+[the Internet Archive](https://archive.org/), `IALoader`. IALoader
 looks at the metadata associated with an Internet Archive item and
 uses that to build the configuration for the emulator by calling
 one of the other loaders as necessary.
 
 ## Examples ##
+
+You need only supply the canvas element and the Internet Archive's
+item name:
 
     var emulator = new IALoader(document.querySelector("#canvas"),
                                 "Pitfall_Activision_1982");
