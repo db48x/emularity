@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "we should reuse game/bios files if they're already in the IndexDB; they'll show up in the filesystem so we can just check before downloading them", 
+
+
+
+
+
+
+    "time": "Wed, 10 Aug 2016 05:52:34 +0000"
+
+
+
+
+
+
+}
