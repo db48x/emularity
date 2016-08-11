@@ -563,6 +563,7 @@ var Module = null;
     function SAERunner(canvas, game_data) {
       this._sae = new ScriptedAmigaEmulator();
       this._cfg = this._sae.getConfig();
+      this._canvas = canvas;
 
       var model = null;
       switch (game_data.amigaModel) {
@@ -655,6 +656,10 @@ var Module = null;
       this._cfg.hook.event.reseted = func;
     };
 
+    SAERunner.prototype.requestFullScreen = function () {
+      getfullscreenenabler().call(this._canvas);
+    };
+
    /**
     * Emulator
     */
@@ -724,6 +729,8 @@ var Module = null;
                                console.log("Gamepad disconnected from index %d: %s",
                                            e.gamepad.index, e.gamepad.id);
                              });
+
+     document.getElementById("gofullscreen").addEventListener("click", this.requestFullScreen);
 
      var css_resolution, scale, aspectRatio;
      // right off the bat we set the canvas's inner dimensions to
@@ -1242,10 +1249,6 @@ var Module = null;
        return canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
      }
 
-     function getfullscreenenabler() {
-       return canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen || canvas.requestFullScreen;
-     }
-
      this.isfullscreensupported = function () {
         return !!(getfullscreenenabler());
      };
@@ -1267,7 +1270,11 @@ var Module = null;
      };
 
      this.requestFullScreen = function () {
-       Module.requestFullScreen(1, 0);
+       if (typeof Module == "object" && "requestFullScreen" in Module) {
+         Module.requestFullScreen(1, 0);
+       } else if (runner) {
+         runner.requestFullScreen();
+       }
      };
 
      /**
@@ -1302,6 +1309,10 @@ var Module = null;
    /**
     * misc
     */
+   function getfullscreenenabler() {
+     return canvas.requestFullScreen || canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen;
+   }
+
    function BFSOpenZip(loadedData) {
        return new BrowserFS.FileSystem.ZipFS(loadedData);
    };
