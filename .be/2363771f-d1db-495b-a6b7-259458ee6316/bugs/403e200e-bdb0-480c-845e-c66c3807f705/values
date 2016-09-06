@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Peter Betz <peter.betz@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "TypeError: document.getElementById(...) is null @ loader.js:733", 
+
+
+
+
+
+
+    "time": "Tue, 06 Sep 2016 17:39:09 +0000"
+
+
+
+
+
+
+}
