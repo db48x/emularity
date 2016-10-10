@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "fixed", 
+
+
+
+
+
+
+    "summary": "hide the archive.org-specific hacks so that they don't break other users", 
+
+
+
+
+
+
+    "time": "Mon, 10 Oct 2016 19:21:07 +0000"
+
+
+
+
+
+
+}

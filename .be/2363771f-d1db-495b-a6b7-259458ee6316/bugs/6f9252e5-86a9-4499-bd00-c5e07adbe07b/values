@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "add a status bar underneath the canvas to show cpu/disk state", 
+
+
+
+
+
+
+    "time": "Thu, 11 Aug 2016 16:57:53 +0000"
+
+
+
+
+
+
+}

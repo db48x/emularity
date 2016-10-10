@@ -142,13 +142,16 @@ var Module = null;
                                                           cfgr.fileSystemKey(game),
                                                           cfgr.nativeResolution(nr[0], nr[1]),
                                                           cfgr.aspectRatio(nr[0] / nr[1]),
-                                                          cfgr.sampleRate(SAMPLE_RATE),
-                                                          cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')))];
+                                                          cfgr.sampleRate(SAMPLE_RATE)];
+
+                                           if (/archive\.org$/.test(document.location.hostname)) {
+                                             cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')))
+                                           }
 
                                            if (module && module.indexOf("dosbox") === 0) {
-                                               config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
-                                                                                      .item(0)
-                                                                                      .textContent));
+                                             config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
+                                                                                    .item(0)
+                                                                                    .textContent));
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
@@ -730,7 +733,9 @@ var Module = null;
                                            e.gamepad.index, e.gamepad.id);
                              });
 
-     document.getElementById("gofullscreen").addEventListener("click", this.requestFullScreen);
+     if (/archive\.org$/.test(document.location.hostname)) {
+       document.getElementById("gofullscreen").addEventListener("click", this.requestFullScreen);
+     }
 
      var css_resolution, scale, aspectRatio;
      // right off the bat we set the canvas's inner dimensions to
