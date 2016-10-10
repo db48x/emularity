@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "fixed", 
+
+
+
+
+
+
+    "summary": "arcade example uses the wrong js file name", 
+
+
+
+
+
+
+    "time": "Mon, 10 Oct 2016 19:53:43 +0000"
+
+
+
+
+
+
+}
