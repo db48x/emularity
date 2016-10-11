@@ -1,3 +1,22 @@
+/**  The Emularity; easily embed emulators
+  *  Copyright © 2014-2016 Daniel Brooks <db48x@db48x.net>, Jason
+  *  Scott <jscott@archive.org>, Grant Galitz <grantgalitz@gmail.com>,
+  *  John Vilk <jvilk@cs.umass.edu>, and Tracey Jaquith <tracey@archive.org>
+  *
+  *  This program is free software: you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation, either version 3 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
+
 var Module = null;
 
 (function (Promise) {
