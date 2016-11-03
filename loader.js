@@ -277,8 +277,8 @@ var Module = null;
                                                         cfgr.fetchFile(title,
                                                                        get_zip_url(file.name,
                                                                                    get_item_name(game)))));
-                              if (modulecfg.peripherals && modulecfg.peripherals[0]) {
-                                files.push(cfgr.peripheral(modulecfg.peripherals[0],   // we're not pushing a file here
+                              if (modulecfg.peripherals && modulecfg.peripherals[i]) {
+                                files.push(cfgr.peripheral(modulecfg.peripherals[i],   // we're not pushing a file here
                                                            file.name));                // but that's ok
                               }
                             }

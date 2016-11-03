@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "should be able to explicitly associate a filename with a peripheral in the IA item metadata for MAME items", 
+
+
+
+
+
+
+    "time": "Thu, 03 Nov 2016 17:57:59 +0000"
+
+
+
+
+
+
+}

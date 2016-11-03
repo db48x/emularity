@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "fixed", 
+
+
+
+
+
+
+    "summary": "IALoader only uses the first item in the 'peripherals' list when configuring mame", 
+
+
+
+
+
+
+    "time": "Thu, 03 Nov 2016 17:54:22 +0000"
+
+
+
+
+
+
+}
