@@ -258,31 +258,49 @@ var Module = null;
                             }
                           });
 
-       var ext = dict_from_xml(metadata).emulator_ext;
-       var game_files = list_from_xml(filelist).map(function (node) {
-                                                      if ("getAttribute" in node) {
-                                                        var file = dict_from_xml(node);
-                                                        file.name = node.getAttribute("name");
-                                                        return file;
-                                                      }
-                                                      return null;
-                                                    })
-                                               .filter(function (file) {
-                                                         return file && file.name.endsWith("." + ext);
-                                                       });
-       game_files.forEach(function (file, i) {
-                            if (file) {
-                              var title = "Game File ("+ (i+1) +" of "+ game_files.length +")";
-                              files.push(cfgr.mountFile('/'+ file.name,
-                                                        cfgr.fetchFile(title,
-                                                                       get_zip_url(file.name,
-                                                                                   get_item_name(game)))));
-                              if (modulecfg.peripherals && modulecfg.peripherals[i]) {
-                                files.push(cfgr.peripheral(modulecfg.peripherals[i],   // we're not pushing a file here
-                                                           file.name));                // but that's ok
-                              }
-                            }
+       var meta = dict_from_xml(metadata),
+           peripherals = {},
+           game_files_counter = {};
+       list_from_xml(filelist).filter(function (node) {
+                                        return "getAttribute" in node;
+                                      })
+                              .map(function (node) {
+                                     var file = dict_from_xml(node);
+                                     file.name = node.getAttribute("name");
+                                     return file;
+                                   })
+                              .filter(function (file) {
+                                        return file.name.endsWith("." + meta.emulator_ext);
+                                      })
+                              .forEach(function (file, i) {
+                                         game_files_counter[file.name] = 1;
+                                         if (modulecfg.peripherals && modulecfg.peripherals[i]) {
+                                           peripherals[modulecfg.peripherals[i]] = file.name;
+                                         }
+                                       });
+       Object.keys(meta).filter(function (k) {
+                                  return k.startsWith("mame_peripheral_");
+                                })
+                        .forEach(function (k) {
+                                   var periph = k.match(/^mame_peripheral_([a-zA-Z0-9]+)$/)[1];
+                                   peripherals[periph] = meta[k];
+                                   game_files_counter[meta[k]] = 1;
+                                 })
+
+       var game_files = Object.keys(game_files_counter),
+           len = game_files.length;
+       game_files.forEach(function (filename, i) {
+                            var title = "Game File ("+ (i+1) +" of "+ len +")";
+                            files.push(cfgr.mountFile('/'+ filename,
+                                           cfgr.fetchFile(title,
+                                                          get_zip_url(filename,
+                                                                      get_item_name(game)))));
                           });
+       Object.keys(peripherals).forEach(function (periph) {
+                                          files.push(cfgr.peripheral(periph,                // we're not pushing a 'file' here,
+                                                                     peripherals[periph])); // but that's ok
+                                        });
+
        files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
                                  cfgr.fetchOptionalFile("CFG File",
                                                         get_other_emulator_config_url(module))));
