@@ -1,0 +1,7 @@
+This turned out to be a problem related to the mess->mame rename.
+
+messexidy.js became mameexidy.js, but the example wasn't changed and
+the messexidy.js file was left in place on the IA servers, so there
+were no glarinly obvious signs that something had gone wrong, like a
+404. Fixed the example a few revisions back.
+
