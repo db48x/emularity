@@ -27,29 +27,15 @@ Currently works with three emulators:
 
 ## Scripted Amiga Emulator ##
 
-[SAE](https://github.com/naTmeg/ScriptedAmigaEmulator) is a Javascript
-port of WinUAE by [naTmeg](https://github.com/naTmeg). It emulates
-most of the Amiga models that were released.
+[SAE](https://github.com/naTmeg/ScriptedAmigaEmulator) is a Javascript port of WinUAE by [naTmeg](https://github.com/naTmeg). It emulates most of the Amiga models that were released.
 
 # Credits and Components #
 
-Primary work on Emularity is by [https://github.com/db48x](Daniel
-Brooks), with contributions of code or concepts from
-[https://github.com/jvilk](John Vilk), Andre D,
-[https://github.com/DopefishJustin/](Justin Kerk), Vitorio Miliano,
-and [https://github.com/textfiles](Jason Scott). Some of these
-contributions predate the git repository, unfortunately.
+Primary work on Emularity is by [Daniel Brooks](https://github.com/db48x), with contributions of code or concepts from [John Vilk](https://github.com/jvilk), Andre D, [Justin Kerk](https://github.com/DopefishJustin), [Vitorio Miliano](https://github.com/vitorio), and [Jason Scott](https://github.com/textfiles). Some of these contributions predate the Emularity git repository, unfortunately.
 
-Emularity makes use of [BrowserFS](https://github.com/jvilk/BrowserFS)
-by [https://github.com/jvilk](John Vilk), an in-browser filesystem
-that emulates the Node JS filesystem API and supports storing and
-retrieving files from various backends.
+Emularity makes use of [BrowserFS](https://github.com/jvilk/BrowserFS) by [John Vilk](https://github.com/jvilk), an in-browser filesystem that emulates the Node JS filesystem API and supports storing and retrieving files from various backends.
 
-It also utilizes
-[ES6-Promise](https://github.com/jakearchibald/es6-promise), a
-polyfill of the ES6 Promise API. Both are implemented and included
-without modification; consult these original repositories for
-information or verification.
+It also utilizes [ES6-Promise](https://github.com/jakearchibald/es6-promise), a polyfill of the ES6 Promise API. Both are implemented and included without modification; consult these original repositories for information or verification.
 
 # Some Open Issues #
 
