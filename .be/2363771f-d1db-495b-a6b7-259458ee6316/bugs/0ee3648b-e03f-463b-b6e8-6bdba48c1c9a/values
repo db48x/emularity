@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "reporter": "Daniel Brooks <db48x@db48x.net>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "support loading WebAssembly modules", 
+
+
+
+
+
+
+    "time": "Wed, 08 Mar 2017 11:55:32 +0000"
+
+
+
+
+
+
+}
