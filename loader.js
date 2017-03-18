@@ -770,7 +770,7 @@ var Module = null;
                                            e.gamepad.index, e.gamepad.id);
                              });
 
-     if (/archive\.org$/.test(document.location.hostname && document.getElementById("gofullscreen"))) {
+     if (/archive\.org$/.test(document.location.hostname) && document.getElementById("gofullscreen")) {
        document.getElementById("gofullscreen").addEventListener("click", this.requestFullScreen);
      }
 
