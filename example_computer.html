@@ -6,8 +6,8 @@
  Apple IIe).
 
  * Check out this repository in your browser-accessible directory;
-   this file as well as es6-promise.js, browserfs.js and loader.js are
-   required. The logo and images directories are optional, but the
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
    splash screen looks quite a lot better when they're available.
 
  * Use "git annex get emulators/jsmess/messnapple2e.js.gz" to download
@@ -44,7 +44,7 @@
   <body>
     <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"/>
     <script type="text/javascript" src="es6-promise.js"></script>
-    <script type="text/javascript" src="browserfs.js"></script>
+    <script type="text/javascript" src="browserfs.min.js"></script>
     <script type="text/javascript" src="loader.js"></script>
     <script type="text/javascript">
       var emulator = new Emulator(document.querySelector("#canvas"),
