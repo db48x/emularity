@@ -51,19 +51,22 @@ var Module = null;
      }
 
      // yea, this is a hack
+     var images;
      if (/archive\.org$/.test(document.location.hostname)) {
-       var images = { ia: img("/images/ialogo.png"),
-                      mame: img("/images/mame.png"),
-                      mess: img("/images/mame.png"),
-                      dosbox: img("/images/dosbox.png"),
-                      sae: img("/images/sae.png")
-                    };
+       images = { ia: img("/images/ialogo.png"),
+                  mame: img("/images/mame.png"),
+                  mess: img("/images/mame.png"),
+                  dosbox: img("/images/dosbox.png"),
+                  sae: img("/images/sae.png"),
+                  pce: img("/images/pce.png")
+                };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
                   mame: img("other_logos/mame.png"),
                   mess: img("other_logos/mame.png"),
                   dosbox: img("other_logos/dosbox.png"),
-                  sae: img("other_logos/sae.png")
+                  sae: img("other_logos/sae.png"),
+                  pce: img("other_logos/pce.png")
                 };
      }
 
@@ -109,7 +112,7 @@ var Module = null;
                                          })
                                    .then(function (data) {
                                            if (splash.failed_loading) {
-                                             return;
+                                             return null;
                                            }
                                            filelist = data;
                                            splash.setTitle("Downloading emulator metadata...");
@@ -130,7 +133,7 @@ var Module = null;
                                          })
                                    .then(function (data) {
                                            if (splash.failed_loading) {
-                                             return;
+                                             return null;
                                            }
 
                                            modulecfg = JSON.parse(data);
@@ -145,6 +148,11 @@ var Module = null;
                                              emulator_logo = images.sae;
                                              cfgr = SAELoader;
                                              get_files = get_sae_files;
+                                           }
+                                           else if (module && module.indexOf("pce-") === 0) {
+                                             emulator_logo = images.pce;
+                                             cfgr = PCELoader;
+                                             get_files = get_pce_files;
                                            }
                                            else if (module) {
                                              emulator_logo = images.mame;
@@ -164,7 +172,7 @@ var Module = null;
                                                           cfgr.sampleRate(SAMPLE_RATE)];
 
                                            if (/archive\.org$/.test(document.location.hostname)) {
-                                             cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')))
+                                             cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')));
                                            }
 
                                            if (module && module.indexOf("dosbox") === 0) {
@@ -174,7 +182,9 @@ var Module = null;
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
-                                           } else if (module) {
+                                           } else if (module && module.indexOf("pce-") === 0) {
+                                             config_args.push(cfgr.model(modulecfg.driver));
+                                           } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
                                            }
@@ -232,7 +242,9 @@ var Module = null;
          var node = urls[i],
              drive = node.nodeName.split('_')[2],
              title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
-             url = get_zip_url(node.textContent);
+             filename = node.textContent,
+             url = (filename.includes("/")) ? get_zip_url(filename)
+                                            : get_zip_url(filename, get_item_name(game));
          files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
        }
 
@@ -285,16 +297,16 @@ var Module = null;
                                    var periph = k.match(/^mame_peripheral_([a-zA-Z0-9]+)$/)[1];
                                    peripherals[periph] = meta[k];
                                    game_files_counter[meta[k]] = 1;
-                                 })
+                                 });
 
        var game_files = Object.keys(game_files_counter),
            len = game_files.length;
        game_files.forEach(function (filename, i) {
-                            var title = "Game File ("+ (i+1) +" of "+ len +")";
+                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                url = (filename.includes("/")) ? get_zip_url(filename)
+                                                               : get_zip_url(filename, get_item_name(game));
                             files.push(cfgr.mountFile('/'+ filename,
-                                           cfgr.fetchFile(title,
-                                                          get_zip_url(filename,
-                                                                      get_item_name(game)))));
+                                                      cfgr.fetchFile(title, url)));
                           });
        Object.keys(peripherals).forEach(function (periph) {
                                           files.push(cfgr.peripheral(periph,                // we're not pushing a 'file' here,
@@ -333,21 +345,75 @@ var Module = null;
                                                        });
        game_files.forEach(function (file, i) {
                             if (file) {
-                              var title = "Game File ("+ (i+1) +" of "+ game_files.length +")";
+                              var title = "Game File ("+ (i+1) +" of "+ game_files.length +")",
+                                  url = (file.name.includes("/")) ? get_zip_url(file.name)
+                                                                  : get_zip_url(file.name, get_item_name(game));
                               files.push(cfgr.mountFile('/'+ file.name,
-                                                        cfgr.fetchFile(title,
-                                                                       get_zip_url(file.name,
-                                                                                   get_item_name(game)))));
+                                                        cfgr.fetchFile(title, url)));
                               files.push(cfgr.floppy(0,             // we're not pushing a file here
                                                      file.name));   // but that's ok
                             }
                           });
        files.push(cfgr.mountFile('/'+ modulecfg['driver'] + '.cfg',
-                                 cfgr.fetchOptionalFile("CFG File",
+                                 cfgr.fetchOptionalFile("Config File",
                                                         get_other_emulator_config_url(module))));
        return files;
      }
 
+     function get_pce_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "ROM File ("+ (i+1) +" of "+ bios_files.length +")";
+                              files.push(cfgr.mountFile('/'+ fname,
+                                                        cfgr.fetchFile(title,
+                                                                       get_bios_url(fname))));
+                            }
+                          });
+
+       var meta = dict_from_xml(metadata),
+           game_files_counter = {};
+       list_from_xml(filelist).filter(function (node) {
+                                        return "getAttribute" in node;
+                                      })
+                              .map(function (node) {
+                                     var file = dict_from_xml(node);
+                                     file.name = node.getAttribute("name");
+                                     return file;
+                                   })
+                              .filter(function (file) {
+                                        return file.name.endsWith("." + meta.emulator_ext);
+                                      })
+                              .forEach(function (file, i) {
+                                         if (modulecfg.peripherals && modulecfg.peripherals[i]) {
+                                           game_files_counter[file.name] = modulecfg.peripherals[i];
+                                         }
+                                       });
+       Object.keys(meta).filter(function (k) {
+                                  return k.startsWith("pce_drive_");
+                                })
+                        .forEach(function (k) {
+                                   var periph = k.match(/^pce_drive_([a-zA-Z0-9]+)$/)[1];
+                                   game_files_counter[meta[k]] = periph;
+                                 });
+
+       var game_files = Object.keys(game_files_counter),
+           len = game_files.length;
+       game_files.forEach(function (filename, i) {
+                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                ext = filename.match(/\.([^.]*)$/)[1],
+                                url = (filename.includes("/")) ? get_zip_url(filename)
+                                                               : get_zip_url(filename, get_item_name(game));
+                            files.push(cfgr.mountFile('/'+ game_files_counter[filename] +'.'+ ext,
+                                                      cfgr.fetchFile(title, url)));
+                          });
+
+       files.push(cfgr.mountFile('/pce-'+ modulecfg['driver'] + '.cfg',
+                                 cfgr.fetchOptionalFile("Config File",
+                                                        get_other_emulator_config_url("pce-"+ modulecfg['driver']))));
+       return files;
+     }
      var get_item_name = function (game_path) {
        return game_path.split('/').shift();
      };
@@ -503,7 +569,7 @@ var Module = null;
    };
 
    MAMELoader.peripheral = function (peripheral, game) {
-     var p = {}
+     var p = {};
      p[peripheral] = [game];
      return { peripheral: p };
    };
@@ -525,11 +591,11 @@ var Module = null;
 
    SAELoader.model = function (model) {
      return { amigaModel: model };
-   }
+   };
 
    SAELoader.fastMemory = function (megabytes) {
      return { fast_memory: megabytes << 20 };
-   }
+   };
 
    SAELoader.rom = function (filenames) {
      if (typeof filenames == "string")
@@ -538,14 +604,29 @@ var Module = null;
    };
 
    SAELoader.floppy = function (index, filename) {
-     var f = {}
+     var f = {};
      f[index] = filename;
      return { floppy: f };
    };
 
    SAELoader.ntsc = function (v) {
      return { ntsc: !!v };
+   };
+
+   /**
+    * PCELoader
+    */
+
+   function PCELoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.emulator_arguments = ["-c", "/emulator/pce-"+ config.pceModel +".cfg"];
+     return config;
    }
+   PCELoader.__proto__ = BaseLoader;
+
+   PCELoader.model = function (model) {
+     return { pceModel: model };
+   };
 
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args) {
      var args = [driver,
@@ -568,7 +649,7 @@ var Module = null;
        for (var p in peripheral) {
          if (Object.prototype.propertyIsEnumerable.call(peripheral, p)) {
            args.push('-' + p,
-                     '/emulator/'+ (peripheral[p][0].replace(/\//g,'_')))
+                     '/emulator/'+ (peripheral[p][0].replace(/\//g,'_')));
          }
        }
      }
@@ -664,29 +745,29 @@ var Module = null;
 
     SAERunner.prototype.start = function () {
       var err = this._sae.start();
-    }
+    };
 
     SAERunner.prototype.pause = function () {
       this._sae.pause();
-    }
+    };
 
     SAERunner.prototype.stop = function () {
       this._sae.stop();
-    }
+    };
 
     SAERunner.prototype.mute = function () {
       var err = this._sae.mute(true);
       if (err) {
-        console.warn("unable to mute; SAE error number", err)
+        console.warn("unable to mute; SAE error number", err);
       }
-    }
+    };
 
     SAERunner.prototype.unmute = function () {
       var err = this._sae.mute(false);
       if (err) {
-        console.warn("unable to unmute; SAE error number", err)
+        console.warn("unable to unmute; SAE error number", err);
       }
-    }
+    };
 
     SAERunner.prototype.onStarted = function (func) {
       this._cfg.hook.event.started = func;
@@ -728,10 +809,10 @@ var Module = null;
 
      var muted = false;
      var SDL_PauseAudio;
-     this.isMuted = function () { return muted; }
-     this.mute = function () { return this.setMute(true); }
-     this.unmute = function () { return this.setMute(false); }
-     this.toggleMute = function () { return this.setMute(!muted); }
+     this.isMuted = function () { return muted; };
+     this.mute = function () { return this.setMute(true); };
+     this.unmute = function () { return this.setMute(false); };
+     this.toggleMute = function () { return this.setMute(!muted); };
      this.setMute = function (state) {
        muted = state;
        if (runner) {
@@ -1462,13 +1543,40 @@ var Module = null;
      return Array.prototype.slice.call(xml.childNodes);
    }
 
+   function _SDL_CreateRGBSurfaceFrom(pixels, width, height, depth, pitch, rmask, gmask, bmask, amask) {
+     // TODO: Actually fill pixel data to created surface.
+     // TODO: Take into account depth and pitch parameters.
+     // console.log('TODO: Partially unimplemented SDL_CreateRGBSurfaceFrom called!');
+     var surface = SDL.makeSurface(width, height, 0, false, 'CreateRGBSurfaceFrom', rmask, gmask, bmask, amask);
+
+     var surfaceData = SDL.surfaces[surface];
+     var surfaceImageData = surfaceData.ctx.getImageData(0, 0, width, height);
+     var surfacePixelData = surfaceImageData.data;
+
+     // Fill pixel data to created surface.
+     // Supports SDL_PIXELFORMAT_RGBA8888 and SDL_PIXELFORMAT_RGB888
+     var channels = amask ? 4 : 3; // RGBA8888 or RGB888
+     for (var pixelOffset = 0; pixelOffset < width*height; pixelOffset++) {
+       surfacePixelData[pixelOffset*4+0] = HEAPU8[pixels + (pixelOffset*channels+0)]; // R
+       surfacePixelData[pixelOffset*4+1] = HEAPU8[pixels + (pixelOffset*channels+1)]; // G
+       surfacePixelData[pixelOffset*4+2] = HEAPU8[pixels + (pixelOffset*channels+2)]; // B
+       surfacePixelData[pixelOffset*4+3] = amask ? HEAPU8[pixels + (pixelOffset*channels+3)] : 0xff; // A
+     };
+
+     surfaceData.ctx.putImageData(surfaceImageData, 0, 0);
+
+     return surface;
+   }
+
    window.IALoader = IALoader;
    window.DosBoxLoader = DosBoxLoader;
    window.JSMESSLoader = MAMELoader; // depreciated; just for backwards compatibility
    window.JSMAMELoader = MAMELoader; // ditto
    window.MAMELoader = MAMELoader;
    window.SAELoader = SAELoader;
+   window.PCELoader = PCELoader;
    window.Emulator = Emulator;
+   window._SDL_CreateRGBSurfaceFrom = _SDL_CreateRGBSurfaceFrom;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
 
 // legacy

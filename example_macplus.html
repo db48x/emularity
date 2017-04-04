@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>example computer program</title>
+  </head>
+  <body>
+    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"></canvas>
+    <script type="text/javascript" src="es6-promise.js"></script>
+    <script type="text/javascript" src="browserfs.min.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <script type="text/javascript">
+      var emulator = new Emulator(document.querySelector("#canvas"),
+                                  null,
+                                  new PCELoader(PCELoader.model("macclassic"),
+                                                PCELoader.nativeResolution(512, 342),
+                                                PCELoader.mountFile("pce-mac-classic.rom",
+                                                                    PCELoader.fetchFile("ROM 1/2",
+                                                                                        "examples/pce/pce-mac-classic.rom")),
+                                                PCELoader.mountFile("pce-macplus-pcex.rom",
+                                                                    PCELoader.fetchFile("ROM 2/2",
+                                                                                        "examples/pce/pce-macplus-pcex.rom")),
+                                                PCELoader.mountFile("pce-mac-classic-pram.dat",
+                                                                    PCELoader.fetchFile("PRAM",
+                                                                                        "examples/pce/pce-mac-classic-pram.dat")),
+                                                PCELoader.mountFile("hd1.img",
+                                                                    PCELoader.fetchFile("Hard Drive Image",
+                                                                                        "examples/pce/hd1.img")),
+                                                PCELoader.mountFile("pce-macclassic.cfg",
+                                                                    PCELoader.fetchFile("PCE Config",
+                                                                                        "examples/pce/pce-macclassic.cfg")),
+                                                PCELoader.emulatorJS("emulators/pce/pce-macplus.js")))
+      emulator.start({ waitAfterDownloading: true });
+    </script>
+  </body>
+</html>
