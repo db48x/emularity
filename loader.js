@@ -729,17 +729,17 @@ var Module = null;
       }
 
       this._cfg.memory.rom.name = game_data.rom;
-      this._cfg.memory.rom.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.rom, null, flag_r).toArrayBuffer());
+      this._cfg.memory.rom.data = game_data.fs.readFileSync('/'+game_data.rom, null, flag_r);
       this._cfg.memory.rom.size = this._cfg.memory.rom.data.length;
 
       if (game_data.extRom) {
         this._cfg.memory.extRom.name = game_data.extRom;
-        this._cfg.memory.extRom.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.extRom, null, flag_r).toArrayBuffer());
+        this._cfg.memory.extRom.data = game_data.fs.readFileSync('/'+game_data.extRom, null, flag_r);
         this._cfg.memory.extRom.size = this._cfg.memory.extRom.data.length;
       }
 
       this._cfg.floppy.drive[0].file.name = game_data.floppy[0];
-      this._cfg.floppy.drive[0].file.data = new Uint8Array(game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r).toArrayBuffer());
+      this._cfg.floppy.drive[0].file.data = game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r);
       this._cfg.floppy.drive[0].file.size = this._cfg.floppy.drive[0].file.data.length;
     }
 
