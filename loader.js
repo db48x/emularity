@@ -920,12 +920,16 @@ var Module = null;
        if (has_started)
          return false;
        has_started = true;
+       var defaultOptions = { waitAfterDownloading: false,
+                              hasCustomCSS: false };
        if (typeof options !== 'object') {
-         options = { waitAfterDownloading: false };
+         options = defaultOptions;
+       } else {
+         options.__proto__ = defaultOptions;
        }
 
        var k, c, game_data;
-       setupSplash(canvas, splash);
+       setupSplash(canvas, splash, options);
        drawsplash();
 
        var loading;
@@ -1168,6 +1172,7 @@ var Module = null;
      };
 
      var fetch_file = function (title, url, rt, optional) {
+       var needsCSS = !splash.table.dataset.hasCustomCSS;
        var row = addRow(splash.table);
        var titleCell = row[0], statusCell = row[1];
        titleCell.textContent = title;
@@ -1201,17 +1206,23 @@ var Module = null;
                                           };
                             function success() {
                               statusCell.textContent = "✔";
+                              titleCell.parentNode.classList.add('emularity-download-success');
                               titleCell.textContent = title;
-                              titleCell.style.fontWeight = 'bold';
-                              titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
-                              titleCell.parentNode.style.color = splash.getColor('background');
+                              if (needsCSS) {
+                                titleCell.style.fontWeight = 'bold';
+                                titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
+                                titleCell.parentNode.style.color = splash.getColor('background');
+                              }
                             }
                             function failure() {
                               statusCell.textContent = "✘";
+                              titleCell.parentNode.classList.add('emularity-download-failure');
                               titleCell.textContent = title;
-                              titleCell.style.fontWeight = 'bold';
-                              titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
-                              titleCell.parentNode.style.color = splash.getColor('background');
+                              if (needsCSS) {
+                                titleCell.style.fontWeight = 'bold';
+                                titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
+                                titleCell.parentNode.style.color = splash.getColor('background');
+                              }
                             }
                             xhr.send();
                           });
@@ -1253,48 +1264,57 @@ var Module = null;
        console.log("canvas cleared");
      };
 
-     function setupSplash(canvas, splash) {
+     function setupSplash(canvas, splash, globalOptions) {
        splash.splashElt = document.getElementById("emularity-splash-screen");
        if (!splash.splashElt) {
          splash.splashElt = document.createElement('div');
-         splash.splashElt.setAttribute('id', "emularity-splash-screen");
-         splash.splashElt.style.position = 'absolute';
-         splash.splashElt.style.top = canvas.offsetTop +'px';
-         splash.splashElt.style.left = canvas.offsetLeft +'px';
-         splash.splashElt.style.width = canvas.offsetWidth +'px';
-         splash.splashElt.style.color = splash.getColor('foreground');
-         splash.splashElt.style.backgroundColor = splash.getColor('background');
+         splash.splashElt.classList.add("emularity-splash-screen");
+         if (!globalOptions.hasCustomCSS) {
+           splash.splashElt.style.position = 'absolute';
+           splash.splashElt.style.top = '0';
+           splash.splashElt.style.left = '0';
+           splash.splashElt.style.right = '0';
+           splash.splashElt.style.color = splash.getColor('foreground');
+           splash.splashElt.style.backgroundColor = splash.getColor('background');
+         }
          canvas.parentElement.appendChild(splash.splashElt);
        }
 
-       splash.splashimg.setAttribute('id', "emularity-splash-image");
-       splash.splashimg.style.display = 'block';
-       splash.splashimg.style.marginLeft = 'auto';
-       splash.splashimg.style.marginRight = 'auto';
+       splash.splashimg.classList.add("emularity-splash-image");
+       if (!globalOptions.hasCustomCSS) {
+         splash.splashimg.style.display = 'block';
+         splash.splashimg.style.marginLeft = 'auto';
+         splash.splashimg.style.marginRight = 'auto';
+       }
        splash.splashElt.appendChild(splash.splashimg);
 
        splash.titleElt = document.createElement('span');
-       splash.titleElt.setAttribute('id', "emularity-splash-title");
-       splash.titleElt.style.display = 'block';
-       splash.titleElt.style.width = '100%';
-       splash.titleElt.style.marginTop = "1em";
-       splash.titleElt.style.marginBottom = "1em";
-       splash.titleElt.style.textAlign = 'center';
-       splash.titleElt.style.font = "24px sans-serif";
+       splash.titleElt.classList.add("emularity-splash-title");
+       if (!globalOptions.hasCustomCSS) {
+         splash.titleElt.style.display = 'block';
+         splash.titleElt.style.width = '100%';
+         splash.titleElt.style.marginTop = "1em";
+         splash.titleElt.style.marginBottom = "1em";
+         splash.titleElt.style.textAlign = 'center';
+         splash.titleElt.style.font = "24px sans-serif";
+       }
        splash.titleElt.textContent = " ";
        splash.splashElt.appendChild(splash.titleElt);
 
-       var table = document.getElementById("dosbox-progress-indicator");
+       var table = document.getElementById("emularity-progress-indicator");
        if (!table) {
          table = document.createElement('table');
-         table.setAttribute('id', "dosbox-progress-indicator");
-         table.style.width = "75%";
-         table.style.color = splash.getColor('foreground');
-         table.style.backgroundColor = splash.getColor('background');
-         table.style.marginLeft = 'auto';
-         table.style.marginRight = 'auto';
-         table.style.borderCollapse = 'separate';
-         table.style.borderSpacing = "2px";
+         table.classList.add("emularity-progress-indicator");
+         table.dataset.hasCustomCSS = globalOptions.hasCustomCSS;
+         if (!globalOptions.hasCustomCSS) {
+           table.style.width = "75%";
+           table.style.color = splash.getColor('foreground');
+           table.style.backgroundColor = splash.getColor('background');
+           table.style.marginLeft = 'auto';
+           table.style.marginRight = 'auto';
+           table.style.borderCollapse = 'separate';
+           table.style.borderSpacing = "2px";
+         }
          splash.splashElt.appendChild(table);
        }
        splash.table = table;
@@ -1314,20 +1334,31 @@ var Module = null;
      };
 
      var addRow = function (table) {
+       var needsCSS = !table.dataset.hasCustomCSS;
        var row = table.insertRow(-1);
-       row.style.textAlign = 'center';
+       if (needsCSS) {
+         row.style.textAlign = 'center';
+       }
        var cell = row.insertCell(-1);
-       cell.style.position = 'relative';
+       if (needsCSS) {
+         cell.style.position = 'relative';
+       }
        var titleCell = document.createElement('span');
+       titleCell.classList.add("emularity-download-title");
        titleCell.textContent = '—';
-       titleCell.style.verticalAlign = 'center';
-       titleCell.style.minHeight = "24px";
-       titleCell.style.whiteSpace = "nowrap";
+       if (needsCSS) {
+         titleCell.style.verticalAlign = 'center';
+         titleCell.style.minHeight = "24px";
+         titleCell.style.whiteSpace = "nowrap";
+       }
        cell.appendChild(titleCell);
        var statusCell = document.createElement('span');
-       statusCell.style.position = 'absolute';
-       statusCell.style.left = "0";
-       statusCell.style.paddingLeft = "0.5em";
+       statusCell.classList.add("emularity-download-status");
+       if (needsCSS) {
+         statusCell.style.position = 'absolute';
+         statusCell.style.left = "0";
+         statusCell.style.paddingLeft = "0.5em";
+       }
        cell.appendChild(statusCell);
        return [titleCell, statusCell];
      };
