@@ -987,14 +987,12 @@ var Module = null;
                               reject();
                             } else {
                               var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
-
                               function fetch(file) {
                                 if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
                                   return Promise.resolve(file.data);
                                 }
                                 return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
                               }
-
                               function mountat(drive) {
                                 return function (data) {
                                   if (data !== null) {
@@ -1005,14 +1003,23 @@ var Module = null;
                                   }
                                 };
                               }
-
                               function saveat(filename) {
                                 return function (data) {
                                   if (data !== null) {
+                                    if (filename.includes('/')) {
+                                      var parts = filename.split('/');
+                                      for (var i = 1; i < parts.length; i++) {
+                                        var path = '/'+ parts.slice(0, i).join('/');
+                                        if (!game_data.fs.existsSync(path)) {
+                                          game_data.fs.mkdirSync(path);
+                                        }
+                                      }
+                                    }
                                     game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
                                   }
                                 };
                               }
+
                               Promise.all(game_data.files
                                                    .map(function (f) {
                                                           if (f && f.file) {
