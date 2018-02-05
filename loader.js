@@ -1172,7 +1172,7 @@ var Module = null;
      };
 
      var fetch_file = function (title, url, rt, optional) {
-       var needsCSS = !splash.table.dataset.hasCustomCSS;
+       var needsCSS = splash.table.dataset.hasCustomCSS == "false";
        var row = addRow(splash.table);
        var titleCell = row[0], statusCell = row[1];
        titleCell.textContent = title;
@@ -1334,7 +1334,7 @@ var Module = null;
      };
 
      var addRow = function (table) {
-       var needsCSS = !table.dataset.hasCustomCSS;
+       var needsCSS = table.dataset.hasCustomCSS == "false";
        var row = table.insertRow(-1);
        if (needsCSS) {
          row.style.textAlign = 'center';
