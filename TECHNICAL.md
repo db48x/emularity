@@ -187,3 +187,70 @@ Once you have an emulator object, there are several methods you can call.
 * `toggleMute()`
 * `setSplashColors()`
 * others…
+
+# Splash Screen Styles #
+
+By default, Emularity requires no stylesheet; it directly styles every
+element that it creates instead. If you would like more control over
+how the splash screen looks than is provided by the `setSplashColors`
+method, pass `{ hasCustomCSS: true }` to the `start` method. All of
+the splash screen elements will be unstyled, leaving the look up to
+you. For reference, the default styles normally applied by Emularity
+are approximately as follows:
+
+```css
+.emularity-splash-screen {
+  color: white;
+  background-color: black;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0
+}
+.emularity-splash-screen .emularity-splash-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto
+}
+.emularity-splash-screen .emularity-splash-title {
+  display: block;
+  width: 100%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  text-align: center;
+  font: 24px sans-serif
+}
+.emularity-splash-screen .emularity-progress-indicator {
+  color: white;
+  background-color: black;
+  width: 75%;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: separate;
+  border-spacing: 2px
+}
+.emularity-splash-screen .emularity-progress-indicator tr {
+  text-align: center
+}
+.emularity-splash-screen .emularity-progress-indicator td {
+  position: relative;
+  padding-top: 4px
+}
+.emularity-splash-screen .emularity-progress-indicator td.emularity-download-success {
+  font-weight: bold;
+  color: black;
+  background-color: white
+}
+.emularity-splash-screen .emularity-progress-indicator td.emularity-download-failure {
+  font-weight: bold;
+  color: black;
+  background-color: red
+}
+.emularity-splash-screen .emularity-progress-indicator td .emularity-download-title {
+  white-space: nowrap
+}
+.emularity-splash-screen .emularity-progress-indicator td .emularity-download-status {
+  position: absolute;
+  left: .5em
+}
+```
