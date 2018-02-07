@@ -543,13 +543,17 @@ var Module = null;
     */
    function DosBoxLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
-     config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files);
+     config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
      return config;
    }
    DosBoxLoader.__proto__ = BaseLoader;
 
    DosBoxLoader.startExe = function (path) {
      return { emulatorStart: path };
+   };
+
+   DosBoxLoader.extraArgs = function (args) {
+     return { extra_dosbox_args: args };
    };
 
    /**
@@ -661,125 +665,127 @@ var Module = null;
      return args;
    };
 
-    var build_dosbox_arguments = function (emulator_start, files) {
-      var args = ['-conf', '/emulator/dosbox.conf'];
+   var build_dosbox_arguments = function (emulator_start, files, extra_args) {
+     var args = ['-conf', '/emulator/dosbox.conf'];
 
-      var len = files.length;
-      for (var i = 0; i < len; i++) {
-        if ('mountpoint' in files[i]) {
-          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint);
-        }
-      }
+     var len = files.length;
+     for (var i = 0; i < len; i++) {
+       if ('mountpoint' in files[i]) {
+         args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint);
+       }
+     }
 
-      var path = emulator_start.split(/\\|\//); // I have LTS already
-      args.push('-c', /^[a-zA-Z]:$/.test(path[0]) ? path.shift() : 'c:');
-      var prog = path.pop();
-      if (path && path.length)
-        args.push('-c', 'cd '+ path.join('/'));
-      args.push('-c', prog);
+     args = args.concat(extra_args);
 
-      return args;
-    };
+     var path = emulator_start.split(/\\|\//); // I have LTS already
+     args.push('-c', /^[a-zA-Z]:$/.test(path[0]) ? path.shift() : 'c:');
+     var prog = path.pop();
+     if (path && path.length)
+       args.push('-c', 'cd '+ path.join('/'));
+     args.push('-c', prog);
 
-    function SAERunner(canvas, game_data) {
-      this._sae = new ScriptedAmigaEmulator();
-      this._cfg = this._sae.getConfig();
-      this._canvas = canvas;
+     return args;
+   };
 
-      var model = null;
-      switch (game_data.amigaModel) {
-        case "A500": model = SAEC_Model_A500; break;
-        case "A500P": model = SAEC_Model_A500P; break;
-        case "A600": model = SAEC_Model_A600; break;
-        case "A1000": model = SAEC_Model_A1000; break;
-        case "A1200": model = SAEC_Model_A1200; break;
-        case "A2000": model = SAEC_Model_A2000; break;
-        case "A3000": model = SAEC_Model_A3000; break;
-        case "A4000": model = SAEC_Model_A4000; break;
-        case "A4000T": model = SAEC_Model_A4000T; break;
-        /*  future. do not use. cd-emulation is not implemented yet.
-        case "CDTV": model = SAEC_Model_CDTV; break;
-        case "CD32": model = SAEC_Model_CD32; break; */
-      }
-      this._sae.setModel(model, 0);
-      this._cfg.memory.z2FastSize = game_data.fastMemory || 2 << 20;
-      this._cfg.floppy.speed = SAEC_Config_Floppy_Speed_Turbo;
-      this._cfg.video.id = canvas.getAttribute("id");
+   function SAERunner(canvas, game_data) {
+     this._sae = new ScriptedAmigaEmulator();
+     this._cfg = this._sae.getConfig();
+     this._canvas = canvas;
 
-      if (game_data.nativeResolution && game_data.nativeResolution.height == 360 && game_data.nativeResolution.width == 284)
-      {
-        this._cfg.video.hresolution = SAEC_Config_Video_HResolution_LoRes;
-        this._cfg.video.vresolution = SAEC_Config_Video_VResolution_NonDouble;
-        this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH; /* 360 */
-        this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT; /* 284 */
-      }
-      else if (game_data.nativeResolution && game_data.nativeResolution.height == 1440 && game_data.nativeResolution.width == 568)
-      {
-        this._cfg.video.hresolution = SAEC_Config_Video_HResolution_SuperHiRes;
-        this._cfg.video.vresolution = SAEC_Config_Video_VResolution_Double;
-        this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH << 2; /* 1440 */
-        this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT << 1; /* 568 */
-      }
-      else
-      {
-        this._cfg.video.hresolution = SAEC_Config_Video_HResolution_HiRes;
-        this._cfg.video.vresolution = SAEC_Config_Video_VResolution_Double;
-        this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH << 1; /* 720 */
-        this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT << 1; /* 568 */
-      }
+     var model = null;
+     switch (game_data.amigaModel) {
+       case "A500": model = SAEC_Model_A500; break;
+       case "A500P": model = SAEC_Model_A500P; break;
+       case "A600": model = SAEC_Model_A600; break;
+       case "A1000": model = SAEC_Model_A1000; break;
+       case "A1200": model = SAEC_Model_A1200; break;
+       case "A2000": model = SAEC_Model_A2000; break;
+       case "A3000": model = SAEC_Model_A3000; break;
+       case "A4000": model = SAEC_Model_A4000; break;
+       case "A4000T": model = SAEC_Model_A4000T; break;
+       /*  future. do not use. cd-emulation is not implemented yet.
+       case "CDTV": model = SAEC_Model_CDTV; break;
+       case "CD32": model = SAEC_Model_CD32; break; */
+     }
+     this._sae.setModel(model, 0);
+     this._cfg.memory.z2FastSize = game_data.fastMemory || 2 << 20;
+     this._cfg.floppy.speed = SAEC_Config_Floppy_Speed_Turbo;
+     this._cfg.video.id = canvas.getAttribute("id");
 
-      this._cfg.memory.rom.name = game_data.rom;
-      this._cfg.memory.rom.data = game_data.fs.readFileSync('/'+game_data.rom, null, flag_r);
-      this._cfg.memory.rom.size = this._cfg.memory.rom.data.length;
+     if (game_data.nativeResolution && game_data.nativeResolution.height == 360 && game_data.nativeResolution.width == 284)
+     {
+       this._cfg.video.hresolution = SAEC_Config_Video_HResolution_LoRes;
+       this._cfg.video.vresolution = SAEC_Config_Video_VResolution_NonDouble;
+       this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH; /* 360 */
+       this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT; /* 284 */
+     }
+     else if (game_data.nativeResolution && game_data.nativeResolution.height == 1440 && game_data.nativeResolution.width == 568)
+     {
+       this._cfg.video.hresolution = SAEC_Config_Video_HResolution_SuperHiRes;
+       this._cfg.video.vresolution = SAEC_Config_Video_VResolution_Double;
+       this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH << 2; /* 1440 */
+       this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT << 1; /* 568 */
+     }
+     else
+     {
+       this._cfg.video.hresolution = SAEC_Config_Video_HResolution_HiRes;
+       this._cfg.video.vresolution = SAEC_Config_Video_VResolution_Double;
+       this._cfg.video.size_win.width = SAEC_Video_DEF_AMIGA_WIDTH << 1; /* 720 */
+       this._cfg.video.size_win.height = SAEC_Video_DEF_AMIGA_HEIGHT << 1; /* 568 */
+     }
 
-      if (game_data.extRom) {
-        this._cfg.memory.extRom.name = game_data.extRom;
-        this._cfg.memory.extRom.data = game_data.fs.readFileSync('/'+game_data.extRom, null, flag_r);
-        this._cfg.memory.extRom.size = this._cfg.memory.extRom.data.length;
-      }
+     this._cfg.memory.rom.name = game_data.rom;
+     this._cfg.memory.rom.data = game_data.fs.readFileSync('/'+game_data.rom, null, flag_r);
+     this._cfg.memory.rom.size = this._cfg.memory.rom.data.length;
 
-      this._cfg.floppy.drive[0].file.name = game_data.floppy[0];
-      this._cfg.floppy.drive[0].file.data = game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r);
-      this._cfg.floppy.drive[0].file.size = this._cfg.floppy.drive[0].file.data.length;
-    }
+     if (game_data.extRom) {
+       this._cfg.memory.extRom.name = game_data.extRom;
+       this._cfg.memory.extRom.data = game_data.fs.readFileSync('/'+game_data.extRom, null, flag_r);
+       this._cfg.memory.extRom.size = this._cfg.memory.extRom.data.length;
+     }
 
-    SAERunner.prototype.start = function () {
-      var err = this._sae.start();
-    };
+     this._cfg.floppy.drive[0].file.name = game_data.floppy[0];
+     this._cfg.floppy.drive[0].file.data = game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r);
+     this._cfg.floppy.drive[0].file.size = this._cfg.floppy.drive[0].file.data.length;
+   }
 
-    SAERunner.prototype.pause = function () {
-      this._sae.pause();
-    };
+   SAERunner.prototype.start = function () {
+     var err = this._sae.start();
+   };
 
-    SAERunner.prototype.stop = function () {
-      this._sae.stop();
-    };
+   SAERunner.prototype.pause = function () {
+     this._sae.pause();
+   };
 
-    SAERunner.prototype.mute = function () {
-      var err = this._sae.mute(true);
-      if (err) {
-        console.warn("unable to mute; SAE error number", err);
-      }
-    };
+   SAERunner.prototype.stop = function () {
+     this._sae.stop();
+   };
 
-    SAERunner.prototype.unmute = function () {
-      var err = this._sae.mute(false);
-      if (err) {
-        console.warn("unable to unmute; SAE error number", err);
-      }
-    };
+   SAERunner.prototype.mute = function () {
+     var err = this._sae.mute(true);
+     if (err) {
+       console.warn("unable to mute; SAE error number", err);
+     }
+   };
 
-    SAERunner.prototype.onStarted = function (func) {
-      this._cfg.hook.event.started = func;
-    };
+   SAERunner.prototype.unmute = function () {
+     var err = this._sae.mute(false);
+     if (err) {
+       console.warn("unable to unmute; SAE error number", err);
+     }
+   };
 
-    SAERunner.prototype.onReset = function (func) {
-      this._cfg.hook.event.reseted = func;
-    };
+   SAERunner.prototype.onStarted = function (func) {
+     this._cfg.hook.event.started = func;
+   };
 
-    SAERunner.prototype.requestFullScreen = function () {
-      getfullscreenenabler().call(this._canvas);
-    };
+   SAERunner.prototype.onReset = function (func) {
+     this._cfg.hook.event.reseted = func;
+   };
+
+   SAERunner.prototype.requestFullScreen = function () {
+     getfullscreenenabler().call(this._canvas);
+   };
 
    /**
     * Emulator

@@ -151,6 +151,7 @@ that we don't break existing users.
 ### EM-DOSBox ###
 
 * `DosBoxLoader.startExe(filename)`
+* `DosBoxLoader.extraArgs(args)`
 
 ### SAE ###
 
