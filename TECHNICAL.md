@@ -131,6 +131,7 @@ function, and thus make writing them more convenient.
 ### Common ###
 
 * `BaseLoader.emulatorJS(url)`
+* `BaseLoader.emulatorWASM(url)`
 * `BaseLoader.mountZip(drive, file)`
 * `BaseLoader.mountFile(filename, file)`
 * `BaseLoader.fetchFile(url)`

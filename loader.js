@@ -163,8 +163,10 @@ var Module = null;
                                              throw new Error("Unknown module type "+ module +"; cannot configure the emulator.");
                                            }
 
+                                           var wantsWASM = modulecfg.wasm_filename && 'WebAssembly' in window;
                                            var nr = modulecfg['native_resolution'];
-                                           config_args = [cfgr.emulatorJS(get_js_url(modulecfg.js_filename)),
+                                           config_args = [cfgr.emulatorJS(get_js_url(wantsWASM ? modulecfg.wasmjs_filename : modulecfg.js_filename)),
+                                                          cfgr.emulatorWASM(wantsWASM && get_js_url(modulecfg.wasm_filename)),
                                                           cfgr.locateAdditionalEmulatorJS(locateAdditionalJS),
                                                           cfgr.fileSystemKey(game),
                                                           cfgr.nativeResolution(nr[0], nr[1]),
@@ -204,6 +206,7 @@ var Module = null;
                                            if (splash.failed_loading) {
                                              return;
                                            }
+                                           updateLogo();
                                            resolve(cfgr.apply(null, extend(config_args, game_files)));
                                          },
                                          function () {
@@ -221,7 +224,7 @@ var Module = null;
        if ("file_locations" in modulecfg && filename in modulecfg.file_locations) {
          return get_js_url(modulecfg.file_locations[filename]);
        }
-       throw new Error("Don't know how to find file: "+ filename);
+       return get_js_url(filename);
      }
 
      function get_dosbox_files(cfgr, emulator, modulecfg, filelist) {
@@ -483,6 +486,10 @@ var Module = null;
 
    BaseLoader.emulatorJS = function (url) {
      return { emulatorJS: url };
+   };
+
+   BaseLoader.emulatorWASM = function (url) {
+     return { emulatorWASM: url };
    };
 
    BaseLoader.locateAdditionalEmulatorJS = function (func) {
@@ -1026,18 +1033,22 @@ var Module = null;
                                 };
                               }
 
-                              Promise.all(game_data.files
-                                                   .map(function (f) {
-                                                          if (f && f.file) {
-                                                            if (f.drive) {
-                                                              return fetch(f.file).then(mountat(f.drive));
-                                                            } else if (f.mountpoint) {
-                                                              return fetch(f.file).then(saveat(f.mountpoint));
-                                                            }
-                                                          }
-                                                          return null;
-                                                        }))
-                                                   .then(resolve, reject);
+                              var promises = game_data.files
+                                                      .map(function (f) {
+                                                             if (f && f.file) {
+                                                               if (f.drive) {
+                                                                 return fetch(f.file).then(mountat(f.drive));
+                                                               } else if (f.mountpoint) {
+                                                                 return fetch(f.file).then(saveat(f.mountpoint));
+                                                               }
+                                                             }
+                                                             return null;
+                                                           });
+                              // this is kinda wrong; it really only applies when we're loading something created by Emscripten
+                              if ('emulatorWASM' in game_data && game_data.emulatorWASM && 'WebAssembly' in window) {
+                                promises.push(fetch({ title: "WASM Binary", url: game_data.emulatorWASM }).then(function (data) { game_data.wasmBinary = data; }));
+                              }
+                              Promise.all(promises).then(resolve, reject);
                             }
                           });
                         }
@@ -1087,7 +1098,7 @@ var Module = null;
 
                       moveConfigToRoot(game_data.fs);
                       Module = init_module(game_data.emulator_arguments, game_data.fs, game_data.locateAdditionalJS,
-                                           game_data.nativeResolution, game_data.aspectRatio);
+                                           game_data.nativeResolution, game_data.aspectRatio, game_data.wasmBinary);
 
                       if (callbacks && callbacks.before_emulator) {
                         try {
@@ -1134,13 +1145,14 @@ var Module = null;
      };
      this.start = start;
 
-     var init_module = function(args, fs, locateAdditionalJS, nativeResolution, aspectRatio) {
+     var init_module = function(args, fs, locateAdditionalJS, nativeResolution, aspectRatio, wasmBinary) {
        return { arguments: args,
                 screenIsReadOnly: true,
                 print: function (text) { console.log(text); },
                 canvas: canvas,
                 noInitialRun: false,
                 locateFile: locateAdditionalJS,
+                wasmBinary: wasmBinary,
                 preInit: function () {
                            splash.setTitle("Loading game file(s) into file system");
                            // Re-initialize BFS to just use the writable in-memory storage.
