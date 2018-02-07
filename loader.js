@@ -670,7 +670,7 @@ var Module = null;
 
      var len = files.length;
      for (var i = 0; i < len; i++) {
-       if ('mountpoint' in files[i]) {
+       if ('drive' in files[i]) {
          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint);
        }
      }
