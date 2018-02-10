@@ -682,7 +682,9 @@ var Module = null;
        }
      }
 
-     args = args.concat(extra_args);
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
 
      var path = emulator_start.split(/\\|\//); // I have LTS already
      args.push('-c', /^[a-zA-Z]:$/.test(path[0]) ? path.shift() : 'c:');
