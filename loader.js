@@ -227,37 +227,35 @@ var Module = null;
        return get_js_url(filename);
      }
 
-     function get_dosbox_files(cfgr, emulator, modulecfg, filelist) {
-       // first get the urls
-       var urls = [], files = [];
-       var len = metadata.documentElement.childNodes.length, i;
-       for (i = 0; i < len; i++) {
-         var node = metadata.documentElement.childNodes[i];
-         var m = node.nodeName.match(/^dosbox_drive_[a-zA-Z]$/);
-         if (m) {
-           urls.push(node);
-         }
+     function get_dosbox_files(cfgr, metadata, modulecfg, filelist) {
+       var default_drive = "c", // pick any drive letter as a default
+           drives = {}, files = [],
+           meta = dict_from_xml(metadata);
+       if (game && game.endsWith(".zip")) {
+         drives[default_drive] = game;
        }
-
-       // and a count, then fetch them in
-       var len = urls.length;
-       for (i = 0; i < len; i++) {
-         var node = urls[i],
-             drive = node.nodeName.split('_')[2],
-             title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
-             filename = node.textContent,
-             url = (filename.includes("/")) ? get_zip_url(filename)
-                                            : get_zip_url(filename, get_item_name(game));
-         files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
-       }
-
-       if (game) {
-         var drive = 'c',
-             title = 'Game File ('+ (i+1) +' of '+ (game ? len+1 : len) +')',
-             url = get_zip_url(game);
-         files.push(cfgr.mountZip(drive, cfgr.fetchFile(title, url)));
-       }
-
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           drives[default_drive] = file.name;
+                                                                         });
+       meta_props_matching(meta, /^dosbox_drive_([a-zA-Z])$/).forEach(function (result) {
+                                                                        let key = result[0], match = result[1];
+                                                                        drives[match[1]] = meta[key];
+                                                                      });
+       var mounts = Object.keys(drives),
+           len = mounts.length;
+       mounts.forEach(function (drive, i) {
+                        var title = "Game File ("+ (i+1) +" of "+ len +")",
+                            filename = drives[drive],
+                            url = (filename.includes("/")) ? get_zip_url(filename)
+                                                           : get_zip_url(filename, get_item_name(game));
+                            if (filename.toLowerCase().endsWith(".zip")) {
+                              files.push(cfgr.mountZip(drive,
+                                                       cfgr.fetchFile(title, url)));
+                            } else {
+                              files.push(cfgr.mountFile('/'+ filename,
+                                                        cfgr.fetchFile(title, url)));
+                            }
+                      });
        return files;
      }
 
@@ -276,31 +274,17 @@ var Module = null;
        var meta = dict_from_xml(metadata),
            peripherals = {},
            game_files_counter = {};
-       list_from_xml(filelist).filter(function (node) {
-                                        return "getAttribute" in node;
-                                      })
-                              .map(function (node) {
-                                     var file = dict_from_xml(node);
-                                     file.name = node.getAttribute("name");
-                                     return file;
-                                   })
-                              .filter(function (file) {
-                                        return file.name.endsWith("." + meta.emulator_ext);
-                                      })
-                              .forEach(function (file, i) {
-                                         game_files_counter[file.name] = 1;
-                                         if (modulecfg.peripherals && modulecfg.peripherals[i]) {
-                                           peripherals[modulecfg.peripherals[i]] = file.name;
-                                         }
-                                       });
-       Object.keys(meta).filter(function (k) {
-                                  return k.startsWith("mame_peripheral_");
-                                })
-                        .forEach(function (k) {
-                                   var periph = k.match(/^mame_peripheral_([a-zA-Z0-9]+)$/)[1];
-                                   peripherals[periph] = meta[k];
-                                   game_files_counter[meta[k]] = 1;
-                                 });
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           game_files_counter[file.name] = 1;
+                                                                           if (modulecfg.peripherals && modulecfg.peripherals[i]) {
+                                                                             peripherals[modulecfg.peripherals[i]] = file.name;
+                                                                           }
+                                                                         });
+       meta_props_matching(meta, /^mame_peripheral_([a-zA-Z0-9]+)$/).forEach(function (result) {
+                                                                               let key = result[0], match = result[1];
+                                                                               peripherals[match[1]] = meta[key];
+                                                                               game_files_counter[meta[key]] = 1;
+                                                                             });
 
        var game_files = Object.keys(game_files_counter),
            len = game_files.length;
@@ -334,18 +318,8 @@ var Module = null;
                             }
                           });
 
-       var ext = dict_from_xml(metadata).emulator_ext;
-       var game_files = list_from_xml(filelist).map(function (node) {
-                                                      if ("getAttribute" in node) {
-                                                        var file = dict_from_xml(node);
-                                                        file.name = node.getAttribute("name");
-                                                        return file;
-                                                      }
-                                                      return null;
-                                                    })
-                                               .filter(function (file) {
-                                                         return file && file.name.endsWith("." + ext);
-                                                       });
+       var meta = dict_from_xml(metadata),
+           game_files = files_with_ext_from_filelist(filelist, meta.emulator_ext);
        game_files.forEach(function (file, i) {
                             if (file) {
                               var title = "Game File ("+ (i+1) +" of "+ game_files.length +")",
@@ -377,29 +351,15 @@ var Module = null;
 
        var meta = dict_from_xml(metadata),
            game_files_counter = {};
-       list_from_xml(filelist).filter(function (node) {
-                                        return "getAttribute" in node;
-                                      })
-                              .map(function (node) {
-                                     var file = dict_from_xml(node);
-                                     file.name = node.getAttribute("name");
-                                     return file;
-                                   })
-                              .filter(function (file) {
-                                        return file.name.endsWith("." + meta.emulator_ext);
-                                      })
-                              .forEach(function (file, i) {
-                                         if (modulecfg.peripherals && modulecfg.peripherals[i]) {
-                                           game_files_counter[file.name] = modulecfg.peripherals[i];
-                                         }
-                                       });
-       Object.keys(meta).filter(function (k) {
-                                  return k.startsWith("pce_drive_");
-                                })
-                        .forEach(function (k) {
-                                   var periph = k.match(/^pce_drive_([a-zA-Z0-9]+)$/)[1];
-                                   game_files_counter[meta[k]] = periph;
-                                 });
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           if (modulecfg.peripherals && modulecfg.peripherals[i]) {
+                                                                             game_files_counter[file.name] = modulecfg.peripherals[i];
+                                                                           }
+                                                                         });
+       meta_props_matching(meta, /^pce_drive_([a-zA-Z0-9]+)$/).forEach(function (result) {
+                                                                         var key = result[0], periph = result[1][1];
+                                                                         game_files_counter[meta[key]] = periph;
+                                                                       });
 
        var game_files = Object.keys(game_files_counter),
            len = game_files.length;
@@ -1599,6 +1559,41 @@ var Module = null;
        xml = xml.documentElement;
      }
      return Array.prototype.slice.call(xml.childNodes);
+   }
+
+   function files_from_filelist(xml) {
+     return list_from_xml(xml).filter(function (node) {
+                                        return "getAttribute" in node;
+                                      })
+                              .map(function (node) {
+                                     var file = dict_from_xml(node);
+                                     file.name = node.getAttribute("name");
+                                     return file;
+                              });
+   }
+
+   function files_with_ext_from_filelist(xml, ext) {
+     if (!ext.startsWith('.')) {
+       ext = '.'+ ext;
+     }
+     ext = ext.toLowerCase();
+     return files_from_filelist(xml).filter(function (file) {
+                                              return file.name.toLowerCase().endsWith(ext);
+                                            });
+   }
+
+   function meta_props_matching(meta, regex) {
+     if (typeof regex == "string")
+       regex = RegExp(regex);
+     return Object.keys(meta).map(function (k) {
+                                    let match = regex.exec(k);
+                                    if (match)
+                                      return [k, match];
+                                    return null;
+                                  })
+                             .filter(function (result) {
+                               return !!result;
+                             });
    }
 
    function _SDL_CreateRGBSurfaceFrom(pixels, width, height, depth, pitch, rmask, gmask, bmask, amask) {
