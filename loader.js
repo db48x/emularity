@@ -511,6 +511,7 @@ var Module = null;
    function DosBoxLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
+     config.runner = EmscriptenRunner;
      return config;
    }
    DosBoxLoader.__proto__ = BaseLoader;
@@ -531,6 +532,7 @@ var Module = null;
      config.emulator_arguments = build_mame_arguments(config.muted, config.mame_driver,
                                                       config.nativeResolution, config.sample_rate,
                                                       config.peripheral, config.extra_mame_args);
+     config.runner = EmscriptenRunner;
      return config;
    }
    MAMELoader.__proto__ = BaseLoader;
@@ -656,6 +658,86 @@ var Module = null;
      return args;
    };
 
+   /*
+    * EmscriptenRunner
+    */
+   function EmscriptenRunner(canvas, game_data) {
+     var self = this;
+     this._hooks = { start: [], reset: [] };
+     // This is somewhat wrong, because our Emscripten-based emulators
+     // are currently compiled to start immediately when their js file
+     // is loaded.
+     Module = { arguments: game_data.emulator_arguments,
+                screenIsReadOnly: true,
+                print: function (text) { console.log(text); },
+                printErr: function (text) { console.log(text); },
+                canvas: canvas,
+                noInitialRun: false,
+                locateFile: game_data.locateAdditionalJS,
+                wasmBinary: game_data.wasmBinary,
+                preInit: function () {
+                           // Re-initialize BFS to just use the writable in-memory storage.
+                           BrowserFS.initialize(game_data.fs);
+                           var BFS = new BrowserFS.EmscriptenFS();
+                           // Mount the file system into Emscripten.
+                           FS.mkdir('/emulator');
+                           FS.mount(BFS, {root: '/'}, '/emulator');
+                         },
+                preRun: [function () {
+                            self._hooks.start.forEach(function (f) {
+                                                        //try {
+                                                          f && f();
+                                                        //} catch(x) {
+                                                        //  console.warn(x);
+                                                        //}
+                                                      });
+                          }]
+              };
+   }
+
+   EmscriptenRunner.prototype.start = function () {
+   };
+
+   EmscriptenRunner.prototype.pause = function () {
+   };
+
+   EmscriptenRunner.prototype.stop = function () {
+   };
+
+   EmscriptenRunner.prototype.mute = function () {
+     try {
+       if (!SDL_PauseAudio)
+         SDL_PauseAudio = Module.cwrap('SDL_PauseAudio', '', ['number']);
+         SDL_PauseAudio(true);
+     } catch (x) {
+       console.log("Unable to change audio state:", x);
+     }
+   };
+
+   EmscriptenRunner.prototype.unmute = function () {
+     try {
+       if (!SDL_PauseAudio)
+         SDL_PauseAudio = Module.cwrap('SDL_PauseAudio', '', ['number']);
+       SDL_PauseAudio(false);
+     } catch (x) {
+       console.log("Unable to change audio state:", x);
+     }
+   };
+
+   EmscriptenRunner.prototype.onStarted = function (func) {
+     this._hooks.start.push(func);
+   };
+
+   EmscriptenRunner.prototype.onReset = function (func) {
+     this._hooks.reset.push(func);
+   };
+
+   EmscriptenRunner.prototype.requestFullScreen = function () {
+   };
+
+   /*
+    * SAERunner
+    */
    function SAERunner(canvas, game_data) {
      this._sae = new ScriptedAmigaEmulator();
      this._cfg = this._sae.getConfig();
@@ -1059,8 +1141,6 @@ var Module = null;
                       canvas.requestPointerLock = getpointerlockenabler();
 
                       moveConfigToRoot(game_data.fs);
-                      Module = init_module(game_data.emulator_arguments, game_data.fs, game_data.locateAdditionalJS,
-                                           game_data.nativeResolution, game_data.aspectRatio, game_data.wasmBinary);
 
                       if (callbacks && callbacks.before_emulator) {
                         try {
@@ -1069,6 +1149,18 @@ var Module = null;
                           console.log(x);
                         }
                       }
+
+                      if ("runner" in game_data) {
+                        if (game_data.runner == EmscriptenRunner) {
+                          // this is a stupid hack. Emscripten-based
+                          // apps currently need the runner to be set
+                          // up first, then we can attach the
+                          // script. The others have to do it the
+                          // other way around.
+                          runner = setup_runner();
+                        }
+                      }
+
                       if (game_data.emulatorJS) {
                         splash.setTitle("Launching Emulator");
                         return attach_script(game_data.emulatorJS);
@@ -1089,54 +1181,37 @@ var Module = null;
                         return null;
                       }
                       if ("runner" in game_data) {
-                        runner = new game_data.runner(canvas, game_data);
-                        resizeCanvas(canvas, 1, game_data.nativeResolution, game_data.aspectRatio);
-                        runner.onStarted(function () {
-                                           splash.finished_loading = true;
-                                           splash.hide();
-                                         });
-                        runner.onReset(function () {
-                                         if (muted) {
-                                           runner.mute();
-                                         }
-                                       });
+                        if (!runner) {
+                          runner = setup_runner();
+                        }
                         runner.start();
                       }
                     });
+
+       function setup_runner() {
+         var runner = new game_data.runner(canvas, game_data);
+         resizeCanvas(canvas, 1, game_data.nativeResolution, game_data.aspectRatio);
+         runner.onStarted(function () {
+                            splash.finished_loading = true;
+                            splash.hide();
+                            if (callbacks && callbacks.before_run) {
+                              setTimeout(function() {
+                                           callbacks.before_run();
+                                         },
+                                         0);
+                            }
+                          });
+         runner.onReset(function () {
+                          if (muted) {
+                            runner.mute();
+                          }
+                        });
+         return runner;
+       }
+
        return this;
      };
      this.start = start;
-
-     var init_module = function(args, fs, locateAdditionalJS, nativeResolution, aspectRatio, wasmBinary) {
-       return { arguments: args,
-                screenIsReadOnly: true,
-                print: function (text) { console.log(text); },
-                canvas: canvas,
-                noInitialRun: false,
-                locateFile: locateAdditionalJS,
-                wasmBinary: wasmBinary,
-                preInit: function () {
-                           splash.setTitle("Loading game file(s) into file system");
-                           // Re-initialize BFS to just use the writable in-memory storage.
-                           BrowserFS.initialize(fs);
-                           var BFS = new BrowserFS.EmscriptenFS();
-                           // Mount the file system into Emscripten.
-                           FS.mkdir('/emulator');
-                           FS.mount(BFS, {root: '/'}, '/emulator');
-                           splash.finished_loading = true;
-                           splash.hide();
-                           setTimeout(function () {
-                                        resizeCanvas(canvas,
-                                                     scale = scale || scale,
-                                                     css_resolution = nativeResolution || css_resolution,
-                                                     aspectRatio = aspectRatio || aspectRatio);
-                                      });
-                           if (callbacks && callbacks.before_run) {
-                             window.setTimeout(function() { callbacks.before_run(); }, 0);
-                           }
-                         }
-              };
-     };
 
      var formatSize = function (event) {
        if (event.lengthComputable)
