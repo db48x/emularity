@@ -173,6 +173,10 @@ var Module = null;
                                                           cfgr.aspectRatio(nr[0] / nr[1]),
                                                           cfgr.sampleRate(SAMPLE_RATE)];
 
+                                           if ('keepAspect' in cfgr) {
+                                             cfgr.keepAspect(modulecfg.keepAspect);
+                                           }
+
                                            if (/archive\.org$/.test(document.location.hostname)) {
                                              cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')));
                                            }
@@ -531,7 +535,8 @@ var Module = null;
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mame_arguments(config.muted, config.mame_driver,
                                                       config.nativeResolution, config.sample_rate,
-                                                      config.peripheral, config.extra_mame_args);
+                                                      config.peripheral, config.extra_mame_args,
+                                                      config.keep_aspect);
      config.runner = EmscriptenRunner;
      return config;
    }
@@ -545,6 +550,10 @@ var Module = null;
      var p = {};
      p[peripheral] = [game];
      return { peripheral: p };
+   };
+
+   MAMELoader.keepAspect = function (keep) {
+     return { keep_aspect: !!keep };
    };
 
    MAMELoader.extraArgs = function (args) {
@@ -601,12 +610,12 @@ var Module = null;
      return { pceModel: model };
    };
 
-   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args) {
+   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect) {
      var args = [driver,
                  '-verbose',
                  '-rompath', 'emulator',
                  '-window',
-                 '-nokeepaspect'];
+                 keepaspect ? '-keepaspect' : '-nokeepaspect'];
 
      if (native_resolution && "width" in native_resolution && "height" in native_resolution) {
        args.push('-resolution', [native_resolution.width, native_resolution.height].join('x'));
