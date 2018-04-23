@@ -537,7 +537,7 @@ var Module = null;
                                                       config.nativeResolution, config.sample_rate,
                                                       config.peripheral, config.extra_mame_args,
                                                       config.keep_aspect);
-     config.runner = EmscriptenRunner;
+     config.runner = MAMERunner;
      return config;
    }
    MAMELoader.__proto__ = BaseLoader;
@@ -602,6 +602,7 @@ var Module = null;
    function PCELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = ["-c", "/emulator/pce-"+ config.pceModel +".cfg"];
+     config.runner = EmscriptenRunner;
      return config;
    }
    PCELoader.__proto__ = BaseLoader;
@@ -717,7 +718,7 @@ var Module = null;
      try {
        if (!SDL_PauseAudio)
          SDL_PauseAudio = Module.cwrap('SDL_PauseAudio', '', ['number']);
-         SDL_PauseAudio(true);
+       SDL_PauseAudio(true);
      } catch (x) {
        console.log("Unable to change audio state:", x);
      }
@@ -742,6 +743,26 @@ var Module = null;
    };
 
    EmscriptenRunner.prototype.requestFullScreen = function () {
+   };
+
+   /*
+    * MAMERunner
+    */
+   function MAMERunner() {
+     return EmscriptenRunner.apply(this, arguments);
+   }
+   MAMERunner.__proto__ = EmscriptenRunner;
+
+   MAMERunner.prototype.mute = function () {
+     Module.__ZN13sound_manager4muteEbh(Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv()),
+                                        true,
+                                        0x02); // MUTE_REASON_UI
+   };
+
+   MAMERunner.prototype.unmute = function () {
+     Module.__ZN13sound_manager4muteEbh(Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv()),
+                                        false,
+                                        0x02); // MUTE_REASON_UI
    };
 
    /*
