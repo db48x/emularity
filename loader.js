@@ -751,19 +751,21 @@ var Module = null;
    function MAMERunner() {
      return EmscriptenRunner.apply(this, arguments);
    }
-   MAMERunner.__proto__ = EmscriptenRunner;
-
-   MAMERunner.prototype.mute = function () {
-     Module.__ZN13sound_manager4muteEbh(Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv()),
-                                        true,
-                                        0x02); // MUTE_REASON_UI
-   };
-
-   MAMERunner.prototype.unmute = function () {
-     Module.__ZN13sound_manager4muteEbh(Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv()),
-                                        false,
-                                        0x02); // MUTE_REASON_UI
-   };
+   MAMERunner.prototype = Object.create(EmscriptenRunner.prototype,
+                                        {
+                                          mute: function () {
+                                                  var soundmgr = Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv());
+                                                  Module.__ZN13sound_manager4muteEbh(soundmgr,
+                                                                                     true,
+                                                                                     0x02); // MUTE_REASON_UI
+                                                },
+                                          unmute: function () {
+                                                    var soundmgr = Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv());
+                                                    Module.__ZN13sound_manager4muteEbh(soundmgr,
+                                                                                       false,
+                                                                                       0x02); // MUTE_REASON_UI
+                                                  }
+                                        });
 
    /*
     * SAERunner
@@ -1181,7 +1183,7 @@ var Module = null;
                       }
 
                       if ("runner" in game_data) {
-                        if (game_data.runner == EmscriptenRunner) {
+                        if (game_data.runner == EmscriptenRunner || game_data.runner == MAMERunner) {
                           // this is a stupid hack. Emscripten-based
                           // apps currently need the runner to be set
                           // up first, then we can attach the
