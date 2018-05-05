@@ -1680,6 +1680,9 @@ var Module = null;
    }
 
    function files_with_ext_from_filelist(xml, ext) {
+     if (!ext) {
+       return [];
+     }
      if (!ext.startsWith('.')) {
        ext = '.'+ ext;
      }
