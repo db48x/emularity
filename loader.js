@@ -564,6 +564,15 @@ var Module = null;
    MAMELoader.extraArgs = function (args) {
      return { extra_mame_args: args };
    };
+   
+   /**
+    * VICELoader
+    */
+    function VICELoader() {
+      var config = Array.prototype.reduce.call(arguments, extend);
+      config.runner = VICERunner;
+    }
+    VICELoader.__proto__ = BaseLoader;
 
    /**
     * SAELoader
