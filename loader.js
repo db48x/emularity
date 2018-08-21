@@ -154,6 +154,11 @@ var Module = null;
                                              cfgr = PCELoader;
                                              get_files = get_pce_files;
                                            }
+                                           else if (module && module.indexOf("vice-") === 0) {
+                                             emulator_logo = images.ia; // TODO: Use VICE or C64 logo
+                                             cfgr = VICELoader;
+                                             get_files = get_vice_files;
+                                           }
                                            else if (module) {
                                              emulator_logo = images.mame;
                                              cfgr = MAMELoader;
