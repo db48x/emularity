@@ -190,6 +190,11 @@ var Module = null;
                                              config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
                                                                                     .item(0)
                                                                                     .textContent));
+                                           } else if (module && module.indexOf("vice-") === 0) {
+                                             config_args.push(cfgr.autoLoad(metadata.getElementsByTagName("emulator_start")
+                                                                                    .item(0)
+                                                                                    .textContent));
+                                           }
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
@@ -247,6 +252,35 @@ var Module = null;
                                                                            drives[default_drive] = file.name;
                                                                          });
        meta_props_matching(meta, /^dosbox_drive_([a-zA-Z])$/).forEach(function (result) {
+                                                                        let key = result[0], match = result[1];
+                                                                        drives[match[1]] = meta[key];
+                                                                      });
+       var mounts = Object.keys(drives),
+           len = mounts.length;
+       mounts.forEach(function (drive, i) {
+                        var title = "Game File ("+ (i+1) +" of "+ len +")",
+                            filename = drives[drive],
+                            url = (filename.includes("/")) ? get_zip_url(filename)
+                                                           : get_zip_url(filename, get_item_name(game));
+                            if (filename.toLowerCase().endsWith(".zip")) {
+                              files.push(cfgr.mountZip(drive,
+                                                       cfgr.fetchFile(title, url)));
+                            } else {
+                              files.push(cfgr.mountFile('/'+ filename,
+                                                        cfgr.fetchFile(title, url)));
+                            }
+                      });
+       return files;
+     }
+     
+     function get_vice_files(cfgr, metadata, modulecfg, filelist) {
+       var default_drive = "8", 
+           drives = {}, files = [],
+           meta = dict_from_xml(metadata);
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           drives[default_drive] = file.name;
+                                                                         });
+       meta_props_matching(meta, /^vice_drive_([89])$/).forEach(function (result) {
                                                                         let key = result[0], match = result[1];
                                                                         drives[match[1]] = meta[key];
                                                                       });
@@ -573,6 +607,10 @@ var Module = null;
       config.runner = VICERunner;
     }
     VICELoader.__proto__ = BaseLoader;
+    
+    VICELoader.autoLoad = function (path) {
+     return { emulatorStart: path };
+   };
 
    /**
     * SAELoader
