@@ -194,7 +194,6 @@ var Module = null;
                                              config_args.push(cfgr.autoLoad(metadata.getElementsByTagName("emulator_start")
                                                                                     .item(0)
                                                                                     .textContent));
-                                           }
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
@@ -223,7 +222,8 @@ var Module = null;
                                            updateLogo();
                                            resolve(cfgr.apply(null, extend(config_args, game_files)));
                                          },
-                                         function () {
+                                         function (e) {
+                                           console.log(e);
                                            if (splash.failed_loading) {
                                              return;
                                            }
@@ -275,29 +275,30 @@ var Module = null;
      
      function get_vice_files(cfgr, metadata, modulecfg, filelist) {
        var default_drive = "8", 
-           drives = {}, files = [],
+           drives = {}, files = [], wanted_files = []
            meta = dict_from_xml(metadata);
        files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
-                                                                           drives[default_drive] = file.name;
+                                                                           //drives[default_drive] = file.name;
+                                                                           wanted_files.push(file.name);
                                                                          });
        meta_props_matching(meta, /^vice_drive_([89])$/).forEach(function (result) {
                                                                         let key = result[0], match = result[1];
                                                                         drives[match[1]] = meta[key];
                                                                       });
-       var mounts = Object.keys(drives),
-           len = mounts.length;
-       mounts.forEach(function (drive, i) {
+       var len = wanted_files.length;
+       wanted_files.forEach(function (file, i) {
                         var title = "Game File ("+ (i+1) +" of "+ len +")",
-                            filename = drives[drive],
+                            filename = file,
                             url = (filename.includes("/")) ? get_zip_url(filename)
                                                            : get_zip_url(filename, get_item_name(game));
-                            if (filename.toLowerCase().endsWith(".zip")) {
-                              files.push(cfgr.mountZip(drive,
-                                                       cfgr.fetchFile(title, url)));
-                            } else {
+                            //if (filename.toLowerCase().endsWith(".zip")) {
+                            //  files.push(cfgr.mountZip(drive,
+                            //                           cfgr.fetchFile(title, url)));
+                            //} else {
+                            // TODO: ensure vice_drive_8 and vice_drive_9 actually function.
                               files.push(cfgr.mountFile('/'+ filename,
                                                         cfgr.fetchFile(title, url)));
-                            }
+                            //}
                       });
        return files;
      }
@@ -604,7 +605,9 @@ var Module = null;
     */
     function VICELoader() {
       var config = Array.prototype.reduce.call(arguments, extend);
-      config.runner = VICERunner;
+      config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
+      config.runner = EmscriptenRunner;
+      return config;
     }
     VICELoader.__proto__ = BaseLoader;
     
@@ -719,6 +722,14 @@ var Module = null;
 
      return args;
    };
+   
+   var build_vice_arguments = function (emulator_start, files, extra_args) {
+       var args = ["/emulator/" + emulator_start];
+       if(extra_args) {
+           args.append(extra_args);
+       }
+       return args;
+   }
 
    /*
     * EmscriptenRunner
@@ -729,6 +740,7 @@ var Module = null;
      // This is somewhat wrong, because our Emscripten-based emulators
      // are currently compiled to start immediately when their js file
      // is loaded.
+     console.log("arguments:", game_data.emulator_arguments);
      Module = { arguments: game_data.emulator_arguments,
                 screenIsReadOnly: true,
                 print: function (text) { console.log(text); },
