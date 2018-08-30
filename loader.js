@@ -294,14 +294,15 @@ var Module = null;
                             filename = file,
                             url = (filename.includes("/")) ? get_zip_url(filename)
                                                            : get_zip_url(filename, get_item_name(game));
-                            //if (filename.toLowerCase().endsWith(".zip")) {
-                            //  files.push(cfgr.mountZip(drive,
-                            //                           cfgr.fetchFile(title, url)));
-                            //} else {
-                            // TODO: ensure vice_drive_8 and vice_drive_9 actually function.
+                            console.log("Retrieving URL",url);
+                            if (filename.toLowerCase().endsWith(".zip")&&false) { // TODO: Enable and fix zip support.
+                              files.push(cfgr.mountZip("", // TODO: This is a hack, no drive actually applicable here
+                                                       cfgr.fetchFile(title, url)));
+                            } else {
+                             //TODO: ensure vice_drive_8 and vice_drive_9 actually function.
                               files.push(cfgr.mountFile('/'+ filename,
                                                         cfgr.fetchFile(title, url)));
-                            //}
+                            }
                       });
        return files;
      }
