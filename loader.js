@@ -154,7 +154,7 @@ var Module = null;
                                              cfgr = PCELoader;
                                              get_files = get_pce_files;
                                            }
-                                           else if (module && module.indexOf("vice-") === 0) {
+                                           else if (module && module.indexOf("vice") === 0) {
                                              emulator_logo = images.ia; // TODO: Use VICE or C64 logo
                                              cfgr = VICELoader;
                                              get_files = get_vice_files;
@@ -191,7 +191,7 @@ var Module = null;
                                              config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
                                                                                     .item(0)
                                                                                     .textContent));
-                                           } else if (module && module.indexOf("vice-") === 0) {
+                                           } else if (module && module.indexOf("vice") === 0) {
                                              let emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
                                              if (emulator_start_item) {
                                                config_args.push(cfgr.autoLoad(emulator_start_item.textContent));
