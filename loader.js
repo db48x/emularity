@@ -181,6 +181,7 @@ var Module = null;
                                            if ('keepAspect' in cfgr) {
                                              cfgr.keepAspect(modulecfg.keepAspect);
                                            }
+                                           console.log("modulecfg", modulecfg);
 
                                            if (/archive\.org$/.test(document.location.hostname)) {
                                              cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')));
@@ -191,9 +192,11 @@ var Module = null;
                                                                                     .item(0)
                                                                                     .textContent));
                                            } else if (module && module.indexOf("vice-") === 0) {
-                                             config_args.push(cfgr.autoLoad(metadata.getElementsByTagName("emulator_start")
-                                                                                    .item(0)
-                                                                                    .textContent));
+                                             let emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
+                                             if (emulator_start_item) {
+                                               config_args.push(cfgr.autoLoad(emulator_start_item.textContent));
+                                             }
+                                             config_args.push(cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
@@ -605,7 +608,8 @@ var Module = null;
     */
     function VICELoader() {
       var config = Array.prototype.reduce.call(arguments, extend);
-      config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
+      console.log("VICELoader config", config);
+      config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.extra_vice_args);
       config.runner = EmscriptenRunner;
       return config;
     }
@@ -613,7 +617,10 @@ var Module = null;
     
     VICELoader.autoLoad = function (path) {
      return { emulatorStart: path };
-   };
+    };
+    VICELoader.extraArgs = function (args) {
+      return { extra_vice_args: args };
+    }
 
    /**
     * SAELoader
@@ -724,10 +731,11 @@ var Module = null;
    };
    
    var build_vice_arguments = function (emulator_start, files, extra_args) {
-       var args = ["/emulator/" + emulator_start];
+       var args = emulator_start ? ["-autostart", "/emulator/" + emulator_start] : [];
        if(extra_args) {
-           args.append(extra_args);
+           args = args.concat(extra_args);
        }
+       console.log("build_vice_arguments result", args);
        return args;
    }
 
