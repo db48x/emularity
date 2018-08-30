@@ -1,0 +1,7 @@
+* Add logo
+* Define get_vice_files: This is where to add support for metadata entries (ala dosbox_drive_d) [done, imperfectly]
+* Define VICELoader
+* Define VICERunner
+* Add entry in config_args push area (don't fall through to MAME)
+* Check if "this is a stupid hack" applies to VICE
+* Useful hardcoded IA entries: https://archive.org/details/emularity_engine_v1 
