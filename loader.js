@@ -181,7 +181,6 @@ var Module = null;
                                            if ('keepAspect' in cfgr) {
                                              cfgr.keepAspect(modulecfg.keepAspect);
                                            }
-                                           console.log("modulecfg", modulecfg);
 
                                            if (/archive\.org$/.test(document.location.hostname)) {
                                              cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')));
@@ -226,7 +225,6 @@ var Module = null;
                                            resolve(cfgr.apply(null, extend(config_args, game_files)));
                                          },
                                          function (e) {
-                                           console.log(e);
                                            if (splash.failed_loading) {
                                              return;
                                            }
@@ -609,7 +607,6 @@ var Module = null;
     */
     function VICELoader() {
       var config = Array.prototype.reduce.call(arguments, extend);
-      console.log("VICELoader config", config);
       config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.extra_vice_args);
       config.runner = EmscriptenRunner;
       return config;
@@ -736,7 +733,6 @@ var Module = null;
        if(extra_args) {
            args = args.concat(extra_args);
        }
-       console.log("build_vice_arguments result", args);
        return args;
    }
 
@@ -749,7 +745,6 @@ var Module = null;
      // This is somewhat wrong, because our Emscripten-based emulators
      // are currently compiled to start immediately when their js file
      // is loaded.
-     console.log("arguments:", game_data.emulator_arguments);
      Module = { arguments: game_data.emulator_arguments,
                 screenIsReadOnly: true,
                 print: function (text) { console.log(text); },
