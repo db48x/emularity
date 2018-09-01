@@ -58,7 +58,8 @@ var Module = null;
                   mess: img("/images/mame.png"),
                   dosbox: img("/images/dosbox.png"),
                   sae: img("/images/sae.png"),
-                  pce: img("/images/pce.png")
+                  pce: img("/images/pce.png"),
+                  vice: img("/images/vice.svg")
                 };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
@@ -66,7 +67,8 @@ var Module = null;
                   mess: img("other_logos/mame.png"),
                   dosbox: img("other_logos/dosbox.png"),
                   sae: img("other_logos/sae.png"),
-                  pce: img("other_logos/pce.png")
+                  pce: img("other_logos/pce.png"),
+                  vice: img("other_logos/vice.svg")
                 };
      }
 
@@ -155,7 +157,7 @@ var Module = null;
                                              get_files = get_pce_files;
                                            }
                                            else if (module && module.indexOf("vice") === 0) {
-                                             emulator_logo = images.ia; // TODO: Use VICE or C64 logo
+                                             emulator_logo = images.vice;
                                              cfgr = VICELoader;
                                              get_files = get_vice_files;
                                            }
