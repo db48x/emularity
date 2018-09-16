@@ -10,14 +10,19 @@
    are required. The logo and images directories are optional, but the
    splash screen looks quite a lot better when they're available.
 
- * Download the two files that comprise the compiled DosBox emulator:
-   https://archive.org/download/emularity_engine_v1/dosbox-sync.js.gz,
-   and https://archive.org/download/emularity_engine_v1/dosbox-sync.mem.gz.
+ * Download the files that comprise the compiled DosBox-X (PC-9821) emulator:
+   http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/dosbox-x.js,
+   and http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/dosbox-x.wasm.
 
- * Download a copy of Doom from https://archive.org/download/DoomsharewareEpisode/DoomV1.9sw1995idSoftwareInc.action.zip
+ * Download a package of Japanese fonts file, YM2608 sound samples and default dosbox.conf
+   http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/font.zip
 
- * Visit your example_dosbox.html file with a modern
+ * Download a copy of Touhou Reiiden from http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/th1.zip
+
+ * Visit your example_pc98dosbox.html file with a modern
    Javascript-capable browser.
+
+ * For more information about the DOSBox-X Emscripten port, please see https://yksoft1.github.io/dosboxxem-demo/
 -->
 
 <html>
@@ -40,7 +45,7 @@
 
           PC98DosBoxLoader.mountZip("c",
             PC98DosBoxLoader.fetchFile("Game File",
-              "examples/th02.zip")),
+              "examples/th1.zip")),
           PC98DosBoxLoader.mountZip("y",
             PC98DosBoxLoader.fetchFile("ROM File",
               "examples/font.zip")),
