@@ -842,13 +842,14 @@ var Module = null;
   }
   PC98DosBoxRunner.prototype = Object.create(EmscriptenRunner.prototype);
   PC98DosBoxRunner.prototype.start = function () {
-    FS.symlink('./emulator/y/FONT.ROM', '/FONT.ROM');
-    FS.symlink('./emulator/y/2608_bd.wav', '/2608_bd.wav');
-    FS.symlink('./emulator/y/2608_hh.wav', '/2608_hh.wav');
-    FS.symlink('./emulator/y/2608_sd.wav', '/2608_sd.wav');
-    FS.symlink('./emulator/y/2608_rim.wav', '/2608_rim.wav');
-    FS.symlink('./emulator/y/2608_tom.wav', '/2608_tom.wav');
-    FS.symlink('./emulator/y/2608_top.wav', '/2608_top.wav');
+    FS.symlink('/emulator/y/dosbox-default.conf', '/dosbox.conf');
+    FS.symlink('/emulator/y/FONT.ROM', '/FONT.ROM');
+    FS.symlink('/emulator/y/2608_bd.wav', '/2608_bd.wav');
+    FS.symlink('/emulator/y/2608_hh.wav', '/2608_hh.wav');
+    FS.symlink('/emulator/y/2608_sd.wav', '/2608_sd.wav');
+    FS.symlink('/emulator/y/2608_rim.wav', '/2608_rim.wav');
+    FS.symlink('/emulator/y/2608_tom.wav', '/2608_tom.wav');
+    FS.symlink('/emulator/y/2608_top.wav', '/2608_top.wav');
   }
 
    /*
