@@ -573,6 +573,25 @@ var Module = null;
    };
 
    /**
+    * PC98DosBoxLoader
+    */
+   function PC98DosBoxLoader() {
+    var config = Array.prototype.reduce.call(arguments, extend);
+    config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
+    config.runner = PC98DosBoxRunner;
+    return config;
+  }
+  PC98DosBoxLoader.__proto__ = BaseLoader;
+
+  PC98DosBoxLoader.startExe = function (path) {
+    return { emulatorStart: path };
+  };
+
+  PC98DosBoxLoader.extraArgs = function (args) {
+    return { extra_dosbox_args: args };
+  };
+
+   /**
     * MAMELoader
     */
    function MAMELoader() {
@@ -814,6 +833,23 @@ var Module = null;
 
    EmscriptenRunner.prototype.requestFullScreen = function () {
    };
+
+   /*
+    * PC98DosBoxRunner
+    */
+  function PC98DosBoxRunner() {
+    return EmscriptenRunner.apply(this, arguments);
+  }
+  PC98DosBoxRunner.prototype = Object.create(EmscriptenRunner.prototype);
+  PC98DosBoxRunner.prototype.start = function () {
+    FS.symlink('./emulator/y/FONT.ROM', '/FONT.ROM');
+    FS.symlink('./emulator/y/2608_bd.wav', '/2608_bd.wav');
+    FS.symlink('./emulator/y/2608_hh.wav', '/2608_hh.wav');
+    FS.symlink('./emulator/y/2608_sd.wav', '/2608_sd.wav');
+    FS.symlink('./emulator/y/2608_rim.wav', '/2608_rim.wav');
+    FS.symlink('./emulator/y/2608_tom.wav', '/2608_tom.wav');
+    FS.symlink('./emulator/y/2608_top.wav', '/2608_top.wav');
+  }
 
    /*
     * MAMERunner
@@ -1253,7 +1289,7 @@ var Module = null;
                       }
 
                       if ("runner" in game_data) {
-                        if (game_data.runner == EmscriptenRunner || game_data.runner == MAMERunner) {
+                        if (game_data.runner == EmscriptenRunner || game_data.runner == MAMERunner || game_data.runner == PC98DosBoxRunner) {
                           // this is a stupid hack. Emscripten-based
                           // apps currently need the runner to be set
                           // up first, then we can attach the
@@ -1803,6 +1839,7 @@ var Module = null;
 
    window.IALoader = IALoader;
    window.DosBoxLoader = DosBoxLoader;
+   window.PC98DosBoxLoader = PC98DosBoxLoader;
    window.JSMESSLoader = MAMELoader; // depreciated; just for backwards compatibility
    window.JSMAMELoader = MAMELoader; // ditto
    window.MAMELoader = MAMELoader;
