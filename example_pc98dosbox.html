@@ -42,7 +42,12 @@
           PC98DosBoxLoader.emulatorWASM("emulators/dosbox-x/dosbox.wasm"),
           PC98DosBoxLoader.locateAdditionalEmulatorJS(locateAdditionalFiles),
           PC98DosBoxLoader.nativeResolution(640, 480),
-
+          /* DOSBox-X seems like always need a doxbox.conf to run in PC-98 mode correctly, load your dosbox.conf
+             when it is not include in your game package
+          PC98DosBoxLoader.mountFile("dosbox.conf",
+            PC98DosBoxLoader.fetchFile("Configuration File",
+              "dosbox.conf")),
+          */
           PC98DosBoxLoader.mountZip("c",
             PC98DosBoxLoader.fetchFile("Game File",
               "examples/th1.zip")),

@@ -842,7 +842,6 @@ var Module = null;
   }
   PC98DosBoxRunner.prototype = Object.create(EmscriptenRunner.prototype);
   PC98DosBoxRunner.prototype.start = function () {
-    FS.symlink('/emulator/y/dosbox-default.conf', '/dosbox.conf');
     FS.symlink('/emulator/y/FONT.ROM', '/FONT.ROM');
     FS.symlink('/emulator/y/2608_bd.wav', '/2608_bd.wav');
     FS.symlink('/emulator/y/2608_hh.wav', '/2608_hh.wav');
@@ -1290,7 +1289,7 @@ var Module = null;
                       }
 
                       if ("runner" in game_data) {
-                        if (game_data.runner == EmscriptenRunner || game_data.runner == MAMERunner || game_data.runner == PC98DosBoxRunner) {
+                        if (game_data.runner == EmscriptenRunner || game_data.runner.prototype instanceof EmscriptenRunner) {
                           // this is a stupid hack. Emscripten-based
                           // apps currently need the runner to be set
                           // up first, then we can attach the
