@@ -58,7 +58,8 @@ var Module = null;
                   mess: img("/images/mame.png"),
                   dosbox: img("/images/dosbox.png"),
                   sae: img("/images/sae.png"),
-                  pce: img("/images/pce.png")
+                  pce: img("/images/pce.png"),
+                  vice: img("/images/vice.svg")
                 };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
@@ -66,7 +67,8 @@ var Module = null;
                   mess: img("other_logos/mame.png"),
                   dosbox: img("other_logos/dosbox.png"),
                   sae: img("other_logos/sae.png"),
-                  pce: img("other_logos/pce.png")
+                  pce: img("other_logos/pce.png"),
+                  vice: img("other_logos/vice.svg")
                 };
      }
 
@@ -155,7 +157,7 @@ var Module = null;
                                              get_files = get_pce_files;
                                            }
                                            else if (module && module.indexOf("vice") === 0) {
-                                             emulator_logo = images.ia; // TODO: Use VICE or C64 logo
+                                             emulator_logo = images.vice;
                                              cfgr = VICELoader;
                                              get_files = get_vice_files;
                                            }
@@ -571,6 +573,25 @@ var Module = null;
    };
 
    /**
+    * PC98DosBoxLoader
+    */
+   function PC98DosBoxLoader() {
+    var config = Array.prototype.reduce.call(arguments, extend);
+    config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
+    config.runner = PC98DosBoxRunner;
+    return config;
+  }
+  PC98DosBoxLoader.__proto__ = BaseLoader;
+
+  PC98DosBoxLoader.startExe = function (path) {
+    return { emulatorStart: path };
+  };
+
+  PC98DosBoxLoader.extraArgs = function (args) {
+    return { extra_dosbox_args: args };
+  };
+
+   /**
     * MAMELoader
     */
    function MAMELoader() {
@@ -812,6 +833,23 @@ var Module = null;
 
    EmscriptenRunner.prototype.requestFullScreen = function () {
    };
+
+   /*
+    * PC98DosBoxRunner
+    */
+  function PC98DosBoxRunner() {
+    return EmscriptenRunner.apply(this, arguments);
+  }
+  PC98DosBoxRunner.prototype = Object.create(EmscriptenRunner.prototype);
+  PC98DosBoxRunner.prototype.start = function () {
+    FS.symlink('/emulator/y/FONT.ROM', '/FONT.ROM');
+    FS.symlink('/emulator/y/2608_bd.wav', '/2608_bd.wav');
+    FS.symlink('/emulator/y/2608_hh.wav', '/2608_hh.wav');
+    FS.symlink('/emulator/y/2608_sd.wav', '/2608_sd.wav');
+    FS.symlink('/emulator/y/2608_rim.wav', '/2608_rim.wav');
+    FS.symlink('/emulator/y/2608_tom.wav', '/2608_tom.wav');
+    FS.symlink('/emulator/y/2608_top.wav', '/2608_top.wav');
+  }
 
    /*
     * MAMERunner
@@ -1251,7 +1289,7 @@ var Module = null;
                       }
 
                       if ("runner" in game_data) {
-                        if (game_data.runner == EmscriptenRunner || game_data.runner == MAMERunner) {
+                        if (game_data.runner == EmscriptenRunner || game_data.runner.prototype instanceof EmscriptenRunner) {
                           // this is a stupid hack. Emscripten-based
                           // apps currently need the runner to be set
                           // up first, then we can attach the
@@ -1801,6 +1839,7 @@ var Module = null;
 
    window.IALoader = IALoader;
    window.DosBoxLoader = DosBoxLoader;
+   window.PC98DosBoxLoader = PC98DosBoxLoader;
    window.JSMESSLoader = MAMELoader; // depreciated; just for backwards compatibility
    window.JSMAMELoader = MAMELoader; // ditto
    window.MAMELoader = MAMELoader;

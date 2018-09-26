@@ -1,0 +1,69 @@
+<!--
+ The Emularity: An Example Computer Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer using DosBox-X ("Touhou
+ Reiiden" for the PC).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Download the files that comprise the compiled DosBox-X (PC-9821) emulator:
+   http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/dosbox-x.js,
+   and http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/dosbox-x.wasm.
+
+ * Download a package of Japanese fonts file, YM2608 sound samples and default dosbox.conf
+   http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/font.zip
+
+ * Download a copy of Touhou Reiiden from http://jsemu.oss-cn-shanghai.aliyuncs.com/pc98dosbox/th1.zip
+
+ * Visit your example_pc98dosbox.html file with a modern
+   Javascript-capable browser.
+
+ * For more information about the DOSBox-X Emscripten port, please see https://yksoft1.github.io/dosboxxem-demo/
+-->
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>example dos game</title>
+  </head>
+  <body>
+    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"/>
+    <script type="text/javascript" src="es6-promise.js"></script>
+    <script type="text/javascript" src="browserfs.min.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <script type="text/javascript">
+      var emulator = new Emulator(document.querySelector("#canvas"),
+        null,
+        new PC98DosBoxLoader(PC98DosBoxLoader.emulatorJS("emulators/dosbox-x/dosbox.js"),
+          PC98DosBoxLoader.emulatorWASM("emulators/dosbox-x/dosbox.wasm"),
+          PC98DosBoxLoader.locateAdditionalEmulatorJS(locateAdditionalFiles),
+          PC98DosBoxLoader.nativeResolution(640, 480),
+          /* DOSBox-X seems like always need a doxbox.conf to run in PC-98 mode correctly, load your dosbox.conf
+             when it is not include in your game package
+          PC98DosBoxLoader.mountFile("dosbox.conf",
+            PC98DosBoxLoader.fetchFile("Configuration File",
+              "dosbox.conf")),
+          */
+          PC98DosBoxLoader.mountZip("c",
+            PC98DosBoxLoader.fetchFile("Game File",
+              "examples/th1.zip")),
+          PC98DosBoxLoader.mountZip("y",
+            PC98DosBoxLoader.fetchFile("ROM File",
+              "examples/font.zip")),
+
+          PC98DosBoxLoader.startExe("game.bat")))
+      emulator.start({ waitAfterDownloading: true });
+
+      function locateAdditionalFiles(filename) {
+        if (filename === "dosbox.html.mem") {
+          return "emulators/em-dosbox/dosbox-sync.mem";
+        }
+        return "emulators/dosbox-x/"+ filename;
+      }
+    </script>
+  </body>
+</html>
