@@ -194,9 +194,14 @@ var Module = null;
                                                                                     .textContent));
                                            } else if (module && module.indexOf("vice") === 0) {
                                              let emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
+                                             let vice_fliplist = [metadata.getElementsByTagName("vice_drive_8_fliplist").item(0),
+                                                                   metadata.getElementsByTagName("vice_drive_9_fliplist").item(0),
+                                                                   metadata.getElementsByTagName("vice_drive_10_fliplist").item(0),
+                                                                   metadata.getElementsByTagName("vice_drive_11_fliplist").item(0)];
                                              if (emulator_start_item) {
                                                config_args.push(cfgr.autoLoad(emulator_start_item.textContent));
                                              }
+                                             config_args.push(cfgr.fliplist(vice_fliplist));
                                              config_args.push(cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
@@ -288,6 +293,22 @@ var Module = null;
                                                                         let key = result[0], match = result[1];
                                                                         drives[match[1]] = meta[key];
                                                                       });
+       let fliplists = [];
+       meta_props_matching(meta, /^vice_drive_(8|9|10|11)_fliplist$/).forEach(function (result) {
+                                                                                      console.log(result);
+                                                                                      let key = result[0], match = parseInt(result[1][1], 10);
+                                                                                      fliplists[match-8] = meta[key].split(";").reverse();
+                                                                                    });
+       let fliplist = "# Vice fliplist file\n\n";
+       fliplists.forEach(function(drive_fliplist, i) {
+           if(drive_fliplist) {
+               fliplist += "UNIT " + (i + 8).toString() + "\n";
+               drive_fliplist.forEach(function(disk_image) {
+                   fliplist += "/emulator/" + disk_image + "\n";
+               });
+           }
+       });
+       files.push(cfgr.mountFile('/metadata_fliplist.vfl', cfgr.localFile("Fliplist", fliplist)));
        var len = wanted_files.length;
        wanted_files.forEach(function (file, i) {
                         var title = "Game File ("+ (i+1) +" of "+ len +")",
@@ -628,7 +649,7 @@ var Module = null;
     */
     function VICELoader() {
       var config = Array.prototype.reduce.call(arguments, extend);
-      config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.extra_vice_args);
+      config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.fliplist, config.extra_vice_args);
       config.runner = EmscriptenRunner;
       return config;
     }
@@ -639,7 +660,10 @@ var Module = null;
     };
     VICELoader.extraArgs = function (args) {
       return { extra_vice_args: args };
-    }
+    };
+    VICELoader.fliplist = function(fliplist) {
+        return { fliplist: fliplist };
+    };
 
    /**
     * SAELoader
@@ -749,8 +773,11 @@ var Module = null;
      return args;
    };
    
-   var build_vice_arguments = function (emulator_start, files, extra_args) {
+   var build_vice_arguments = function (emulator_start, files, fliplist, extra_args) {
        var args = emulator_start ? ["-autostart", "/emulator/" + emulator_start] : [];
+       if(fliplist[0] || fliplist[1] || fliplist[2] || fliplist[3]) {
+           args = args.concat(["-flipname", "/emulator/metadata_fliplist.vfl"]);
+       }
        if(extra_args) {
            args = args.concat(extra_args);
        }
