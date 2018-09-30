@@ -1,0 +1,65 @@
+<!--
+ The Emularity: An Example C64 Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer using ViceJS 3.2
+ ("Comaland" for the C64).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Download the files that comprise the compiled ViceJS emulator:
+   https://archive.org/download/emularity_engine_v1/vice-resid.js.gz
+
+ * Download a copy of Comaland 100% from
+   https://archive.org/download/comaland_100/image{1..4}.d64
+
+ * Visit your example_vicejs.html file with a modern
+   Javascript-capable browser.
+
+ * For more information about the DOSBox-X Emscripten port, please see
+   https://github.com/rjanicek/vice.js/ (for Vice 2.4), or Sgeo's
+   repository for Vice 3.2 (once he publishes it, hint hint).
+-->
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>example dos game</title>
+  </head>
+  <body>
+    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"/>
+    <script type="text/javascript" src="es6-promise.js"></script>
+    <script type="text/javascript" src="browserfs.min.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <script type="text/javascript">
+      var emulator = new Emulator(document.querySelector("#canvas"),
+                                  null,
+                                  new VICELoader(VICELoader.emulatorJS("emulators/vicejs/vice-resid.js"),
+                                                 VICELoader.nativeResolution(768, 544),
+                                                 VICELoader.extraArgs(["-soundfragsize", "4",
+                                                                       "-soundrate", "48000",
+                                                                       "-soundsync", "2",
+                                                                       "-soundbufsize", "150",
+                                                                       "-residsamp", "0",
+                                                                       "-joydev1", "4"]),
+                                                 VICELoader.mountFile("image1.d64",
+                                                                      VICELoader.fetchFile("Disc 1",
+                                                                                           "examples/comaland_100/image1.d64")),
+                                                 VICELoader.mountFile("image2.d64",
+                                                                      VICELoader.fetchFile("Disc 2",
+                                                                                           "examples/comaland_100/image2.d64")),
+                                                 VICELoader.mountFile("image3.d64",
+                                                                      VICELoader.fetchFile("Disc 3",
+                                                                                           "examples/comaland_100/image3.d64")),
+                                                 VICELoader.mountFile("image4.d64",
+                                                                      VICELoader.fetchFile("Disc 4",
+                                                                                           "examples/comaland_100/image4.d64")),
+                                                 VICELoader.fliplist([["image1.d64", "image2.d64", "image3.d64", "image4.d64"]]),
+                                                 VICELoader.autoLoad("image1.d64")))
+      emulator.start({ waitAfterDownloading: true });
+    </script>
+  </body>
+</html>
