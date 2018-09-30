@@ -194,21 +194,21 @@ var Module = null;
                                                                                     .textContent));
                                            } else if (module && module.indexOf("vice") === 0) {
                                              let emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
-                                             let vice_fliplist = [metadata.getElementsByTagName("vice_drive_8_fliplist").item(0),
+                                             let vice_fliplist = [ metadata.getElementsByTagName("vice_drive_8_fliplist").item(0),
                                                                    metadata.getElementsByTagName("vice_drive_9_fliplist").item(0),
                                                                    metadata.getElementsByTagName("vice_drive_10_fliplist").item(0),
-                                                                   metadata.getElementsByTagName("vice_drive_11_fliplist").item(0)];
+                                                                   metadata.getElementsByTagName("vice_drive_11_fliplist").item(0) ];
                                              if (emulator_start_item) {
                                                config_args.push(cfgr.autoLoad(emulator_start_item.textContent));
                                              }
                                              let fliplists = [];
                                              vice_fliplist.forEach(function (fliplist_meta) {
-                                                                                      if(!fliplist_meta) {
-                                                                                          fliplists.push(null);
-                                                                                      } else {
-                                                                                          fliplists.push(fliplist_meta.textContent.split(";"));
-                                                                                      }
-                                                                                    });
+                                                                     if(!fliplist_meta) {
+                                                                       fliplists.push(null);
+                                                                     } else {
+                                                                       fliplists.push(fliplist_meta.textContent.split(";"));
+                                                                     }
+                                                                   });
                                              config_args.push(cfgr.fliplist(fliplists));
                                              config_args.push(cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module && module.indexOf("sae-") === 0) {
@@ -288,37 +288,34 @@ var Module = null;
                       });
        return files;
      }
-     
+
      function get_vice_files(cfgr, metadata, modulecfg, filelist) {
-       var default_drive = "8", 
-           drives = {}, files = [], wanted_files = []
+       var default_drive = "8",
+           drives = {}, files = [], wanted_files = [],
            meta = dict_from_xml(metadata);
        files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
-                                                                           //drives[default_drive] = file.name;
                                                                            wanted_files.push(file.name);
                                                                          });
        meta_props_matching(meta, /^vice_drive_([89])$/).forEach(function (result) {
-                                                                        let key = result[0], match = result[1];
-                                                                        drives[match[1]] = meta[key];
-                                                                      });
+                                                                  let key = result[0], match = result[1];
+                                                                  drives[match[1]] = meta[key];
+                                                                });
 
-       
        var len = wanted_files.length;
        wanted_files.forEach(function (file, i) {
-                        var title = "Game File ("+ (i+1) +" of "+ len +")",
-                            filename = file,
-                            url = (filename.includes("/")) ? get_zip_url(filename)
-                                                           : get_zip_url(filename, get_item_name(game));
-                            console.log("Retrieving URL",url);
-                            if (filename.toLowerCase().endsWith(".zip")&&false) { // TODO: Enable and fix zip support.
-                              files.push(cfgr.mountZip("", // TODO: This is a hack, no drive actually applicable here
-                                                       cfgr.fetchFile(title, url)));
-                            } else {
-                             //TODO: ensure vice_drive_8 and vice_drive_9 actually function.
-                              files.push(cfgr.mountFile('/'+ filename,
-                                                        cfgr.fetchFile(title, url)));
-                            }
-                      });
+                              var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                  filename = file,
+                                  url = (filename.includes("/")) ? get_zip_url(filename)
+                                                                 : get_zip_url(filename, get_item_name(game));
+                              if (filename.toLowerCase().endsWith(".zip") && false) { // TODO: Enable and fix zip support.
+                                files.push(cfgr.mountZip("", // TODO: This is a hack, no drive actually applicable here
+                                                         cfgr.fetchFile(title, url)));
+                              } else {
+                                //TODO: ensure vice_drive_8 and vice_drive_9 actually function.
+                                files.push(cfgr.mountFile('/'+ filename,
+                                                          cfgr.fetchFile(title, url)));
+                              }
+                            });
        return files;
      }
 
@@ -637,21 +634,21 @@ var Module = null;
    MAMELoader.extraArgs = function (args) {
      return { extra_mame_args: args };
    };
-   
+
    /**
     * VICELoader
     */
     function VICELoader() {
       var config = Array.prototype.reduce.call(arguments, extend);
       if (config.fliplist) {
-          VICELoader.create_fliplist_file(config.files, config.fliplist);
+          VICELoader._create_fliplist_file(config.files, config.fliplist);
       }
       config.emulator_arguments = build_vice_arguments(config.emulatorStart, config.files, config.fliplist, config.extra_vice_args);
       config.runner = EmscriptenRunner;
       return config;
     }
     VICELoader.__proto__ = BaseLoader;
-    
+
     VICELoader.autoLoad = function (path) {
      return { emulatorStart: path };
     };
@@ -661,7 +658,7 @@ var Module = null;
     VICELoader.fliplist = function(fliplist) {
         return { fliplist: fliplist };
     };
-    VICELoader.create_fliplist_file = function(files, fliplists) {
+    VICELoader._create_fliplist_file = function(files, fliplists) {
        let fliplist = "# Vice fliplist file\n\n";
        fliplists.forEach(function(drive_fliplist, i) {
            if(drive_fliplist) {
@@ -673,7 +670,7 @@ var Module = null;
            }
        });
        files.push(VICELoader.mountFile('/metadata_fliplist.vfl', VICELoader.localFile("Fliplist", fliplist)).files[0]);
-    }
+    };
 
    /**
     * SAELoader
@@ -782,17 +779,17 @@ var Module = null;
 
      return args;
    };
-   
+
    var build_vice_arguments = function (emulator_start, files, fliplist, extra_args) {
-       var args = emulator_start ? ["-autostart", "/emulator/" + emulator_start] : [];
-       if(fliplist[0] || fliplist[1] || fliplist[2] || fliplist[3]) {
-           args = args.concat(["-flipname", "/emulator/metadata_fliplist.vfl"]);
-       }
-       if(extra_args) {
-           args = args.concat(extra_args);
-       }
-       return args;
-   }
+     var args = emulator_start ? ["-autostart", "/emulator/" + emulator_start] : [];
+     if (fliplist[0] || fliplist[1] || fliplist[2] || fliplist[3]) {
+       args = args.concat(["-flipname", "/emulator/metadata_fliplist.vfl"]);
+     }
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
+     return args;
+   };
 
    /*
     * EmscriptenRunner
@@ -1882,6 +1879,7 @@ var Module = null;
    window.MAMELoader = MAMELoader;
    window.SAELoader = SAELoader;
    window.PCELoader = PCELoader;
+   window.VICELoader = VICELoader;
    window.Emulator = Emulator;
    window._SDL_CreateRGBSurfaceFrom = _SDL_CreateRGBSurfaceFrom;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
