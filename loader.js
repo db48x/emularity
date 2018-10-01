@@ -967,9 +967,11 @@ var Module = null;
        this._cfg.memory.extRom.size = this._cfg.memory.extRom.data.length;
      }
 
-     this._cfg.floppy.drive[0].file.name = game_data.floppy[0];
-     this._cfg.floppy.drive[0].file.data = game_data.fs.readFileSync('/'+game_data.floppy[0], null, flag_r);
-     this._cfg.floppy.drive[0].file.size = this._cfg.floppy.drive[0].file.data.length;
+     for (var i = 0; i < Object.keys(game_data.floppy).length; i++) {
+       this._cfg.floppy.drive[i].file.name = game_data.floppy[i];
+       this._cfg.floppy.drive[i].file.data = game_data.fs.readFileSync('/' + game_data.floppy[i], null, flag_r);
+       this._cfg.floppy.drive[i].file.size = this._cfg.floppy.drive[i].file.data.length;
+     }
    }
 
    SAERunner.prototype.start = function () {
