@@ -585,7 +585,7 @@ var Module = null;
    };
    
    DosBoxLoader.mountZip = function (drive, file, drive_type="hdd") { 
-     //  driver type: hdd, floppy, cdrom, img
+     //  driver type: hdd, floppy, cdrom
      return { files: [{ drive: drive,
                         mountpoint: "/" + drive,
                         file: file,
@@ -780,9 +780,6 @@ var Module = null;
          }
          else if(files[i].drive_type==='cdrom'){
           args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint + ' -t cdrom');
-         }
-         else if(files[i].drive_type==='img'){
-          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint + ' -t iso');
          }
        }
      }
