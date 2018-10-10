@@ -583,6 +583,15 @@ var Module = null;
    DosBoxLoader.extraArgs = function (args) {
      return { extra_dosbox_args: args };
    };
+   
+   DosBoxLoader.mountZip = function (drive, file, drive_type="hdd") { 
+     //  driver type: hdd, floppy, cdrom, img
+     return { files: [{ drive: drive,
+                        mountpoint: "/" + drive,
+                        file: file,
+                        drive_type: drive_type,
+                      }] };
+   };
 
    /**
     * PC98DosBoxLoader
@@ -762,7 +771,19 @@ var Module = null;
      var len = files.length;
      for (var i = 0; i < len; i++) {
        if ('drive' in files[i]) {
-         args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint);
+        //  See also https://www.dosbox.com/wiki/MOUNT
+         if(files[i].drive_type==='hdd'){
+          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint);
+         }
+         else if(files[i].drive_type==='floppy'){
+          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint + ' -t floppy');
+         }
+         else if(files[i].drive_type==='cdrom'){
+          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint + ' -t cdrom');
+         }
+         else if(files[i].drive_type==='img'){
+          args.push('-c', 'mount '+ files[i].drive +' /emulator'+ files[i].mountpoint + ' -t iso');
+         }
        }
      }
 
