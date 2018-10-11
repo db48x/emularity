@@ -202,7 +202,8 @@ var Module = null;
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
                                            } else if (module && module.indexOf("pce-") === 0) {
-                                             config_args.push(cfgr.model(modulecfg.driver));
+                                             config_args.push(cfgr.model(modulecfg.driver),
+                                                              cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
