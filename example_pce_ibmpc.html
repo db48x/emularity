@@ -1,0 +1,67 @@
+<!--
+ The Emularity: An Example Computer Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer ("PC-DOS 1.0" for the
+ IBM PC Model 5150).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Download the PCE.js IBM PC emulator from
+   https://9game.oss-us-west-1.aliyuncs.com/mini-ibmpc/pcejs-ibmpc.min.js
+   It's a slightly modified version from the NPM one:
+   https://www.npmjs.com/package/pcejs-ibmpc
+ 
+ * Download the original IBM PC BIOS package
+   https://9game.oss-us-west-1.aliyuncs.com/mini-ibmpc/rom-ibmpc-1981.zip
+
+ * Download the configuration file, it's a minimized version for easiler
+   to make your configuration based on that
+   https://9game.oss-us-west-1.aliyuncs.com/mini-ibmpc/pce-mini.cfg
+
+ * Download PC-DOS 1.0 disk image
+   https://9game.oss-us-west-1.aliyuncs.com/mini-ibmpc/pcdos1_0.pfdc
+
+ * Visit your example_computer.html file with a modern
+   Javascript-capable browser.
+-->
+
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>PCE.js IBM-PC example</title>
+</head>
+
+<body>
+  <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;"></canvas>
+  <script type="text/javascript" src="es6-promise.js"></script>
+  <script type="text/javascript" src="browserfs.min.js"></script>
+  <script type="text/javascript" src="loader.js"></script>
+  <script type="text/javascript">
+    var emulator = new Emulator(document.querySelector("#canvas"),
+      null,
+      new PCELoader(PCELoader.model("ibmpc"),
+        PCELoader.nativeResolution(320, 200),
+        PCELoader.mountZip("roms", PCELoader.fetchFile("ROM", "rom-ibmpc-1981.zip")),
+        PCELoader.mountFile("fd0.pfdc", PCELoader.fetchFile("Disk Image", "pcdos1_0.pfdc")),
+        PCELoader.mountFile("pce-ibmpc.cfg", PCELoader.fetchFile("PCE Config", "pce-mini.cfg")),
+        PCELoader.emulatorJS("pcejs-ibmpc.min.js"),
+
+        /* Extra arguments can be used to change the behaviour of PCE
+          * Use "-g" plus a video device model "mda", "cga", "hgc",
+            "plantronics", "ega", "vga" or "wy700" to select your
+            video card model.
+          * To change the emulation speed, use "-s" argument followed
+            by the speed factor, "1" for the original speed of 4.77Mhz
+            Intel 8088 processor.
+        */
+        PCELoader.extraArgs(["-g", "cga", "-s", "4"])))
+    emulator.start({ waitAfterDownloading: true });
+  </script>
+</body>
+
+</html>

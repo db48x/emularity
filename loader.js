@@ -215,7 +215,8 @@ var Module = null;
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
                                            } else if (module && module.indexOf("pce-") === 0) {
-                                             config_args.push(cfgr.model(modulecfg.driver));
+                                             config_args.push(cfgr.model(modulecfg.driver),
+                                                              cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
@@ -723,6 +724,9 @@ var Module = null;
    function PCELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = ["-c", "/emulator/pce-"+ config.pceModel +".cfg"];
+     if (config.extra_pce_args && config.extra_pce_args.length > 0) {
+       config.emulator_arguments = config.emulator_arguments.concat(config.extra_pce_args);
+     }
      config.runner = EmscriptenRunner;
      return config;
    }
@@ -730,6 +734,10 @@ var Module = null;
 
    PCELoader.model = function (model) {
      return { pceModel: model };
+   };
+
+   PCELoader.extraArgs = function (args) {
+     return { extra_pce_args: args };
    };
 
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect) {
