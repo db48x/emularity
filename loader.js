@@ -683,6 +683,9 @@ var Module = null;
    function PCELoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = ["-c", "/emulator/pce-"+ config.pceModel +".cfg"];
+     if (config.extra_pce_args && config.extra_pce_args.length > 0) {
+       config.emulator_arguments = config.emulator_arguments.concat(config.extra_pce_args);
+     }
      config.runner = EmscriptenRunner;
      return config;
    }
@@ -690,6 +693,10 @@ var Module = null;
 
    PCELoader.model = function (model) {
      return { pceModel: model };
+   };
+
+   PCELoader.extraArgs = function (args) {
+     return { extra_pce_args: args };
    };
 
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect) {
