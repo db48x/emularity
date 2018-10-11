@@ -583,13 +583,13 @@ var Module = null;
    DosBoxLoader.extraArgs = function (args) {
      return { extra_dosbox_args: args };
    };
-   
-   DosBoxLoader.mountZip = function (drive, file, drive_type="hdd") { 
+
+   DosBoxLoader.mountZip = function (drive, file, drive_type) {
      //  driver type: hdd, floppy, cdrom
      return { files: [{ drive: drive,
                         mountpoint: "/" + drive,
                         file: file,
-                        drive_type: drive_type,
+                        drive_type: drive_type || "hdd",
                       }] };
    };
 
