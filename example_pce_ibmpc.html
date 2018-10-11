@@ -50,12 +50,14 @@
         PCELoader.mountFile("fd0.pfdc", PCELoader.fetchFile("Disk Image", "pcdos1_0.pfdc")),
         PCELoader.mountFile("pce-ibmpc.cfg", PCELoader.fetchFile("PCE Config", "pce-mini.cfg")),
         PCELoader.emulatorJS("pcejs-ibmpc.min.js"),
-        /*
-        Extra Arguments is required if you need video device other than VGA. Use "-g" argument 
-        follows video device model "mda", "cga", "hgc", "plantronics", "ega", "vga" or "wy700"
-        to select your video card model.
-        To change the emulation speed, use "-s" argument follows the speed factor, "1" for the
-        original speed of 4.77Mhz Intel 8088 processor.
+
+        /* Extra arguments can be used to change the behaviour of PCE
+          * Use "-g" plus a video device model "mda", "cga", "hgc",
+            "plantronics", "ega", "vga" or "wy700" to select your
+            video card model.
+          * To change the emulation speed, use "-s" argument followed
+            by the speed factor, "1" for the original speed of 4.77Mhz
+            Intel 8088 processor.
         */
         PCELoader.extraArgs(["-g", "cga", "-s", "4"])))
     emulator.start({ waitAfterDownloading: true });
