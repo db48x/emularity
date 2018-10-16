@@ -606,15 +606,7 @@ var Module = null;
     config.runner = PC98DosBoxRunner;
     return config;
   }
-  PC98DosBoxLoader.__proto__ = BaseLoader;
-
-  PC98DosBoxLoader.startExe = function (path) {
-    return { emulatorStart: path };
-  };
-
-  PC98DosBoxLoader.extraArgs = function (args) {
-    return { extra_dosbox_args: args };
-  };
+  PC98DosBoxLoader.__proto__ = DosBoxLoader;
 
    /**
     * MAMELoader
