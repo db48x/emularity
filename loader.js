@@ -297,6 +297,9 @@ var Module = null;
        files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
                                                                            wanted_files.push(file.name);
                                                                          });
+       files_with_ext_from_filelist(filelist, "conf").forEach(function (file, i) {
+                                                                           wanted_files.push(file.name);
+                                                                         });
        meta_props_matching(meta, /^vice_drive_([89])$/).forEach(function (result) {
                                                                   let key = result[0], match = result[1];
                                                                   drives[match[1]] = meta[key];
