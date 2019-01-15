@@ -574,7 +574,7 @@ var Module = null;
     */
    function DosBoxLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
-     config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files, config.extra_dosbox_args);
+     config.emulator_arguments = build_dosbox_arguments(config.emulatorStart, config.files, config.extra_dosbox_args, config.images);
      config.runner = EmscriptenRunner;
      return config;
    }
@@ -595,6 +595,19 @@ var Module = null;
                         file: file,
                         drive_type: drive_type || "hdd",
                       }] };
+   };
+
+   DosBoxLoader.mountImage = function(drive, filepath, drive_type, file_system){
+    // See also https://www.dosbox.com/wiki/IMGMOUNT
+    // drive: the drive to mount
+    // filepath: the location of image file, like "/c/test.iso" NOTE: this depends on the method `DosBoxLoader.mountZip` or `DosBoxLoader.mountFile`
+    // drive_type: floppy, iso, hdd
+    // file_system: iso, fat, none
+    return { images: [{ drive: drive,
+                       filepath: filepath,
+                       drive_type: drive_type,
+                       file_system: file_system
+                     }] };
    };
 
    /**
@@ -768,7 +781,7 @@ var Module = null;
      return args;
    };
 
-   var build_dosbox_arguments = function (emulator_start, files, extra_args) {
+   var build_dosbox_arguments = function (emulator_start, files, extra_args, images) {
      var args = ['-conf', '/emulator/dosbox.conf'];
 
      var len = files.length;
@@ -786,6 +799,14 @@ var Module = null;
          }
        }
      }
+
+     if (images){
+      var len = images.length;
+      for (var i = 0; i < len; i++) {
+         //See also https://www.dosbox.com/wiki/IMGMOUNT
+         args.push('-c', 'imgmount ' + images[i].drive + ' /emulator' + images[i].filepath + ' -t ' + images[i].drive_type + ' -fs ' + images[i].file_system);
+        };
+      };
 
      if (extra_args) {
        args = args.concat(extra_args);
