@@ -1,0 +1,62 @@
+<!--
+ The Emularity: An Example Computer Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer ("System 7.0.1" for the
+ Macintosh Plus).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Download the Neko Project II emulator from
+   https://yksoft1.github.io/emularity/minivmac/minivmac.js
+   https://yksoft1.github.io/emularity/minivmac/minivmac.wasm
+
+ * Download BIOS and configuration from
+   https://yksoft1.github.io/emularity/minivmac/vmac.zip
+
+ * Download the System 7.0.1 disk image from:
+   https://yksoft1.github.io/emularity/minivmac/test7.zip
+   then extract the "test7.dsk" disk image file
+
+ * Place BIOS, configuration file and disk image in an
+   "examples" subdirectory.
+
+ * Visit your example_computer.html file with a modern
+   Javascript-capable browser.
+-->
+
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>example computer program</title>
+</head>
+
+<body>
+  <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;" />
+  <script type="text/javascript" src="es6-promise.js"></script>
+  <script type="text/javascript" src="browserfs.min.js"></script>
+  <script type="text/javascript" src="loader.js"></script>
+  <script type="text/javascript">
+    var emulator = new Emulator(document.querySelector("#canvas"),
+      null,
+      new NP2Loader(
+        NP2Loader.nativeResolution(512, 342),
+        NP2Loader.emulatorJS("emulators/minivmac.js"),
+        NP2Loader.emulatorWASM("emulators/minivmac.wasm"),
+        NP2Loader.mountZip("minivmac",
+          NP2Loader.fetchFile("Mac ROM files",
+            "examples/vmac.zip")),
+        NP2Loader.mountFile("test7.dsk",
+          NP2Loader.fetchFile("Disk Image",
+            "examples/test7.dsk")),
+        NP2Loader.extraArgs(["/emulator/test7.dsk"])
+      ));
+    emulator.setScale(3).start({ waitAfterDownloading: true });
+  </script>
+</body>
+
+</html>
