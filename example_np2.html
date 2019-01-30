@@ -1,0 +1,66 @@
+<!--
+ The Emularity: An Example Computer Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer ("FreeDOS(98)" for the
+ PC9801).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Download the Neko Project II emulator from
+   https://yksoft1.github.io/emularity/np2/np2-386.js
+   https://yksoft1.github.io/emularity/np2/np2-386.wasm
+
+ * Download BIOS and sound samples from
+   http://9game.oss-us-west-1.aliyuncs.com/np2/np2roms.zip
+
+ * Download the config file for the Neko Project II from
+   http://9game.oss-us-west-1.aliyuncs.com/np2/np2.cfg
+
+ * Download the FreeDOS(98) HDD image from:
+   http://9game.oss-us-west-1.aliyuncs.com/np2/FreeDOS98_5M.zip
+
+ * Place BIOS, configuration file and unzipped disk image
+   "FreeDOS(98)_5M.NHD" in the "examples/np2" subdirectory.
+
+ * Visit your example_computer.html file with a modern
+   Javascript-capable browser.
+-->
+
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>example computer program</title>
+</head>
+
+<body>
+  <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;" />
+  <script type="text/javascript" src="es6-promise.js"></script>
+  <script type="text/javascript" src="browserfs.min.js"></script>
+  <script type="text/javascript" src="loader.js"></script>
+  <script type="text/javascript">
+    var emulator = new Emulator(document.querySelector("#canvas"),
+      null,
+      new NP2Loader(
+        NP2Loader.nativeResolution(640, 400),
+        NP2Loader.emulatorJS("emulators/np2-386.js"),
+        NP2Loader.emulatorWASM("emulators/np2-386.wasm"),
+        NP2Loader.mountZip("np2",
+          NP2Loader.fetchFile("Bios",
+            "examples/np2/np2roms.zip")),
+        NP2Loader.mountFile("FreeDOS(98)_5M.NHD",
+          NP2Loader.fetchFile("Disk Image",
+            "examples/np2/FreeDOS(98)_5M.NHD")),
+        NP2Loader.mountFile("np2.cfg",
+          NP2Loader.fetchFile("Configuration file",
+            "examples/np2/np2.cfg")),
+      ));
+    emulator.setScale(3).start({ waitAfterDownloading: true });
+  </script>
+</body>
+
+</html>
