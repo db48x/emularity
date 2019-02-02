@@ -44,21 +44,20 @@
   <script type="text/javascript" src="loader.js"></script>
   <script type="text/javascript">
     var emulator = new Emulator(document.querySelector("#canvas"),
-      null,
-      new NP2Loader(
-        NP2Loader.nativeResolution(640, 400),
-        NP2Loader.emulatorJS("emulators/np2-386.js"),
-        NP2Loader.emulatorWASM("emulators/np2-386.wasm"),
-        NP2Loader.mountZip("np2",
-          NP2Loader.fetchFile("Bios",
-            "examples/np2/np2roms.zip")),
-        NP2Loader.mountFile("FreeDOS(98)_5M.NHD",
-          NP2Loader.fetchFile("Disk Image",
-            "examples/np2/FreeDOS(98)_5M.NHD")),
-        NP2Loader.mountFile("np2.cfg",
-          NP2Loader.fetchFile("Configuration file",
-            "examples/np2/np2.cfg")),
-      ));
+                                null,
+                                new NP2Loader(NP2Loader.nativeResolution(640, 400),
+                                              NP2Loader.emulatorJS("emulators/np2-386.js"),
+                                              NP2Loader.emulatorWASM("emulators/np2-386.wasm"),
+                                              NP2Loader.mountZip("np2",
+                                                                 NP2Loader.fetchFile("Bios",
+                                                                                     "examples/np2/np2roms.zip")),
+                                              NP2Loader.mountFile("FreeDOS(98)_5M.NHD",
+                                                                  NP2Loader.fetchFile("Disk Image",
+                                                                                      "examples/np2/FreeDOS(98)_5M.NHD")),
+                                              NP2Loader.mountFile("np2.cfg",
+                                                                  NP2Loader.fetchFile("Configuration file",
+                                                                                      "examples/np2/np2.cfg")),
+                                             ));
     emulator.setScale(3).start({ waitAfterDownloading: true });
   </script>
 </body>

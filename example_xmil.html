@@ -41,19 +41,18 @@
   <script type="text/javascript" src="loader.js"></script>
   <script type="text/javascript">
     var emulator = new Emulator(document.querySelector("#canvas"),
-      null,
-      new NP2Loader(
-        NP2Loader.nativeResolution(320, 200),
-        NP2Loader.emulatorJS("emulators/xmil.js"),
-        NP2Loader.emulatorWASM("emulators/xmil.wasm"),
-        NP2Loader.mountZip("xmil-em",
-          NP2Loader.fetchFile("BIOS",
-            "examples/np2/sharp-x1turbo-rom.zip")),
-        NP2Loader.mountFile("Gradius.2d",
-          NP2Loader.fetchFile("Disk Image",
-            "examples/np2/Gradius.2d")),
-        NP2Loader.extraArgs(["/emulator/Gradius.2d"])
-      ));
+                                null,
+                                new NP2Loader(NP2Loader.nativeResolution(320, 200),
+                                              NP2Loader.emulatorJS("emulators/xmil.js"),
+                                              NP2Loader.emulatorWASM("emulators/xmil.wasm"),
+                                              NP2Loader.mountZip("xmil-em",
+                                                                 NP2Loader.fetchFile("BIOS",
+                                                                                     "examples/np2/sharp-x1turbo-rom.zip")),
+                                              NP2Loader.mountFile("Gradius.2d",
+                                                                  NP2Loader.fetchFile("Disk Image",
+                                                                                      "examples/np2/Gradius.2d")),
+                                              NP2Loader.extraArgs(["/emulator/Gradius.2d"]),
+                                             ));
     emulator.setScale(3).start({ waitAfterDownloading: true });
   </script>
 </body>

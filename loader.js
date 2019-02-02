@@ -738,20 +738,20 @@ var Module = null;
    /**
    * NP2Loader
    */
-  function NP2Loader() {
-    var config = Array.prototype.reduce.call(arguments, extend);
-    config.emulator_arguments = build_np2_arguments(config.emulatorStart, config.files, config.extra_np2_args);
-    config.runner = NP2Runner;
-    return config;
-  }
-  NP2Loader.__proto__ = BaseLoader;
-  
-  NP2Loader.autoLoad = function (path) {
-    return { emulatorStart: path };
-  };
-  NP2Loader.extraArgs = function (args) {
-    return { extra_np2_args: args };
-  }
+   function NP2Loader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.emulator_arguments = build_np2_arguments(config.emulatorStart, config.files, config.extra_np2_args);
+     config.runner = NP2Runner;
+     return config;
+   }
+   NP2Loader.__proto__ = BaseLoader;
+
+   NP2Loader.autoLoad = function (path) {
+     return { emulatorStart: path };
+   };
+   NP2Loader.extraArgs = function (args) {
+     return { extra_np2_args: args };
+   };
 
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect) {
      var args = [driver,
@@ -831,12 +831,12 @@ var Module = null;
    };
 
    var build_np2_arguments = function (emulator_start, files, extra_args) {
-    var args = emulator_start ? [emulator_start] : [];
-    if (extra_args) {
-     args = args.concat(extra_args);
-    }
-    return args;
-  }
+     var args = emulator_start ? [emulator_start] : [];
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
+     return args;
+   };
 
    /*
     * EmscriptenRunner
@@ -918,19 +918,19 @@ var Module = null;
    /*
     * PC98DosBoxRunner
     */
-  function PC98DosBoxRunner() {
-    return EmscriptenRunner.apply(this, arguments);
-  }
-  PC98DosBoxRunner.prototype = Object.create(EmscriptenRunner.prototype);
-  PC98DosBoxRunner.prototype.start = function () {
-    FS.symlink('/emulator/y/FONT.ROM', '/FONT.ROM');
-    FS.symlink('/emulator/y/2608_bd.wav', '/2608_bd.wav');
-    FS.symlink('/emulator/y/2608_hh.wav', '/2608_hh.wav');
-    FS.symlink('/emulator/y/2608_sd.wav', '/2608_sd.wav');
-    FS.symlink('/emulator/y/2608_rim.wav', '/2608_rim.wav');
-    FS.symlink('/emulator/y/2608_tom.wav', '/2608_tom.wav');
-    FS.symlink('/emulator/y/2608_top.wav', '/2608_top.wav');
-  }
+   function PC98DosBoxRunner() {
+     return EmscriptenRunner.apply(this, arguments);
+   }
+   PC98DosBoxRunner.prototype = Object.create(EmscriptenRunner.prototype);
+   PC98DosBoxRunner.prototype.start = function () {
+     FS.symlink('/emulator/y/FONT.ROM', '/FONT.ROM');
+     FS.symlink('/emulator/y/2608_bd.wav', '/2608_bd.wav');
+     FS.symlink('/emulator/y/2608_hh.wav', '/2608_hh.wav');
+     FS.symlink('/emulator/y/2608_sd.wav', '/2608_sd.wav');
+     FS.symlink('/emulator/y/2608_rim.wav', '/2608_rim.wav');
+     FS.symlink('/emulator/y/2608_tom.wav', '/2608_tom.wav');
+     FS.symlink('/emulator/y/2608_top.wav', '/2608_top.wav');
+   };
 
    /*
    * NP2Runner
@@ -941,13 +941,13 @@ var Module = null;
    NP2Runner.prototype = Object.create(EmscriptenRunner.prototype);
    NP2Runner.prototype.start = function () {
      try {
-      var configFile = FS.readFile('/emulator/np2.cfg');
-      FS.writeFile('/emulator/np2/np2.cfg', configFile);
+       var configFile = FS.readFile('/emulator/np2.cfg');
+       FS.writeFile('/emulator/np2/np2.cfg', configFile);
      } catch (ex) {
-      //If the user config file not found, NP2 will use default settings
-      console.log(ex)
+       //If the user config file not found, NP2 will use default settings
+       console.log(ex);
      }
-   }
+   };
 
    /*
     * MAMERunner

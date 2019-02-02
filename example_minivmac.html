@@ -42,19 +42,18 @@
   <script type="text/javascript" src="loader.js"></script>
   <script type="text/javascript">
     var emulator = new Emulator(document.querySelector("#canvas"),
-      null,
-      new NP2Loader(
-        NP2Loader.nativeResolution(512, 342),
-        NP2Loader.emulatorJS("emulators/minivmac.js"),
-        NP2Loader.emulatorWASM("emulators/minivmac.wasm"),
-        NP2Loader.mountZip("minivmac",
-          NP2Loader.fetchFile("Mac ROM files",
-            "examples/vmac.zip")),
-        NP2Loader.mountFile("test7.dsk",
-          NP2Loader.fetchFile("Disk Image",
-            "examples/test7.dsk")),
-        NP2Loader.extraArgs(["/emulator/test7.dsk"])
-      ));
+                                null,
+                                new NP2Loader(NP2Loader.nativeResolution(512, 342),
+                                              NP2Loader.emulatorJS("emulators/minivmac.js"),
+                                              NP2Loader.emulatorWASM("emulators/minivmac.wasm"),
+                                              NP2Loader.mountZip("minivmac",
+                                                                 NP2Loader.fetchFile("Mac ROM files",
+                                                                                     "examples/vmac.zip")),
+                                              NP2Loader.mountFile("test7.dsk",
+                                                                  NP2Loader.fetchFile("Disk Image",
+                                                                                      "examples/test7.dsk")),
+                                              NP2Loader.extraArgs(["/emulator/test7.dsk"]),
+                                             ));
     emulator.setScale(3).start({ waitAfterDownloading: true });
   </script>
 </body>
