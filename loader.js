@@ -59,7 +59,10 @@ var Module = null;
                   dosbox: img("/images/dosbox.png"),
                   sae: img("/images/sae.png"),
                   pce: img("/images/pce.png"),
-                  vice: img("/images/vice.svg")
+                  vice: img("/images/vice.svg"),
+                  np2: img("/images/nekop2.gif"),
+                  xmil: img("/images/xmillenium_logo.jpg"),
+                  vmac: img("/images/vmac.png"),
                 };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
@@ -68,7 +71,10 @@ var Module = null;
                   dosbox: img("other_logos/dosbox.png"),
                   sae: img("other_logos/sae.png"),
                   pce: img("other_logos/pce.png"),
-                  vice: img("other_logos/vice.svg")
+                  vice: img("other_logos/vice.svg"),
+                  np2: img("other_logos/nekop2.gif"),
+                  xmil: img("other_logos/xmillenium_logo.jpg"),
+                  vmac: img("other_logos/vmac.png"),
                 };
      }
 
@@ -161,6 +167,21 @@ var Module = null;
                                              cfgr = VICELoader;
                                              get_files = get_vice_files;
                                            }
+                                           else if (module && module.indexOf("np2-") === 0) {
+                                             emulator_logo = images.np2;
+                                             cfgr = NP2Loader;
+                                             get_files = get_np2_files;
+                                           }
+                                           else if (module && module.indexOf("xmil-") === 0) {
+                                             emulator_logo = images.xmil;
+                                             cfgr = NP2Loader;
+                                             get_files = get_xmil_files;
+                                           }
+                                           else if (module && module.indexOf("vmac-") === 0) {
+                                             emulator_logo = images.vmac;
+                                             cfgr = NP2Loader;
+                                             get_files = get_vmac_files;
+                                           }
                                            else if (module) {
                                              emulator_logo = images.mame;
                                              cfgr = MAMELoader;
@@ -214,6 +235,16 @@ var Module = null;
                                            } else if (module && module.indexOf("sae-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.rom(modulecfg.bios_filenames));
+                                           } else if (module && (module.indexOf("np2-") == 0 ||
+                                                                 module.indexOf("xmil-") == 0 ||
+                                                                 module.indexOf("vmac-") == 0)) {
+                                             let emulator_start_item = metadata.getElementsByTagName("emulator_start");
+                                             console.log(emulator_start_item);
+                                             if (!emulator_start_item) {
+                                               throw new Exception("Error: this item does not have an 'emulator_start' metadata value; I don't know what to run.");
+                                             }
+                                             config_args.push(cfgr.autoLoad('/emulator/'+ emulator_start_item.item(0).textContent),
+                                                              cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
@@ -441,6 +472,102 @@ var Module = null;
                                                         get_other_emulator_config_url("pce-"+ modulecfg['driver']))));
        return files;
      }
+
+     // TODO(db48x): get_{np2,xmil,vmac}_files are even more
+     // duplicative than the rest; time to factor this a lot
+     function get_np2_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "ROM File ("+ (i+1) +" of "+ bios_files.length +")",
+                                  mounter = (fname.endsWith(".zip")) ? cfgr.mountZip
+                                                                     : cfgr.mountFile;
+                              files.push(mounter('np2',
+                                                 cfgr.fetchFile(title, get_bios_url(fname))));
+                            }
+                          });
+       var meta = dict_from_xml(metadata),
+           peripherals = {},
+           game_files_counter = {};
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           game_files_counter[file.name] = 1;
+                                                                         });
+
+       var game_files = Object.keys(game_files_counter),
+           len = game_files.length;
+       game_files.forEach(function (filename, i) {
+                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                url = (filename.includes("/")) ? get_zip_url(filename)
+                                                               : get_zip_url(filename, get_item_name(game));
+                            files.push(cfgr.mountFile('/'+ filename,
+                                                      cfgr.fetchFile(title, url)));
+                          });
+       return files;
+     }
+
+     function get_xmil_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "ROM File ("+ (i+1) +" of "+ bios_files.length +")",
+                                  mounter = (fname.endsWith(".zip")) ? cfgr.mountZip
+                                                                     : cfgr.mountFile;
+                              files.push(mounter('xmil',
+                                                 cfgr.fetchFile(title, get_bios_url(fname))));
+                            }
+                          });
+       var meta = dict_from_xml(metadata),
+           peripherals = {},
+           game_files_counter = {};
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           game_files_counter[file.name] = 1;
+                                                                         });
+
+       var game_files = Object.keys(game_files_counter),
+           len = game_files.length;
+       game_files.forEach(function (filename, i) {
+                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                url = (filename.includes("/")) ? get_zip_url(filename)
+                                                               : get_zip_url(filename, get_item_name(game));
+                            files.push(cfgr.mountFile('/'+ filename,
+                                                      cfgr.fetchFile(title, url)));
+                          });
+       return files;
+     }
+
+     function get_vmac_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [],
+           bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "ROM File ("+ (i+1) +" of "+ bios_files.length +")",
+                                  mounter = (fname.endsWith(".zip")) ? cfgr.mountZip
+                                                                     : cfgr.mountFile;
+                              files.push(mounter('minivmac',
+                                                 cfgr.fetchFile(title, get_bios_url(fname))));
+                            }
+                          });
+       var meta = dict_from_xml(metadata),
+           peripherals = {},
+           game_files_counter = {};
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           game_files_counter[file.name] = 1;
+                                                                         });
+
+       var game_files = Object.keys(game_files_counter),
+           len = game_files.length;
+       game_files.forEach(function (filename, i) {
+                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                url = (filename.includes("/")) ? get_zip_url(filename)
+                                                               : get_zip_url(filename, get_item_name(game));
+                            files.push(cfgr.mountFile('/'+ filename,
+                                                      cfgr.fetchFile(title, url)));
+                          });
+       return files;
+     }
+
      var get_item_name = function (game_path) {
        return game_path.split('/').shift();
      };
@@ -737,9 +864,17 @@ var Module = null;
 
    /**
    * NP2Loader
+   *
+   * TODO(db48x): This is currently doing triple-duty as the loader
+   * for the xmil and vmac emulators as well. Investigate to see if it
+   * would be better to split them out. Since all three are by the
+   * same author, it may simply be better to rename it instead.
    */
    function NP2Loader() {
      var config = Array.prototype.reduce.call(arguments, extend);
+     if (!config.emulatorStart) {
+       throw new Error("You must specify an autoLoad value in order to start this emulator. Try the name of the disk image.");
+     }
      config.emulator_arguments = build_np2_arguments(config.emulatorStart, config.files, config.extra_np2_args);
      config.runner = NP2Runner;
      return config;
