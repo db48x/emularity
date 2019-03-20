@@ -239,7 +239,6 @@ var Module = null;
                                                                  module.indexOf("xmil-") == 0 ||
                                                                  module.indexOf("vmac-") == 0)) {
                                              let emulator_start_item = metadata.getElementsByTagName("emulator_start");
-                                             console.log(emulator_start_item);
                                              if (!emulator_start_item) {
                                                throw new Exception("Error: this item does not have an 'emulator_start' metadata value; I don't know what to run.");
                                              }
