@@ -199,14 +199,15 @@ var Module = null;
                                                           cfgr.fileSystemKey(game),
                                                           cfgr.nativeResolution(nr[0], nr[1]),
                                                           cfgr.aspectRatio(nr[0] / nr[1]),
+                                                          cfgr.scale(scale),
                                                           cfgr.sampleRate(SAMPLE_RATE)];
 
                                            if ('keepAspect' in cfgr) {
-                                             cfgr.keepAspect(modulecfg.keepAspect);
+                                             config_args.push(cfgr.keepAspect(modulecfg.keepAspect));
                                            }
 
                                            if (/archive\.org$/.test(document.location.hostname)) {
-                                             cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute')));
+                                             config_args.push(cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute'))));
                                            }
 
                                            if (module && module.indexOf("dosbox") === 0) {
@@ -662,6 +663,10 @@ var Module = null;
      return { aspectRatio: ratio };
    };
 
+   BaseLoader.scale = function (scale) {
+     return { scale: scale };
+   };
+
    BaseLoader.sampleRate = function (rate) {
      return { sample_rate: rate };
    };
@@ -742,7 +747,7 @@ var Module = null;
      config.emulator_arguments = build_mame_arguments(config.muted, config.mame_driver,
                                                       config.nativeResolution, config.sample_rate,
                                                       config.peripheral, config.extra_mame_args,
-                                                      config.keep_aspect);
+                                                      config.keep_aspect, config.scale);
      config.runner = MAMERunner;
      return config;
    }
@@ -887,7 +892,8 @@ var Module = null;
      return { extra_np2_args: args };
    };
 
-   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect) {
+   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect, scale) {
+     scale = scale || 1;
      var args = [driver,
                  '-verbose',
                  '-rompath', 'emulator',
@@ -895,7 +901,7 @@ var Module = null;
                  keepaspect ? '-keepaspect' : '-nokeepaspect'];
 
      if (native_resolution && "width" in native_resolution && "height" in native_resolution) {
-       args.push('-resolution', [native_resolution.width, native_resolution.height].join('x'));
+       args.push('-resolution', [native_resolution.width * scale, native_resolution.height * scale].join('x'));
      }
 
      if (muted) {
@@ -1562,7 +1568,7 @@ var Module = null;
 
        function setup_runner() {
          var runner = new game_data.runner(canvas, game_data);
-         resizeCanvas(canvas, 1, game_data.nativeResolution, game_data.aspectRatio);
+         resizeCanvas(canvas, scale, game_data.nativeResolution, game_data.aspectRatio);
          runner.onStarted(function () {
                             splash.finished_loading = true;
                             splash.hide();
@@ -1686,8 +1692,8 @@ var Module = null;
 
          canvas.style.width = resolution.width * scale +'px';
          canvas.style.height = resolution.height * scale +'px';
-         canvas.width = resolution.width;
-         canvas.height = resolution.height;
+         canvas.setAttribute("width", resolution.width * scale);
+         canvas.setAttribute("height", resolution.height * scale);
        }
      };
 
