@@ -43,6 +43,7 @@
     var emulator = new Emulator(document.querySelector("#canvas"),
                                 null,
                                 new NP2Loader(NP2Loader.nativeResolution(320, 200),
+                                              NP2Loader.scale(3),
                                               NP2Loader.emulatorJS("emulators/xmil.js"),
                                               NP2Loader.emulatorWASM("emulators/xmil.wasm"),
                                               NP2Loader.mountZip("xmil-em",
@@ -53,7 +54,6 @@
                                                                                       "examples/np2/Gradius.2d")),
                                               NP2Loader.extraArgs(["/emulator/Gradius.2d"]),
                                              ));
-    emulator.setScale(3).start({ waitAfterDownloading: true });
   </script>
 </body>
 

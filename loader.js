@@ -94,8 +94,7 @@ var Module = null;
                         }());
 
      var metadata, filelist, module, modulecfg, config_args, emulator_logo,
-         emulator = new Emulator(canvas).setScale(scale)
-                                        .setSplashImage(images.ia)
+         emulator = new Emulator(canvas).setSplashImage(images.ia)
                                         .setLoad(loadFiles)
                                         .setCallbacks(callbacks);
 
@@ -199,7 +198,7 @@ var Module = null;
                                                           cfgr.fileSystemKey(game),
                                                           cfgr.nativeResolution(nr[0], nr[1]),
                                                           cfgr.aspectRatio(nr[0] / nr[1]),
-                                                          cfgr.scale(scale),
+                                                          cfgr.scale(scale || modulecfg.scale || 2),
                                                           cfgr.sampleRate(SAMPLE_RATE)];
 
                                            if ('keepAspect' in cfgr) {
@@ -1290,7 +1289,7 @@ var Module = null;
        document.getElementById("gofullscreen").addEventListener("click", this.requestFullScreen);
      }
 
-     var css_resolution, scale, aspectRatio;
+     var css_resolution, aspectRatio;
      // right off the bat we set the canvas's inner dimensions to
      // whatever it's current css dimensions are; this isn't likely to be
      // the same size that dosbox/jsmame will set it to, but it avoids
@@ -1302,7 +1301,7 @@ var Module = null;
      }
 
      this.setScale = function(_scale) {
-       scale = _scale;
+       console.warn("setScale method is deprecated; use the BaseLoader.scale method instead");
        return this;
      };
 
@@ -1568,7 +1567,7 @@ var Module = null;
 
        function setup_runner() {
          var runner = new game_data.runner(canvas, game_data);
-         resizeCanvas(canvas, scale, game_data.nativeResolution, game_data.aspectRatio);
+         resizeCanvas(canvas, game_data.scale, game_data.nativeResolution, game_data.aspectRatio);
          runner.onStarted(function () {
                             splash.finished_loading = true;
                             splash.hide();

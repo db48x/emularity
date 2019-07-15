@@ -46,6 +46,7 @@
     var emulator = new Emulator(document.querySelector("#canvas"),
                                 null,
                                 new NP2Loader(NP2Loader.nativeResolution(640, 400),
+                                              NP2Loader.scale(2),
                                               NP2Loader.emulatorJS("emulators/np2-386.js"),
                                               NP2Loader.emulatorWASM("emulators/np2-386.wasm"),
                                               NP2Loader.mountZip("np2",
@@ -58,7 +59,7 @@
                                                                   NP2Loader.fetchFile("Configuration file",
                                                                                       "examples/np2/np2.cfg")),
                                              ));
-    emulator.setScale(3).start({ waitAfterDownloading: true });
+    emulator.start({ waitAfterDownloading: true });
   </script>
 </body>
 

@@ -13,6 +13,7 @@
                                   null,
                                   new PCELoader(PCELoader.model("macclassic"),
                                                 PCELoader.nativeResolution(512, 342),
+                                                PCELoader.scale(2),
                                                 PCELoader.mountFile("pce-mac-classic.rom",
                                                                     PCELoader.fetchFile("ROM 1/2",
                                                                                         "examples/pce/pce-mac-classic.rom")),
@@ -29,7 +30,6 @@
                                                                     PCELoader.fetchFile("PCE Config",
                                                                                         "examples/pce/pce-macclassic.cfg")),
                                                 PCELoader.emulatorJS("emulators/pce/pce-macplus.js")))
-      emulator.setScale(2);
       emulator.start({ waitAfterDownloading: true });
     </script>
   </body>

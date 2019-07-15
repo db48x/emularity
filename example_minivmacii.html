@@ -44,6 +44,7 @@
     var emulator = new Emulator(document.querySelector("#canvas"),
                                 null,
                                 new NP2Loader(NP2Loader.nativeResolution(640, 480),
+                                              NP2Loader.scale(2),
                                               NP2Loader.emulatorJS("emulators/minivmacII.js"),
                                               NP2Loader.emulatorWASM("emulators/minivmacII.wasm"),
                                               NP2Loader.mountZip("minivmac",
@@ -54,7 +55,7 @@
                                                                                       "examples/test7.dsk")),
                                               NP2Loader.extraArgs(["/emulator/test7.dsk"]),
                                              ));
-    emulator.setScale(3).start({ waitAfterDownloading: true });
+    emulator.start({ waitAfterDownloading: true });
   </script>
 </body>
 

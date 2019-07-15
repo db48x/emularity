@@ -47,6 +47,7 @@
                                   null,
                                   new JSMESSLoader(JSMESSLoader.driver("apple2e"),
                                                    JSMESSLoader.nativeResolution(560, 384),
+                                                   JSMESSLoader.scale(2),
                                                    JSMESSLoader.emulatorJS("emulators/jsmess/messnapple2e.js"),
                                                    JSMESSLoader.mountFile("apple2e.zip",
                                                                           JSMESSLoader.fetchFile("Bios",
@@ -59,7 +60,7 @@
                                                                                                  "examples/apple2e.cfg")),
                                                    JSMESSLoader.peripheral("flop1", "Beagle_Bag_1982_Beagle_Bros.do"),
                                                    JSMESSLoader.extraArgs(["-sl6", "diskii", "-sl4", '""'])))
-      emulator.setScale(3).start({ waitAfterDownloading: true });
+      emulator.start({ waitAfterDownloading: true });
     </script>
   </body>
 </html>

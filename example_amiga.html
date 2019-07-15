@@ -14,6 +14,7 @@
                                   new SAELoader(SAELoader.model("A500"),
                                                 SAELoader.fastMemory(2),
                                                 SAELoader.nativeResolution(720, 568),
+                                                SAELoader.scale(2),
                                                 SAELoader.emulatorJS("emulators/sae/scriptedamigaemulator.js"),
                                                 SAELoader.mountFile("aros-amiga-m68k-rom.bin",
                                                                     SAELoader.fetchFile("Bios",
@@ -26,7 +27,7 @@
                                                                     SAELoader.fetchFile("Game",
                                                                                         "examples/Cool_Demos_17.2_1989_Razor_1911.adf")),
                                                 SAELoader.floppy(0, "Cool_Demos_17.2_1989_Razor_1911")))
-      emulator.setScale(3).start({ waitAfterDownloading: true });
+      emulator.start({ waitAfterDownloading: true });
     </script>
   </body>
 </html>

@@ -32,11 +32,11 @@
                                   null,
                                   new JSMAMELoader(JSMAMELoader.driver("targ"),
                                                    JSMAMELoader.nativeResolution(256, 256),
+                                                   JSMAMELoader.scale(3),
                                                    JSMAMELoader.emulatorJS("emulators/jsmess/mameexidy.js"),
                                                    JSMAMELoader.mountFile("targ.zip",
                                                                           JSMAMELoader.fetchFile("Game File",
                                                                                                  "examples/targ.zip"))))
-      emulator.setScale(2);
       emulator.start({ waitAfterDownloading: true });
     </script>
   </body>

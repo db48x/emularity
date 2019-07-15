@@ -39,11 +39,11 @@ copy of the rom (which it loads from examples/1943.zip).
                                   null,
                                   new MAMELoader(MAMELoader.driver("1943"),
                                                  MAMELoader.nativeResolution(224, 256),
+                                                 MAMELoader.scale(3),
                                                  MAMELoader.emulatorJS("emulators/mess1943.js"),
                                                  MAMELoader.mountFile("1943.zip",
                                                                       MAMELoader.fetchFile("Game File",
                                                                                            "examples/1943.zip"))))
-      emulator.setScale(3);
       emulator.start({ waitAfterDownloading: true });
 
 ### Console game for Atari 2600 ###
@@ -58,6 +58,7 @@ keybindings needed to use the 2600.
                                   null,
                                   new MAMELoader(MAMELoader.driver("a2600"),
                                                  MAMELoader.nativeResolution(352, 223),
+                                                 MAMELoader.scale(3),
                                                  MAMELoader.emulatorJS("emulators/messa2600.js"),
                                                  MAMELoader.mountFile("Pitfall_Activision_1982.bin",
                                                                       MAMELoader.fetchFile("Game File",
@@ -66,7 +67,7 @@ keybindings needed to use the 2600.
                                                                       MAMELoader.fetchFile("Config File",
                                                                                            "examples/a2600.cfg")),
                                                  MAMELoader.peripheral("cart", "Pitfall_Activision_1982.bin")))
-      emulator.setScale(3).start({ waitAfterDownloading: true });
+      emulator.start({ waitAfterDownloading: true });
 
 ### DOS game ###
 
@@ -95,6 +96,7 @@ provide their names in the right order.
                                   new SAELoader(SAELoader.model("A500"),
                                                 SAELoader.fastMemory(2),
                                                 SAELoader.nativeResolution(720, 568),
+                                                SAELoader.scale(2),
                                                 SAELoader.emulatorJS("emulators/sae/scriptedamigaemulator.js"),
                                                 SAELoader.mountFile("aros-amiga-m68k-rom.bin",
                                                                     SAELoader.fetchFile("Bios",
@@ -107,7 +109,7 @@ provide their names in the right order.
                                                                     SAELoader.fetchFile("Game",
                                                                                         "examples/Cool_Demos_17.2_1989_Razor_1911.adf")),
                                                 SAELoader.floppy(0, "Cool_Demos_17.2_1989_Razor_1911")))
-      emulator.setScale(3).start({ waitAfterDownloading: true });
+      emulator.start({ waitAfterDownloading: true });
 
 
 ## Configuration API ##
