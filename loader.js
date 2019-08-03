@@ -903,9 +903,7 @@ var Module = null;
        args.push('-resolution', [native_resolution.width * scale, native_resolution.height * scale].join('x'));
      }
 
-     if (muted) {
-       args.push('-sound', 'none');
-     } else if (sample_rate) {
+     if (sample_rate) {
        args.push('-samplerate', sample_rate);
      }
 
@@ -1095,19 +1093,18 @@ var Module = null;
      return EmscriptenRunner.apply(this, arguments);
    }
    MAMERunner.prototype = Object.create(EmscriptenRunner.prototype,
-                                        {
-                                          mute: function () {
-                                                  var soundmgr = Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv());
-                                                  Module.__ZN13sound_manager4muteEbh(soundmgr,
-                                                                                     true,
-                                                                                     0x02); // MUTE_REASON_UI
+                                        { mute: { value: function () {
+                                                           var machine = Module.__ZN15running_machine30emscripten_get_running_machineEv();
+                                                           var soundmgr = Module.__ZN15running_machine20emscripten_get_soundEv(machine);
+                                                           Module.__ZN13sound_manager4muteEbh(soundmgr, true, 0x02); // MUTE_REASON_UI
+                                                         },
                                                 },
-                                          unmute: function () {
-                                                    var soundmgr = Module.__ZN15running_machine20emscripten_get_soundEv(Module.__ZN15running_machine30emscripten_get_running_machineEv());
-                                                    Module.__ZN13sound_manager4muteEbh(soundmgr,
-                                                                                       false,
-                                                                                       0x02); // MUTE_REASON_UI
-                                                  }
+                                          unmute: { value: function () {
+                                                             var machine = Module.__ZN15running_machine30emscripten_get_running_machineEv();
+                                                             var soundmgr = Module.__ZN15running_machine20emscripten_get_soundEv(machine);
+                                                             Module.__ZN13sound_manager4muteEbh(soundmgr, false, 0x02); // MUTE_REASON_UI
+                                                           },
+                                                  },
                                         });
 
    /*
@@ -1571,12 +1568,15 @@ var Module = null;
          runner.onStarted(function () {
                             splash.finished_loading = true;
                             splash.hide();
-                            if (callbacks && callbacks.before_run) {
-                              setTimeout(function() {
+                            setTimeout(function() {
+                                         if (muted) {
+                                           runner.mute();
+                                         }
+                                         if (callbacks && callbacks.before_run) {
                                            callbacks.before_run();
-                                         },
-                                         0);
-                            }
+                                         }
+                                       },
+                                       0);
                           });
          runner.onReset(function () {
                           if (muted) {
