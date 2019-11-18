@@ -926,7 +926,7 @@ var Module = null;
      }
 
      if (autoboot) {
-       args.push('-autoboot_command', autoboot, '-autoboot_delay', '2');
+       args.push('-autoboot_command', autoboot+'\\n', '-autoboot_delay', '2');
      }
 
      if (extra_args) {
