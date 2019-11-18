@@ -250,6 +250,10 @@ var Module = null;
                                            } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
+                                             let emulator_start_item = metadata.getElementsByTagName("emulator_start");
+                                             if (emulator_start_item.length > 0) {
+                                               config_args.push(cfgr.autoboot(emulator_start_item.item(0).textContent));
+                                             }
                                            }
 
                                            splash.setTitle("Downloading game data...");
@@ -745,8 +749,9 @@ var Module = null;
      var config = Array.prototype.reduce.call(arguments, extend);
      config.emulator_arguments = build_mame_arguments(config.muted, config.mame_driver,
                                                       config.nativeResolution, config.sample_rate,
-                                                      config.peripheral, config.extra_mame_args,
-                                                      config.keep_aspect, config.scale);
+                                                      config.peripheral, config.autoboot,
+                                                      config.extra_mame_args, config.keep_aspect,
+                                                      config.scale);
      config.runner = MAMERunner;
      return config;
    }
@@ -768,6 +773,10 @@ var Module = null;
 
    MAMELoader.extraArgs = function (args) {
      return { extra_mame_args: args };
+   };
+
+   MAMELoader.autoboot = function (path) {
+    return { autoboot: path };
    };
 
    /**
@@ -891,7 +900,7 @@ var Module = null;
      return { extra_np2_args: args };
    };
 
-   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, extra_args, keepaspect, scale) {
+   var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, autoboot, extra_args, keepaspect, scale) {
      scale = scale || 1;
      var args = [driver,
                  '-verbose',
@@ -914,6 +923,10 @@ var Module = null;
                      '/emulator/'+ (peripheral[p][0].replace(/\//g,'_')));
          }
        }
+     }
+
+     if (autoboot) {
+       args.push('-autoboot_command', autoboot, '-autoboot_delay', '2');
      }
 
      if (extra_args) {
