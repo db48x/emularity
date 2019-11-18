@@ -209,20 +209,20 @@ var Module = null;
                                              config_args.push(cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute'))));
                                            }
 
+                                           var emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
                                            if (module && module.indexOf("dosbox") === 0) {
                                              config_args.push(cfgr.startExe(metadata.getElementsByTagName("emulator_start")
                                                                                     .item(0)
                                                                                     .textContent));
                                            } else if (module && module.indexOf("vice") === 0) {
-                                             let emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
-                                             let vice_fliplist = [ metadata.getElementsByTagName("vice_drive_8_fliplist").item(0),
+                                             var vice_fliplist = [ metadata.getElementsByTagName("vice_drive_8_fliplist").item(0),
                                                                    metadata.getElementsByTagName("vice_drive_9_fliplist").item(0),
                                                                    metadata.getElementsByTagName("vice_drive_10_fliplist").item(0),
                                                                    metadata.getElementsByTagName("vice_drive_11_fliplist").item(0) ];
                                              if (emulator_start_item) {
                                                config_args.push(cfgr.autoLoad(emulator_start_item.textContent));
                                              }
-                                             let fliplists = [];
+                                             var fliplists = [];
                                              vice_fliplist.forEach(function (fliplist_meta) {
                                                                      if(!fliplist_meta) {
                                                                        fliplists.push(null);
@@ -238,11 +238,10 @@ var Module = null;
                                            } else if (module && (module.indexOf("np2-") == 0 ||
                                                                  module.indexOf("xmil-") == 0 ||
                                                                  module.indexOf("vmac-") == 0)) {
-                                             let emulator_start_item = metadata.getElementsByTagName("emulator_start");
                                              if (!emulator_start_item) {
                                                throw new Exception("Error: this item does not have an 'emulator_start' metadata value; I don't know what to run.");
                                              }
-                                             config_args.push(cfgr.autoLoad('/emulator/'+ emulator_start_item.item(0).textContent),
+                                             config_args.push(cfgr.autoLoad('/emulator/'+ emulator_start_item.textContent),
                                                               cfgr.extraArgs(modulecfg.extra_args));
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
@@ -250,9 +249,8 @@ var Module = null;
                                            } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
-                                             let emulator_start_item = metadata.getElementsByTagName("emulator_start");
-                                             if (emulator_start_item.length > 0) {
-                                               config_args.push(cfgr.autoboot(emulator_start_item.item(0).textContent));
+                                             if (emulator_start_item) {
+                                               config_args.push(cfgr.autoboot(emulator_start_item.textContent));
                                              }
                                            }
 
@@ -303,7 +301,7 @@ var Module = null;
                                                                            drives[default_drive] = file.name;
                                                                          });
        meta_props_matching(meta, /^dosbox_drive_([a-zA-Z])$/).forEach(function (result) {
-                                                                        let key = result[0], match = result[1];
+                                                                        var key = result[0], match = result[1];
                                                                         drives[match[1]] = meta[key];
                                                                       });
        var mounts = Object.keys(drives),
@@ -335,7 +333,7 @@ var Module = null;
                                                                            wanted_files.push(file.name);
                                                                          });
        meta_props_matching(meta, /^vice_drive_([89])$/).forEach(function (result) {
-                                                                  let key = result[0], match = result[1];
+                                                                  var key = result[0], match = result[1];
                                                                   drives[match[1]] = meta[key];
                                                                 });
 
@@ -379,7 +377,7 @@ var Module = null;
                                                                            }
                                                                          });
        meta_props_matching(meta, /^mame_peripheral_([a-zA-Z0-9]+)$/).forEach(function (result) {
-                                                                               let key = result[0], match = result[1];
+                                                                               var key = result[0], match = result[1];
                                                                                peripherals[match[1]] = meta[key];
                                                                                game_files_counter[meta[key]] = 1;
                                                                              });
@@ -803,7 +801,7 @@ var Module = null;
         return { fliplist: fliplist };
     };
     VICELoader._create_fliplist_file = function(files, fliplists) {
-       let fliplist = "# Vice fliplist file\n\n";
+       var fliplist = "# Vice fliplist file\n\n";
        fliplists.forEach(function(drive_fliplist, i) {
            if(drive_fliplist) {
                drive_fliplist = drive_fliplist.reverse();
@@ -2054,7 +2052,7 @@ var Module = null;
      if (typeof regex == "string")
        regex = RegExp(regex);
      return Object.keys(meta).map(function (k) {
-                                    let match = regex.exec(k);
+                                    var match = regex.exec(k);
                                     if (match)
                                       return [k, match];
                                     return null;
