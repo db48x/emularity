@@ -914,6 +914,14 @@ var Module = null;
        args.push('-samplerate', sample_rate);
      }
 
+     if (autoboot) {
+       args.push('-autoboot_command', autoboot+'\\n', '-autoboot_delay', '2');
+     }
+
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
+
      if (peripheral) {
        for (var p in peripheral) {
          if (Object.prototype.propertyIsEnumerable.call(peripheral, p)) {
@@ -921,14 +929,6 @@ var Module = null;
                      '/emulator/'+ (peripheral[p][0].replace(/\//g,'_')));
          }
        }
-     }
-
-     if (autoboot) {
-       args.push('-autoboot_command', autoboot+'\\n', '-autoboot_delay', '2');
-     }
-
-     if (extra_args) {
-       args = args.concat(extra_args);
      }
 
      return args;
