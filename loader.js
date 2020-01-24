@@ -991,6 +991,7 @@ var Module = null;
     */
    function EmscriptenRunner(canvas, game_data) {
      var self = this;
+     this._canvas = canvas;
      this._hooks = { start: [], reset: [] };
      // This is somewhat wrong, because our Emscripten-based emulators
      // are currently compiled to start immediately when their js file
@@ -1061,6 +1062,7 @@ var Module = null;
    };
 
    EmscriptenRunner.prototype.requestFullScreen = function () {
+     this._canvas.requestFullscreen();
    };
 
    /*
@@ -1292,10 +1294,6 @@ var Module = null;
                                console.log("Gamepad disconnected from index %d: %s",
                                            e.gamepad.index, e.gamepad.id);
                              });
-
-     if (/archive\.org$/.test(document.location.hostname) && document.getElementById("gofullscreen")) {
-       document.getElementById("gofullscreen").addEventListener("click", this.requestFullScreen);
-     }
 
      var css_resolution, aspectRatio;
      // right off the bat we set the canvas's inner dimensions to
@@ -1874,9 +1872,7 @@ var Module = null;
      };
 
      this.requestFullScreen = function () {
-       if (typeof Module == "object" && "requestFullScreen" in Module) {
-         Module.requestFullScreen(1, 0);
-       } else if (runner) {
+       if (runner) {
          runner.requestFullScreen();
        }
      };
