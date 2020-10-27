@@ -173,6 +173,11 @@ var Module = null;
                                              cfgr = NP2Loader;
                                              get_files = get_np2_files;
                                            }
+                                           else if (module && module.indexOf("ruffle-") === 0) {
+                                             emulator_logo = images.ruffle;
+                                             cfgr = RuffleLoader;
+                                             get_files = get_ruffle_files;
+                                           }
                                            else if (module && module.indexOf("xmil-") === 0) {
                                              emulator_logo = images.xmil;
                                              cfgr = NP2Loader;
@@ -253,7 +258,7 @@ var Module = null;
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
-                                           } else if (module) { // MAME
+                                           } else if (module && module.indexOf("ruffle-") !== 0) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
                                              if (emulator_start_item) {
@@ -398,6 +403,7 @@ var Module = null;
                             files.push(cfgr.mountFile('/'+ filename,
                                                       cfgr.fetchFile(title, url)));
                           });
+
        Object.keys(peripherals).forEach(function (periph) {
                                           files.push(cfgr.peripheral(periph,                // we're not pushing a 'file' here,
                                                                      peripherals[periph])); // but that's ok
@@ -439,29 +445,21 @@ var Module = null;
                                                         get_other_emulator_config_url(module))));
        return files;
      }
-     
-     function get_ruffle_files (cfgr, metadata, modulecfg, filelist) {
-      var default_drive = 'c'
-      var files = []
-      var meta = dict_from_xml(metadata)
 
-      games_files = files_with_ext_from_filelist(filelist, meta.emulator_ext);
+     function get_ruffle_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [];
+       var meta = dict_from_xml(metadata);
+       var game_files = files_with_ext_from_filelist(filelist, meta.emulator_ext);
 
-      for(let file in games_files){
-        if (file) {
-          var title = 'Downloading Game File';
-
-          // Get IA Download Links
-          var url = (filename.includes('/')) ? get_zip_url(file)
-            : get_zip_url(file, get_item_name(game))
-
-          files.push(
-            cfgr.mountFile(default_drive, cfgr.fetchFile(title, url)) // Mount game file
-          )
-          break; // only allow one .swf file to be loaded
-        }
-      }
-      return files;
+       if (game_files.length > 0) {
+         var file = game_files[0]; // only allow one .swf file to be loaded
+         var title = 'Downloading Game File';
+         var url = (file.name.includes('/')) ? get_zip_url(file.name)
+                                             : get_zip_url(file.name, get_item_name(game));
+         files.push(cfgr.mountFile('/' + file.name, cfgr.fetchFile(title, url)));
+         files.push(cfgr.swf_file_name('/' + file.name));
+       }
+       return files;
     }
 
      function get_pce_files(cfgr, metadata, modulecfg, filelist) {
@@ -907,12 +905,16 @@ var Module = null;
    * RuffleLoader
    */
    function RuffleLoader () {
-     var config = Array.prototype.reduce.call(arguments, extend)
-     config.runner = RuffleRunner
-     return config
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.runner = RuffleRunner;
+     return config;
    }
-    
+
    RuffleLoader.__proto__ = BaseLoader;
+
+   RuffleLoader.swf_file_name = function (file_name) {
+     return { swf_file_name: file_name };
+   };
 
    /**
    * NP2Loader
@@ -1270,36 +1272,36 @@ var Module = null;
    /*
     * RuffleRunner
     */
-   RuffleRunner = function (canvas, game_data) {
-    // read game data from file system
-    let gamedata = game_data.fs.readFileSync( "/c" , null, flag_r)
-    this.ready = {}
+   function RuffleRunner(canvas, game_data) {
+     // read game data from file system
+     let gamedata = game_data.fs.readFileSync(game_data.swf_file_name, null, flag_r);
+     this.ready = null;
 
-    window.RufflePlayer = window.RufflePlayer || {};
-    let ruffle = window.RufflePlayer.newest();
-    let player = ruffle.create_player();
-    
-    // copy atributes of canvas to player div
-    for(let el of canvas.attributes){
-      player.setAttribute(el.localName,el.nodeValue)
-    }
+     window.RufflePlayer = window.RufflePlayer || {};
+     let ruffle = RufflePlayer.newest();
+     let player = ruffle.create_player();
 
-    canvas.parentElement.replaceChild(player, canvas);
-    player.play_swf_data(gamedata).then(() => {
-      this.ready(); // clear screen 
-      player.play_button_clicked(); // autoplay
-    })
-  }
+     // copy atributes of canvas to player div
+     for (let el of canvas.attributes){
+       player.setAttribute(el.localName, el.nodeValue);
+     }
 
-  RuffleRunner.prototype.onReset =  function (func) {
-  }
+     canvas.parentElement.replaceChild(player, canvas);
+     player.play_swf_data(gamedata).then(() => {
+       this.ready(); // clear screen
+       player.play_button_clicked(); // autoplay
+     });
+   }
 
-  RuffleRunner.prototype.start =  function (func) {
-  }
+   RuffleRunner.prototype.onReset =  function (func) {
+   };
 
-  RuffleRunner.prototype.onStarted =  function (func) {
-    this.ready = func;
-  }
+   RuffleRunner.prototype.start =  function (func) {
+   };
+
+   RuffleRunner.prototype.onStarted =  function (func) {
+     this.ready = func;
+   };
 
    /**
     * Emulator
@@ -2177,3 +2179,7 @@ var Module = null;
 // legacy
 var JSMESS = JSMESS || {};
 JSMESS.ready = function (f) { f(); };
+
+// Local Variables:
+// js-indent-level: 2
+// End:
