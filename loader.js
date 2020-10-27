@@ -1381,102 +1381,111 @@ var Module = null;
        }
        loading.then(function (_game_data) {
                       return new Promise(function(resolve, reject) {
-                        var inMemoryFS = new BrowserFS.FileSystem.InMemory();
-                        // If the browser supports IndexedDB storage, mirror writes to that storage
-                        // for persistence purposes.
-                        if (BrowserFS.FileSystem.IndexedDB.isAvailable()) {
-                          var AsyncMirrorFS = BrowserFS.FileSystem.AsyncMirror,
-                              IndexedDB = BrowserFS.FileSystem.IndexedDB;
-                          deltaFS = new AsyncMirrorFS(inMemoryFS,
-                                                      new IndexedDB(function(e, fs) {
-                                                                      if (e) {
-                                                                        // we probably weren't given access;
-                                                                        // private window for example.
-                                                                        // don't fail completely, just don't
-                                                                        // use indexeddb
-                                                                        deltaFS = inMemoryFS;
-                                                                        finish();
-                                                                      } else {
-                                                                        // Initialize deltaFS by copying files from async storage to sync storage.
-                                                                        deltaFS.initialize(function (e) {
-                                                                                             if (e) {
-                                                                                               reject(e);
-                                                                                             } else {
-                                                                                               finish();
-                                                                                             }
-                                                                                           });
-                                                                      }
-                                                                    },
-                                                                    "fileSystemKey" in _game_data ? _game_data.fileSystemKey
-                                                                                                  : "emularity"));
-                        } else {
-                          finish();
-                        }
+                        var InMemoryFS = BrowserFS.FileSystem.InMemory;
+                        InMemoryFS.Create(function (e, inMemory) {
+                          // If the browser supports IndexedDB storage, mirror writes to that storage
+                          // for persistence purposes.
+                          if (BrowserFS.FileSystem.IndexedDB.isAvailable()) {
+                            var AsyncMirrorFS = BrowserFS.FileSystem.AsyncMirror,
+                                IndexedDBFS = BrowserFS.FileSystem.IndexedDB;
+                            IndexedDBFS.Create(function(e, idbfs) {
+                                                 if (e) {
+                                                   finish(e, inMemory);
+                                                 } else {
+                                                   AsyncMirrorFS.Create({ sync: inMemory, async: idbfs },
+                                                                        finish);
+                                                 }
+                                               },
+                                               "fileSystemKey" in _game_data ? _game_data.fileSystemKey
+                                                                             : "emularity");
+                          } else {
+                            finish(e, inMemory);
+                          }
+                        });
 
-                        function finish() {
+                        function finish(e, deltaFS) {
                           game_data = _game_data;
 
                           // Any file system writes to MountableFileSystem will be written to the
                           // deltaFS, letting us mount read-only zip files into the MountableFileSystem
                           // while being able to "write" to them.
-                          game_data.fs = new BrowserFS.FileSystem.OverlayFS(deltaFS,
-                                                                            new BrowserFS.FileSystem.MountableFileSystem());
-                          game_data.fs.initialize(function (e) {
-                            if (e) {
-                              console.error("Failed to initialize the OverlayFS:", e);
-                              reject();
-                            } else {
-                              var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
-                              function fetch(file) {
-                                if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
-                                  return Promise.resolve(file.data);
-                                }
-                                return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
-                              }
-                              function mountat(drive) {
-                                return function (data) {
-                                  if (data !== null) {
-                                    drive = drive.toLowerCase();
-                                    var mountpoint = '/'+ drive;
-                                    // Mount into RO MFS.
-                                    game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, BFSOpenZip(new Buffer(data)));
-                                  }
-                                };
-                              }
-                              function saveat(filename) {
-                                return function (data) {
-                                  if (data !== null) {
-                                    if (filename.includes('/')) {
-                                      var parts = filename.split('/');
-                                      for (var i = 1; i < parts.length; i++) {
-                                        var path = '/'+ parts.slice(0, i).join('/');
-                                        if (!game_data.fs.existsSync(path)) {
-                                          game_data.fs.mkdirSync(path);
-                                        }
-                                      }
-                                    }
-                                    game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
-                                  }
-                                };
-                              }
-
-                              var promises = game_data.files
-                                                      .map(function (f) {
-                                                             if (f && f.file) {
-                                                               if (f.drive) {
-                                                                 return fetch(f.file).then(mountat(f.drive));
-                                                               } else if (f.mountpoint) {
-                                                                 return fetch(f.file).then(saveat(f.mountpoint));
-                                                               }
+                          var MountableFS = BrowserFS.FileSystem.MountableFileSystem,
+                              OverlayFS = BrowserFS.FileSystem.OverlayFS;
+                          InMemoryFS.Create(function (e, inMemory) {
+                            MountableFS.Create(function (e, mountable) {
+                              OverlayFS.Create({ readable: mountable
+                                               , writable: deltaFS
+                                               },
+                                               function (e, fs) {
+                                                 if (e) {
+                                                   console.error("Failed to initialize the OverlayFS:", e);
+                                                   reject();
+                                                 } else {
+                                                   game_data.fs = fs;
+                                                   var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
+                                                   function fetch(file) {
+                                                     if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
+                                                       return Promise.resolve(file.data);
+                                                     }
+                                                     return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
+                                                   }
+                                                   function mountat(drive) {
+                                                     return function (data) {
+                                                       if (data !== null) {
+                                                         drive = drive.toLowerCase();
+                                                         var mountpoint = '/'+ drive;
+                                                         // Mount into RO MFS.
+                                                         return new Promise(function (resolve, reject) {
+                                                           var ZipFS = BrowserFS.FileSystem.ZipFS;
+                                                           return new ZipFS.Create({ zipData: new Buffer(data) },
+                                                                                   function (e, fs) {
+                                                                                     if (e) {
+                                                                                       reject();
+                                                                                     } else {
+                                                                                       game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, fs);
+                                                                                       resolve();
+                                                                                     }
+                                                                                   });
+                                                         });
+                                                       }
+                                                     };
+                                                   }
+                                                   function saveat(filename) {
+                                                     return function (data) {
+                                                       if (data !== null) {
+                                                         if (filename.includes('/')) {
+                                                           var parts = filename.split('/');
+                                                           for (var i = 1; i < parts.length; i++) {
+                                                             var path = '/'+ parts.slice(0, i).join('/');
+                                                             if (!game_data.fs.existsSync(path)) {
+                                                               game_data.fs.mkdirSync(path);
                                                              }
-                                                             return null;
-                                                           });
-                              // this is kinda wrong; it really only applies when we're loading something created by Emscripten
-                              if ('emulatorWASM' in game_data && game_data.emulatorWASM && 'WebAssembly' in window) {
-                                promises.push(fetch({ title: "WASM Binary", url: game_data.emulatorWASM }).then(function (data) { game_data.wasmBinary = data; }));
-                              }
-                              Promise.all(promises).then(resolve, reject);
-                            }
+                                                           }
+                                                         }
+                                                         game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
+                                                       }
+                                                     };
+                                                   }
+
+                                                   var promises = game_data.files
+                                                                           .map(function (f) {
+                                                                                  if (f && f.file) {
+                                                                                    if (f.drive) {
+                                                                                      return fetch(f.file).then(mountat(f.drive));
+                                                                                    } else if (f.mountpoint) {
+                                                                                      return fetch(f.file).then(saveat(f.mountpoint));
+                                                                                    }
+                                                                                  }
+                                                                                  return null;
+                                                                                });
+                                                   // this is kinda wrong; it really only applies when we're loading something created by Emscripten
+                                                   if ('emulatorWASM' in game_data && game_data.emulatorWASM && 'WebAssembly' in window) {
+                                                     promises.push(fetch({ title: "WASM Binary", url: game_data.emulatorWASM }).then(function (data) { game_data.wasmBinary = data; }));
+                                                   }
+                                                   Promise.all(promises).then(resolve, reject);
+                                                 }
+                                               });
+                            });
                           });
                         }
                       });
@@ -1912,10 +1921,6 @@ var Module = null;
    function getfullscreenenabler() {
      return canvas.requestFullScreen || canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen;
    }
-
-   function BFSOpenZip(loadedData) {
-       return new BrowserFS.FileSystem.ZipFS(loadedData);
-   };
 
    // This is such a hack. We're not calling the BrowserFS api
    // "correctly", so we have to synthesize these flags ourselves
