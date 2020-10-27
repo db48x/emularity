@@ -183,11 +183,6 @@ var Module = null;
                                              cfgr = NP2Loader;
                                              get_files = get_xmil_files;
                                            }
-                                           else if (module && module.indexOf('ruffle-') === 0) {
-                                            emulator_logo = images.ruffle
-                                            cfgr = RuffleLoader
-                                            get_files = get_ruffle_files
-                                           }
                                            else if (module && module.indexOf("vmac-") === 0) {
                                              emulator_logo = images.vmac;
                                              cfgr = NP2Loader;
