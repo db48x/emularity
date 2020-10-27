@@ -1481,8 +1481,8 @@ var Module = null;
                                                                         finish);
                                                  }
                                                },
-                                               "fileSystemKey" in _game_data ? _game_data.fileSystemKey
-                                                                             : "emularity");
+                                               { storeName: "fileSystemKey" in _game_data ? _game_data.fileSystemKey
+                                                                                          : "emularity" });
                           } else {
                             finish(e, inMemory);
                           }
