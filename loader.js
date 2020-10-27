@@ -404,6 +404,18 @@ var Module = null;
                                                       cfgr.fetchFile(title, url)));
                           });
 
+       // add on game drive (.chd) files, if any
+       // chd files must go into a subdir named after the driver for mame to find them
+       var drive_files = files_with_ext_from_filelist(filelist, 'chd');  // maybe 'chd' should be meta.drive_ext?
+       len = drive_files.length;
+       drive_files.forEach(function (file, i) {
+                             var title = "Game Drive ("+ (i+1) +" of "+ len +")";
+                             var url = (file.name.includes("/")) ? get_zip_url(file.name)
+                                                                 : get_zip_url(file.name, get_item_name(game));
+                             files.push(cfgr.mountFile(modulecfg.driver + '/' + file.name,
+                                                       cfgr.fetchFile(title, url)));
+                           });
+
        Object.keys(peripherals).forEach(function (periph) {
                                           files.push(cfgr.peripheral(periph,                // we're not pushing a 'file' here,
                                                                      peripherals[periph])); // but that's ok
