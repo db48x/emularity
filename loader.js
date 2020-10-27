@@ -63,6 +63,7 @@ var Module = null;
                   np2: img("/images/nekop2.gif"),
                   xmil: img("/images/xmillenium_logo.jpg"),
                   vmac: img("/images/vmac.png"),
+                  ruffle: img("/images/ruffle.png"),
                 };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
@@ -75,6 +76,7 @@ var Module = null;
                   np2: img("other_logos/nekop2.gif"),
                   xmil: img("other_logos/xmillenium_logo.jpg"),
                   vmac: img("other_logos/vmac.png"),
+                  ruffle: img("/other_logos/ruffle.png"),
                 };
      }
 
@@ -171,10 +173,20 @@ var Module = null;
                                              cfgr = NP2Loader;
                                              get_files = get_np2_files;
                                            }
+                                           else if (module && module.indexOf("ruffle-") === 0) {
+                                             emulator_logo = images.ruffle;
+                                             cfgr = RuffleLoader;
+                                             get_files = get_ruffle_files;
+                                           }
                                            else if (module && module.indexOf("xmil-") === 0) {
                                              emulator_logo = images.xmil;
                                              cfgr = NP2Loader;
                                              get_files = get_xmil_files;
+                                           }
+                                           else if (module && module.indexOf('ruffle-') === 0) {
+                                            emulator_logo = images.ruffle
+                                            cfgr = RuffleLoader
+                                            get_files = get_ruffle_files
                                            }
                                            else if (module && module.indexOf("vmac-") === 0) {
                                              emulator_logo = images.vmac;
@@ -246,7 +258,7 @@ var Module = null;
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
-                                           } else if (module) { // MAME
+                                           } else if (module && module.indexOf("ruffle-") !== 0) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
                                              if (emulator_start_item) {
@@ -391,6 +403,7 @@ var Module = null;
                             files.push(cfgr.mountFile('/'+ filename,
                                                       cfgr.fetchFile(title, url)));
                           });
+
        Object.keys(peripherals).forEach(function (periph) {
                                           files.push(cfgr.peripheral(periph,                // we're not pushing a 'file' here,
                                                                      peripherals[periph])); // but that's ok
@@ -432,6 +445,22 @@ var Module = null;
                                                         get_other_emulator_config_url(module))));
        return files;
      }
+
+     function get_ruffle_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [];
+       var meta = dict_from_xml(metadata);
+       var game_files = files_with_ext_from_filelist(filelist, meta.emulator_ext);
+
+       if (game_files.length > 0) {
+         var file = game_files[0]; // only allow one .swf file to be loaded
+         var title = 'Downloading Game File';
+         var url = (file.name.includes('/')) ? get_zip_url(file.name)
+                                             : get_zip_url(file.name, get_item_name(game));
+         files.push(cfgr.mountFile('/' + file.name, cfgr.fetchFile(title, url)));
+         files.push(cfgr.swf_file_name('/' + file.name));
+       }
+       return files;
+    }
 
      function get_pce_files(cfgr, metadata, modulecfg, filelist) {
        var files = [],
@@ -873,6 +902,21 @@ var Module = null;
    };
 
    /**
+   * RuffleLoader
+   */
+   function RuffleLoader () {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.runner = RuffleRunner;
+     return config;
+   }
+
+   RuffleLoader.__proto__ = BaseLoader;
+
+   RuffleLoader.swf_file_name = function (file_name) {
+     return { swf_file_name: file_name };
+   };
+
+   /**
    * NP2Loader
    *
    * TODO(db48x): This is currently doing triple-duty as the loader
@@ -1223,6 +1267,40 @@ var Module = null;
 
    SAERunner.prototype.requestFullScreen = function () {
      getfullscreenenabler().call(this._canvas);
+   };
+
+   /*
+    * RuffleRunner
+    */
+   function RuffleRunner(canvas, game_data) {
+     // read game data from file system
+     let gamedata = game_data.fs.readFileSync(game_data.swf_file_name, null, flag_r);
+     this.ready = null;
+
+     window.RufflePlayer = window.RufflePlayer || {};
+     let ruffle = RufflePlayer.newest();
+     let player = ruffle.create_player();
+
+     // copy atributes of canvas to player div
+     for (let el of canvas.attributes){
+       player.setAttribute(el.localName, el.nodeValue);
+     }
+
+     canvas.parentElement.replaceChild(player, canvas);
+     player.play_swf_data(gamedata).then(() => {
+       this.ready(); // clear screen
+       player.play_button_clicked(); // autoplay
+     });
+   }
+
+   RuffleRunner.prototype.onReset =  function (func) {
+   };
+
+   RuffleRunner.prototype.start =  function (func) {
+   };
+
+   RuffleRunner.prototype.onStarted =  function (func) {
+     this.ready = func;
    };
 
    /**
@@ -2098,6 +2176,7 @@ var Module = null;
    window.PCELoader = PCELoader;
    window.VICELoader = VICELoader;
    window.NP2Loader = NP2Loader;
+   window.RuffleLoader = RuffleLoader;
    window.Emulator = Emulator;
    window._SDL_CreateRGBSurfaceFrom = _SDL_CreateRGBSurfaceFrom;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
@@ -2105,3 +2184,7 @@ var Module = null;
 // legacy
 var JSMESS = JSMESS || {};
 JSMESS.ready = function (f) { f(); };
+
+// Local Variables:
+// js-indent-level: 2
+// End:

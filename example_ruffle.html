@@ -1,0 +1,44 @@
+<!--
+  Waning this emulator is still a work in progress, and not 100% of apis have been implemented
+  so don't expect compatibility with all .swf files.
+
+  * Download latest nightly build (ruffle_web_latest.zip) from 
+    http://ruffle-rs.s3-website-us-west-1.amazonaws.com/web/
+    and extract to the emulators folder.
+
+  * in the examples folder save 
+    https://web.archive.org/web/20080721095815im_/http://70.85.12.163/albino_flash02/end(www.albinoblacksheep.com).swf
+
+  * Visit your example_ruffle.html file with a modern
+    Javascript-capable browser.
+
+  -->
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>example computer program</title>
+  </head>
+  <body>
+    <div id="container"></div>
+    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;" width="756" height="391" moz-opaque=""></canvas>
+  </body>
+  <foot>
+    <script type="text/javascript" src="es6-promise.js"></script>
+    <script type="text/javascript" src="browserfs.min.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <script type="text/javascript">
+      var emulator = new Emulator(
+        document.querySelector("#canvas"),
+        null,
+        new RuffleLoader(
+            RuffleLoader.emulatorJS("emulators/ruffle_web_latest/ruffle.js"),
+            RuffleLoader.mountFile("c", RuffleLoader.fetchFile(
+              "Game File",
+              "/examples/end(www.albinoblacksheep.com).swf")),
+        )
+      );
+      emulator.start({ waitAfterDownloading: true });
+    </script>
+   
+  </foot>
+</html>
