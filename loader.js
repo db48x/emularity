@@ -1472,17 +1472,18 @@ var Module = null;
                           // for persistence purposes.
                           if (BrowserFS.FileSystem.IndexedDB.isAvailable()) {
                             var AsyncMirrorFS = BrowserFS.FileSystem.AsyncMirror,
-                                IndexedDBFS = BrowserFS.FileSystem.IndexedDB;
-                            IndexedDBFS.Create(function(e, idbfs) {
+                                IndexedDBFS = BrowserFS.FileSystem.IndexedDB,
+                                fileSystemKey = "fileSystemKey" in _game_data ? _game_data.fileSystemKey
+                                                                              : "emularity";
+                            IndexedDBFS.Create({ storeName: fileSystemKey },
+                                               function(e, idbfs) {
                                                  if (e) {
                                                    finish(e, inMemory);
                                                  } else {
                                                    AsyncMirrorFS.Create({ sync: inMemory, async: idbfs },
                                                                         finish);
                                                  }
-                                               },
-                                               { storeName: "fileSystemKey" in _game_data ? _game_data.fileSystemKey
-                                                                                          : "emularity" });
+                                               });
                           } else {
                             finish(e, inMemory);
                           }
