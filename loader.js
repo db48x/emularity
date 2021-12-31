@@ -1543,12 +1543,12 @@ var Module = null;
                                                            var parts = filename.split('/');
                                                            for (var i = 1; i < parts.length; i++) {
                                                              var path = '/'+ parts.slice(0, i).join('/');
-                                                             if (!game_data.fs.existsSync(path)) {
-                                                               game_data.fs.mkdirSync(path);
+                                                             if (!mountable.existsSync(path)) {
+                                                               mountable.mkdirSync(path);
                                                              }
                                                            }
                                                          }
-                                                         game_data.fs.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
+                                                         mountable.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
                                                        }
                                                      };
                                                    }
