@@ -1496,82 +1496,87 @@ var Module = null;
                           // deltaFS, letting us mount read-only zip files into the MountableFileSystem
                           // while being able to "write" to them.
                           var MountableFS = BrowserFS.FileSystem.MountableFileSystem,
-                              OverlayFS = BrowserFS.FileSystem.OverlayFS;
-                          InMemoryFS.Create(function (e, inMemory) {
-                            MountableFS.Create(function (e, mountable) {
-                              OverlayFS.Create({ readable: mountable
-                                               , writable: deltaFS
-                                               },
-                                               function (e, fs) {
-                                                 if (e) {
-                                                   console.error("Failed to initialize the OverlayFS:", e);
-                                                   reject();
-                                                 } else {
-                                                   game_data.fs = fs;
-                                                   var Buffer = BrowserFS.BFSRequire('buffer').Buffer;
-                                                   function fetch(file) {
-                                                     if ('data' in file && file.data !== null && typeof file.data !== 'undefined') {
-                                                       return Promise.resolve(file.data);
-                                                     }
+                              OverlayFS = BrowserFS.FileSystem.OverlayFS,
+                              ZipFS = BrowserFS.FileSystem.ZipFS,
+                              Buffer = BrowserFS.BFSRequire('buffer').Buffer;
+                          MountableFS.Create(function (e, mountable) {
+                            OverlayFS.Create({ readable: mountable
+                                             , writable: deltaFS
+                                             },
+                                             function (e, fs) {
+                                               if (e) {
+                                                 console.error("Failed to initialize the OverlayFS:", e);
+                                                 reject();
+                                               } else {
+                                                 game_data.fs = fs;
+                                                 function fetch(file) {
+                                                   var isCached = 'cached' in file && file.cached,
+                                                       hasData = 'data' in file && file.data !== null && typeof file.data !== 'undefined';
+                                                   if (isCached || hasData) {
+                                                     return cached_file(file.title, file.data);
+                                                   } else {
                                                      return fetch_file(file.title, file.url, 'arraybuffer', file.optional);
                                                    }
-                                                   function mountat(drive) {
-                                                     return function (data) {
-                                                       if (data !== null) {
-                                                         drive = drive.toLowerCase();
-                                                         var mountpoint = '/'+ drive;
-                                                         // Mount into RO MFS.
-                                                         return new Promise(function (resolve, reject) {
-                                                           var ZipFS = BrowserFS.FileSystem.ZipFS;
-                                                           return new ZipFS.Create({ zipData: new Buffer(data) },
-                                                                                   function (e, fs) {
-                                                                                     if (e) {
-                                                                                       reject();
-                                                                                     } else {
-                                                                                       game_data.fs.getOverlayedFileSystems().readable.mount(mountpoint, fs);
-                                                                                       resolve();
-                                                                                     }
-                                                                                   });
-                                                         });
+                                                 }
+                                                 function mountat(drive) {
+                                                   return function (data) {
+                                                     if (data !== null) {
+                                                       drive = drive.toLowerCase();
+                                                       var mountpoint = '/'+ drive;
+                                                       // Mount into RO MFS.
+                                                       return new Promise(function (resolve, reject) {
+                                                         return new ZipFS.Create({ zipData: new Buffer(data) },
+                                                                                 function (e, fs) {
+                                                                                   if (e) {
+                                                                                     reject();
+                                                                                   } else {
+                                                                                     mountable.mount(mountpoint, fs);
+                                                                                     resolve();
+                                                                                   }
+                                                                                 });
+                                                       });
+                                                     }
+                                                   };
+                                                 }
+                                                 function saveat(filename) {
+                                                   return function (data) {
+                                                     if (data !== null) {
+                                                       if (deltaFS.existsSync(filename)) {
+                                                         return;
                                                        }
-                                                     };
-                                                   }
-                                                   function saveat(filename) {
-                                                     return function (data) {
-                                                       if (data !== null) {
-                                                         if (filename.includes('/')) {
-                                                           var parts = filename.split('/');
-                                                           for (var i = 1; i < parts.length; i++) {
-                                                             var path = '/'+ parts.slice(0, i).join('/');
-                                                             if (!mountable.existsSync(path)) {
-                                                               mountable.mkdirSync(path);
-                                                             }
+                                                       if (filename.includes('/', 1)) {
+                                                         var parts = filename.substring(1).split('/');
+                                                         for (var i = 1; i < parts.length; i++) {
+                                                           var path = '/'+ parts.slice(0, i).join('/');
+                                                           if (!deltaFS.existsSync(path)) {
+                                                             deltaFS.mkdirSync(path, 0777);
                                                            }
                                                          }
-                                                         mountable.writeFileSync('/'+ filename, new Buffer(data), null, flag_w, 0x1a4);
                                                        }
-                                                     };
-                                                   }
-
-                                                   var promises = game_data.files
-                                                                           .map(function (f) {
-                                                                                  if (f && f.file) {
-                                                                                    if (f.drive) {
-                                                                                      return fetch(f.file).then(mountat(f.drive));
-                                                                                    } else if (f.mountpoint) {
-                                                                                      return fetch(f.file).then(saveat(f.mountpoint));
-                                                                                    }
-                                                                                  }
-                                                                                  return null;
-                                                                                });
-                                                   // this is kinda wrong; it really only applies when we're loading something created by Emscripten
-                                                   if ('emulatorWASM' in game_data && game_data.emulatorWASM && 'WebAssembly' in window) {
-                                                     promises.push(fetch({ title: "WASM Binary", url: game_data.emulatorWASM }).then(function (data) { game_data.wasmBinary = data; }));
-                                                   }
-                                                   Promise.all(promises).then(resolve, reject);
+                                                       deltaFS.writeFileSync(filename, new Buffer(data), null, flag_w, 0644);
+                                                     }
+                                                   };
                                                  }
-                                               });
-                            });
+                                                 var promises = game_data.files
+                                                                         .map(function (f) {
+                                                                                if (f && f.file) {
+                                                                                  if (f.drive) {
+                                                                                    return fetch(f.file).then(mountat(f.drive));
+                                                                                  } else if (f.mountpoint) {
+                                                                                    var path = f.mountpoint[0] != '/' ? '/'+ f.mountpoint : f.mountpoint;
+                                                                                    f.file.cached = deltaFS.existsSync(path);
+                                                                                    return fetch(f.file).then(saveat(path));
+                                                                                  }
+                                                                                }
+                                                                                return null;
+                                                                              });
+                                                 // this is kinda wrong; it really only applies when we're loading something created by Emscripten
+                                                 if ('emulatorWASM' in game_data && game_data.emulatorWASM && 'WebAssembly' in window) {
+                                                   promises.push(fetch({ title: "WASM Binary", url: game_data.emulatorWASM }).then(function (data) { game_data.wasmBinary = data; }));
+                                                 }
+                                                 Promise.all(promises).then(resolve, reject);
+                                               }
+                                             });
                           });
                         }
                       });
@@ -1715,60 +1720,73 @@ var Module = null;
      };
 
      var fetch_file = function (title, url, rt, optional) {
+       return _fetch_file(title, url, rt, optional, false);
+     };
+
+     var cached_file = function (title, data) {
+       return _fetch_file(title, data, null, false, true);
+     };
+
+     var _fetch_file = function (title, url, rt, optional, cached) {
        var needsCSS = splash.table.dataset.hasCustomCSS == "false";
        var row = addRow(splash.table);
        var titleCell = row[0], statusCell = row[1];
        titleCell.textContent = title;
        return new Promise(function (resolve, reject) {
-                            var xhr = new XMLHttpRequest();
-                            xhr.open('GET', url, true);
-                            xhr.responseType = rt || 'arraybuffer';
-                            xhr.onprogress = function (e) {
-                                               titleCell.innerHTML = title +" <span style=\"font-size: smaller\">"+ formatSize(e) +"</span>";
-                                             };
-                            xhr.onload = function (e) {
-                                           if (xhr.status === 200) {
-                                             success();
-                                             resolve(xhr.response);
-                                           } else if (optional) {
-                                             success();
-                                             resolve(null);
-                                           } else {
-                                             failure();
-                                             reject();
-                                           }
-                                         };
-                            xhr.onerror = function (e) {
-                                            if (optional) {
-                                              success();
-                                              resolve(null);
-                                            } else {
-                                              failure();
-                                              reject();
-                                            }
-                                          };
-                            function success() {
-                              statusCell.textContent = "✔";
-                              titleCell.parentNode.classList.add('emularity-download-success');
-                              titleCell.textContent = title;
-                              if (needsCSS) {
-                                titleCell.style.fontWeight = 'bold';
-                                titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
-                                titleCell.parentNode.style.color = splash.getColor('background');
-                              }
+                            if (cached) {
+                              success();
+                              resolve(url); // second parameter reused as a pass–through
+                            } else {
+                              var xhr = new XMLHttpRequest();
+                              xhr.open('GET', url, true);
+                              xhr.responseType = rt || 'arraybuffer';
+                              xhr.onprogress = function (e) {
+                                                 titleCell.innerHTML = title +" <span style=\"font-size: smaller\">"+ formatSize(e) +"</span>";
+                                               };
+                              xhr.onload = function (e) {
+                                             if (xhr.status === 200) {
+                                               success();
+                                               resolve(xhr.response);
+                                             } else if (optional) {
+                                               success();
+                                               resolve(null);
+                                             } else {
+                                               failure();
+                                               reject();
+                                             }
+                                           };
+                              xhr.onerror = function (e) {
+                                              if (optional) {
+                                                success();
+                                                resolve(null);
+                                              } else {
+                                                failure();
+                                                reject();
+                                              }
+                                            };
+                              xhr.send();
                             }
-                            function failure() {
-                              statusCell.textContent = "✘";
-                              titleCell.parentNode.classList.add('emularity-download-failure');
-                              titleCell.textContent = title;
-                              if (needsCSS) {
-                                titleCell.style.fontWeight = 'bold';
-                                titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
-                                titleCell.parentNode.style.color = splash.getColor('background');
-                              }
-                            }
-                            xhr.send();
                           });
+       function success() {
+         statusCell.textContent = "✔";
+         titleCell.parentNode.classList.add('emularity-download-success');
+         titleCell.textContent = title;
+         if (needsCSS) {
+           titleCell.style.fontWeight = 'bold';
+           titleCell.parentNode.style.backgroundColor = splash.getColor('foreground');
+           titleCell.parentNode.style.color = splash.getColor('background');
+         }
+       }
+       function failure() {
+         statusCell.textContent = "✘";
+         titleCell.parentNode.classList.add('emularity-download-failure');
+         titleCell.textContent = title;
+         if (needsCSS) {
+           titleCell.style.fontWeight = 'bold';
+           titleCell.parentNode.style.backgroundColor = splash.getColor('failure');
+           titleCell.parentNode.style.color = splash.getColor('background');
+         }
+       }
      };
 
      function keyevent(resolve) {
