@@ -260,6 +260,11 @@ var Module = null;
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
+                                           } else if (module && module.indexOf("v86") === 0) {
+                                             config_args.push(cfgr.memorySize(modulecfg.memory_size),
+                                                              cfgr.vgaMemorySize(modulecfg.vga_memory_size),
+                                                              cfgr.acpi(modulecfg.acpi),
+                                                              cfgr.bootOrder(modulecfg.boot_order));
                                            } else if (module && module.indexOf("ruffle-") !== 0) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
@@ -1037,6 +1042,14 @@ var Module = null;
       return {"cdrom": {"path": filename}}
     };
 
+    V86Loader.bootOrder = function (order) {
+      return {"boot_order": order}
+    };
+
+    V86Loader.acpi = function (enabled) {
+      return {"acpi": enabled}
+    };
+
     V86Loader.memorySize = function (amount) {
       return {"memory_size": amount};
     };
@@ -1402,7 +1415,9 @@ var Module = null;
      cfg.screen_container = screenContainerInnerElt;
      cfg.memory_size = game_data.memory_size || 32 << 20;
      cfg.vga_memory_size = game_data.vga_memory_size || 2 << 20;
-     cfg.autostart = true; // FIXME
+     cfg.acpi = game_data.acpi;
+     cfg.boot_order = game_data.boot_order || 0x213;
+     cfg.autostart = true;
 
      cfg.wasm_fn = env => {
        return new Promise(async resolve => {
@@ -1430,7 +1445,7 @@ var Module = null;
    }
 
    V86Runner.prototype.start = function () {
-     // this._emulator.run(); // FIXME
+     this._emulator.run();
    };
 
    V86Runner.prototype.pause = function () {
