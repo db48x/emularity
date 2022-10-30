@@ -1009,8 +1009,8 @@ var Module = null;
     */
     function V86Loader() {
       var config = Array.prototype.reduce.call(arguments, extend);
-      config.memory_size = Math.round((config.memory_size || 32) * 1024 * 1024);
-      config.vga_memory_size = Math.round((config.vga_memory_size || 2) * 1024 * 1024);
+      config.memory_size = config.memory_size || 32;
+      config.vga_memory_size = config.vga_memory_size || 2;
       config.boot_order = config.boot_order || 0x213;
       config.runner = V86Runner;
       return config;
@@ -1416,8 +1416,8 @@ var Module = null;
 
      var cfg = {};
      cfg.screen_container = screenContainerInnerElt;
-     cfg.memory_size = game_data.memory_size;
-     cfg.vga_memory_size = game_data.vga_memory_size;
+     cfg.memory_size = Math.floor(game_data.memory_size * 1024 * 1024);
+     cfg.vga_memory_size = Math.floor(game_data.vga_memory_size * 1024 * 1024);
      cfg.acpi = game_data.acpi;
      cfg.boot_order = game_data.boot_order;
 
