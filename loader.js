@@ -1009,6 +1009,9 @@ var Module = null;
     */
     function V86Loader() {
       var config = Array.prototype.reduce.call(arguments, extend);
+      config.memory_size = 32 << 20;
+      config.vga_memory_size = 2 << 20;
+      config.boot_order = 0x213;
       config.runner = V86Runner;
       return config;
     }
@@ -1047,7 +1050,7 @@ var Module = null;
     };
 
     V86Loader.acpi = function (enabled) {
-      return {"acpi": enabled}
+      return {"acpi": !!enabled}
     };
 
     V86Loader.memorySize = function (amount) {
@@ -1413,18 +1416,19 @@ var Module = null;
 
      var cfg = {};
      cfg.screen_container = screenContainerInnerElt;
-     cfg.memory_size = game_data.memory_size || 32 << 20;
-     cfg.vga_memory_size = game_data.vga_memory_size || 2 << 20;
+     cfg.memory_size = game_data.memory_size;
+     cfg.vga_memory_size = game_data.vga_memory_size;
      cfg.acpi = game_data.acpi;
-     cfg.boot_order = game_data.boot_order || 0x213;
-     cfg.autostart = true;
+     cfg.boot_order = game_data.boot_order;
 
+     cfg.autostart = true;
      cfg.wasm_fn = env => {
        return new Promise(async resolve => {
          const wasm = await WebAssembly.instantiate(game_data.wasmBinary, env);
          resolve(wasm.instance.exports);
        });
      };
+
      ["bios", "vga_bios", "fda", "fdb", "cdrom", "hda", "hdb"].forEach(key => {
        if (game_data[key] && game_data[key]["path"]) {
          cfg[key] = {"buffer": game_data.fs.readFileSync('/'+game_data[key]["path"], null, flag_r).buffer};
