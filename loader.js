@@ -1009,9 +1009,9 @@ var Module = null;
     */
     function V86Loader() {
       var config = Array.prototype.reduce.call(arguments, extend);
-      config.memory_size = 32 << 20;
-      config.vga_memory_size = 2 << 20;
-      config.boot_order = 0x213;
+      config.memory_size = Math.round((config.memory_size || 32) * 1024 * 1024);
+      config.vga_memory_size = Math.round((config.vga_memory_size || 2) * 1024 * 1024);
+      config.boot_order = config.boot_order || 0x213;
       config.runner = V86Runner;
       return config;
     }

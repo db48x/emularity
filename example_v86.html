@@ -55,6 +55,7 @@
                                               V86Loader.scale(1),
                                               V86Loader.emulatorJS("emulators/v86/libv86.js"),
                                               V86Loader.emulatorWASM("emulators/v86/v86.wasm"),
+                                              V86Loader.memorySize(16),
                                               V86Loader.mountFile("seabios.bin",
                                                                   V86Loader.fetchFile("BIOS",
                                                                                       "emulators/v86/seabios.bin")),
