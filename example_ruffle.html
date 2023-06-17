@@ -2,8 +2,8 @@
   Waning this emulator is still a work in progress, and not 100% of apis have been implemented
   so don't expect compatibility with all .swf files.
 
-  * Download latest nightly build (ruffle_web_latest.zip) from 
-    http://ruffle-rs.s3-website-us-west-1.amazonaws.com/web/
+  * Download latest nightly selfhosted build from
+    https://ruffle.rs/#downloads
     and extract to the emulators folder.
 
   * in the examples folder save 
@@ -20,21 +20,21 @@
   </head>
   <body>
     <div id="container"></div>
-    <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;" width="756" height="391" moz-opaque=""></canvas>
+    <canvas id="canvas" style="width: 780px; height: 440px; display: block; margin: 0 auto;" moz-opaque=""></canvas>
   </body>
   <foot>
     <script type="text/javascript" src="es6-promise.js"></script>
     <script type="text/javascript" src="browserfs.min.js"></script>
     <script type="text/javascript" src="loader.js"></script>
     <script type="text/javascript">
+      const url = "/examples/end(www.albinoblacksheep.com).swf";
+      const file = url.slice(url.lastIndexOf("/"));
       var emulator = new Emulator(
         document.querySelector("#canvas"),
         null,
         new RuffleLoader(
-            RuffleLoader.emulatorJS("emulators/ruffle_web_latest/ruffle.js"),
-            RuffleLoader.mountFile("c", RuffleLoader.fetchFile(
-              "Game File",
-              "/examples/end(www.albinoblacksheep.com).swf")),
+            RuffleLoader.emulatorJS("emulators/ruffle/ruffle.js"),
+            RuffleLoader.mountFile(file, RuffleLoader.fetchFile("Game File", url)),
         )
       );
       emulator.start({ waitAfterDownloading: true });

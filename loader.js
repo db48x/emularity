@@ -253,7 +253,10 @@ var Module = null;
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
-                                           } else if (module && module.indexOf("ruffle-") !== 0) { // MAME
+                                           } else if (module && module.indexOf("ruffle-") === 0) {
+                                             modulecfg.config = modulecfg.config || {};
+                                             modulecfg.config.base = get_cors_url(game);
+                                           } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
                                              if (emulator_start_item) {
@@ -454,6 +457,8 @@ var Module = null;
      }
 
      function get_ruffle_files(cfgr, metadata, modulecfg, filelist) {
+       window.RufflePlayer = window.RufflePlayer || {};
+       window.RufflePlayer.config = modulecfg.config;
        var files = [];
        var meta = dict_from_xml(metadata);
        var game_files = files_with_ext_from_filelist(filelist, meta.emulator_ext);
@@ -615,37 +620,41 @@ var Module = null;
 
      // NOTE: deliberately use cors.archive.org since this will 302 rewrite to iaXXXXX.us.archive.org/XX/items/...
      // and need to keep that "artificial" extra domain-ish name to avoid CORS issues with IE/Safari  (tracey@archive)
+     var get_cors_url = function(item, path) {
+       return '//cors.archive.org/cors/' + item + (path ? '/' + path : '');
+     }
+
      var get_emulator_config_url = function (module) {
-       return '//cors.archive.org/cors/emularity_engine_v1/' + module + '.json';
+       return get_cors_url('emularity_engine_v1', module + '.json');
      };
 
      var get_other_emulator_config_url = function (module) {
-       return '//cors.archive.org/cors/emularity_config_v1/' + module + '.cfg';
+       return get_cors_url('emularity_config_v1', module + '.cfg');
      };
 
      var get_meta_url = function (game_path) {
        var path = game_path.split('/');
-       return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_meta.xml";
+       return get_cors_url(path[0], path[0] + "_meta.xml");
      };
 
      var get_files_url = function (game_path) {
        var path = game_path.split('/');
-       return "//cors.archive.org/cors/"+ path[0] +"/"+ path[0] +"_files.xml";
+       return get_cors_url(path[0], path[0] +"_files.xml");
      };
 
      var get_zip_url = function (game_path, item_path) {
        if (item_path) {
-         return "//cors.archive.org/cors/"+ item_path +"/"+ game_path;
+         return get_cors_url(item_path, game_path);
        }
-       return "//cors.archive.org/cors/"+ game_path;
+       return get_cors_url(game_path);
      };
 
      var get_js_url = function (js_filename) {
-       return "//cors.archive.org/cors/emularity_engine_v1/"+ js_filename;
+       return get_cors_url('emularity_engine_v1', js_filename);
      };
 
      var get_bios_url = function (bios_filename) {
-       return "//cors.archive.org/cors/emularity_bios_v1/"+ bios_filename;
+       return get_cors_url('emularity_bios_v1', bios_filename);
      };
 
      function mountat (drive) {
@@ -1280,13 +1289,21 @@ var Module = null;
     * RuffleRunner
     */
    function RuffleRunner(canvas, game_data) {
+     if (!game_data.swf_file_name) {
+       let url = game_data.files[0].file.url;
+       game_data.swf_file_name = url.slice(url.lastIndexOf('/'));
+     }
      // read game data from file system
      let gamedata = game_data.fs.readFileSync(game_data.swf_file_name, null, flag_r);
      this.ready = null;
 
-     window.RufflePlayer = window.RufflePlayer || {};
      let ruffle = RufflePlayer.newest();
-     let player = ruffle.create_player();
+     let player = ruffle.createPlayer();
+     player.addEventListener('loadedmetadata', () => {
+       player.style.width = player.metadata.width + "px";
+       player.style.height = player.metadata.height + "px";
+     });
+     this._player = player;
 
      // copy atributes of canvas to player div
      for (let el of canvas.attributes){
@@ -1294,11 +1311,19 @@ var Module = null;
      }
 
      canvas.parentElement.replaceChild(player, canvas);
-     player.play_swf_data(gamedata).then(() => {
-       this.ready(); // clear screen
-       player.play_button_clicked(); // autoplay
+       player.load({
+        data: gamedata,
+        swfFileName: game_data.swf_file_name.replace('/', ''),
+        splashScreen: false
+       }).then(() => {
+        this.ready(); // clear screen
      });
+
    }
+
+   RuffleRunner.prototype.requestFullScreen = function () {
+       this._player.enterFullscreen();
+   };
 
    RuffleRunner.prototype.onReset =  function (func) {
    };
@@ -1309,6 +1334,14 @@ var Module = null;
    RuffleRunner.prototype.onStarted =  function (func) {
      this.ready = func;
    };
+
+   RuffleRunner.prototype.mute = function() {
+     this._player.volume = 0;
+   }
+
+   RuffleRunner.prototype.unmute = function() {
+     this._player.volume = 1;
+   }
 
    /**
     * Emulator
@@ -1859,7 +1892,7 @@ var Module = null;
          splash.titleElt.style.textAlign = 'center';
          splash.titleElt.style.font = "24px sans-serif";
        }
-       splash.titleElt.textContent = " ";
+       splash.titleElt.textContent = " ";
        splash.splashElt.appendChild(splash.titleElt);
 
        var table = document.getElementById("emularity-progress-indicator");
