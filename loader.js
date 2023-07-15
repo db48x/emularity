@@ -78,7 +78,7 @@ var Module = null;
                   np2: img("other_logos/nekop2.gif"),
                   xmil: img("other_logos/xmillenium_logo.jpg"),
                   vmac: img("other_logos/vmac.png"),
-                  ruffle: img("/other_logos/ruffle.png"),
+                  ruffle: img("other_logos/ruffle.png"),
                   cloudpilot: img("other_logos/cloudpilot.png"),
                   v86: img("other_logos/v86.png"),
                 };
