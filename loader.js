@@ -65,6 +65,7 @@ var Module = null;
                   vmac: img("/images/vmac.png"),
                   ruffle: img("/images/ruffle.png"),
                   cloudpilot: img("/images/cloudpilot.png"),
+                  v86: img("/images/v86.png"),
                 };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
@@ -79,6 +80,7 @@ var Module = null;
                   vmac: img("other_logos/vmac.png"),
                   ruffle: img("/other_logos/ruffle.png"),
                   cloudpilot: img("other_logos/cloudpilot.png"),
+                  v86: img("other_logos/v86.png"),
                 };
      }
 
@@ -195,6 +197,11 @@ var Module = null;
                                              cfgr = CloudpilotLoader;
                                              get_files = get_cloudpilot_files;
                                            }
+                                           else if (module && module.indexOf("v86") === 0) {
+                                             emulator_logo = images.v86;
+                                             cfgr = V86Loader;
+                                             get_files = get_v86_files;
+                                           }
                                            else if (module) {
                                              emulator_logo = images.mame;
                                              cfgr = MAMELoader;
@@ -265,6 +272,11 @@ var Module = null;
                                            } else if (module && module.indexOf("ruffle-") === 0) {
                                              modulecfg.config = modulecfg.config || {};
                                              modulecfg.config.base = get_cors_url(game);
+                                           } else if (module && module.indexOf("v86") === 0) {
+                                             config_args.push(cfgr.memorySize(modulecfg.memory_size),
+                                                              cfgr.vgaMemorySize(modulecfg.vga_memory_size),
+                                                              cfgr.acpi(modulecfg.acpi),
+                                                              cfgr.bootOrder(modulecfg.boot_order));
                                            } else if (module) { // MAME
                                              config_args.push(cfgr.driver(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
@@ -644,6 +656,49 @@ var Module = null;
        return files;
     }
 
+     function get_v86_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [];
+
+       if (modulecfg['bios_filename']) {
+         files.push(cfgr.mountFile('/' + modulecfg['bios_filename'], cfgr.fetchFile("BIOS File", get_bios_url(modulecfg['bios_filename']))));
+         files.push(cfgr.bios(modulecfg['bios_filename']));
+       }
+       if (modulecfg['vga_bios_filename']) {
+         files.push(cfgr.mountFile('/' + modulecfg['vga_bios_filename'], cfgr.fetchFile("VGA BIOS File", get_bios_url(modulecfg['vga_bios_filename']))));
+         files.push(cfgr.vgaBios(modulecfg['vga_bios_filename']));
+       }
+
+       var meta = dict_from_xml(metadata),
+           game_files_counter = {};
+       files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
+                                                                           if (modulecfg.peripherals && modulecfg.peripherals[i]) {
+                                                                             game_files_counter[file.name] = modulecfg.peripherals[i];
+                                                                           }
+                                                                         });
+       meta_props_matching(meta, /^v86_drive_([a-zA-Z0-9]+)$/).forEach(function (result) {
+                                                                         var key = result[0], periph = result[1][1];
+                                                                         game_files_counter[meta[key]] = periph;
+                                                                       });
+
+       var game_files = Object.keys(game_files_counter),
+           len = game_files.length;
+       game_files.forEach(function (filename, i) {
+                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                                ext = filename.match(/\.([^.]*)$/)[1],
+                                url = (filename.includes("/")) ? get_zip_url(filename)
+                                                               : get_zip_url(filename, get_item_name(game)),
+                                periph = game_files_counter[filename],
+                                path = '/' + periph + '.' + ext,
+                                periph_cfg = {};
+                            periph_cfg[periph] = {"path": path};
+                            files.push(cfgr.mountFile(path,
+                                                      cfgr.fetchFile(title, url)));
+                            files.push(periph_cfg);
+                          });
+
+      return files;
+     }
+
      var get_item_name = function (game_path) {
        return game_path.split('/').shift();
      };
@@ -1012,6 +1067,63 @@ var Module = null;
    };
    CloudpilotLoader.__proto__ = BaseLoader;
 
+   /**
+    * V86Loader
+    */
+    function V86Loader() {
+      var config = Array.prototype.reduce.call(arguments, extend);
+      config.memory_size = config.memory_size || 32;
+      config.vga_memory_size = config.vga_memory_size || 2;
+      config.boot_order = config.boot_order || 0x213;
+      config.runner = V86Runner;
+      return config;
+    }
+    V86Loader.__proto__ = BaseLoader;
+ 
+    V86Loader.bios = function (filename) {
+      return {"bios": {"path": filename}}
+    };
+
+    V86Loader.vgaBios = function (filename) {
+      return {"vga_bios": {"path": filename}}
+    };
+
+    V86Loader.fda = function (filename) {
+      return {"fda": {"path": filename}}
+    };
+
+    V86Loader.fdb = function (filename) {
+      return {"fdb": {"path": filename}}
+    };
+
+    V86Loader.hda = function (filename) {
+      return {"hda": {"path": filename}}
+    };
+
+    V86Loader.hdb = function (filename) {
+      return {"hda": {"path": filename}}
+    };
+
+    V86Loader.cdrom = function (filename) {
+      return {"cdrom": {"path": filename}}
+    };
+
+    V86Loader.bootOrder = function (order) {
+      return {"boot_order": order}
+    };
+
+    V86Loader.acpi = function (enabled) {
+      return {"acpi": !!enabled}
+    };
+
+    V86Loader.memorySize = function (amount) {
+      return {"memory_size": amount};
+    };
+
+    V86Loader.vgaMemorySize = function (amount) {
+      return {"vga_memory_size": amount};
+    };
+
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, autoboot, extra_args, keepaspect, scale) {
      scale = scale || 1;
      var args = [driver,
@@ -1336,6 +1448,104 @@ var Module = null;
    };
 
    SAERunner.prototype.requestFullScreen = function () {
+     getfullscreenenabler().call(this._canvas);
+   };
+
+   /*
+    * V86Runner
+    */
+   function V86Runner(canvas, game_data) {
+     // v86 needs a specific DOM structure instead of a canvas
+     var screenContainerOuterElt = document.createElement("div");
+     screenContainerOuterElt.id = canvas.id;
+     screenContainerOuterElt.classList = canvas.classList;
+     screenContainerOuterElt.style = canvas.style;
+
+     var screenContainerInnerElt = document.createElement("div");
+     screenContainerInnerElt.classList = ["emularity-v86-screen-container"];
+     screenContainerInnerElt.style = "display:flex;justify-content:center;align-items:center;background-color:#000;";
+
+     var textDivElt = document.createElement("div");
+     textDivElt.classList = ["emularity-v86-screen-text"];
+     textDivElt.style = "font-size:14px;font-family:monospace;line-height:14px;white-space:pre;";
+     var canvasElt = document.createElement("canvas");
+     canvasElt.classList = ["emularity-v86-screen-canvas"];
+     canvasElt.style = "display:none;";
+
+     screenContainerInnerElt.appendChild(textDivElt);
+     screenContainerInnerElt.appendChild(canvasElt);
+     screenContainerOuterElt.appendChild(screenContainerInnerElt);
+     canvas.parentNode.replaceChild(screenContainerOuterElt, canvas);
+
+     var cfg = {};
+     cfg.screen_container = screenContainerInnerElt;
+     cfg.memory_size = Math.floor(game_data.memory_size * 1024 * 1024);
+     cfg.vga_memory_size = Math.floor(game_data.vga_memory_size * 1024 * 1024);
+     cfg.acpi = game_data.acpi;
+     cfg.boot_order = game_data.boot_order;
+
+     cfg.autostart = true;
+     cfg.wasm_fn = env => {
+       return new Promise(async resolve => {
+         const wasm = await WebAssembly.instantiate(game_data.wasmBinary, env);
+         resolve(wasm.instance.exports);
+       });
+     };
+
+     ["bios", "vga_bios", "fda", "fdb", "cdrom", "hda", "hdb"].forEach(key => {
+       if (game_data[key] && game_data[key]["path"]) {
+         cfg[key] = {"buffer": game_data.fs.readFileSync('/'+game_data[key]["path"], null, flag_r).buffer};
+       }
+     });
+
+     var emu = new V86Starter(cfg);
+     this._emulator = emu;
+     this.ready = null;
+
+     if (game_data["scale"]) {
+       emu.screen_set_scale(game_data["scale"], game_data["scale"]);
+     }
+
+     screenContainerInnerElt.addEventListener('click', function (e) {
+       emu.lock_mouse();
+     });
+   }
+
+   V86Runner.prototype.start = function () {
+     this._emulator.run();
+   };
+
+   V86Runner.prototype.pause = function () {
+     this._emulator.stop();
+   };
+
+   V86Runner.prototype.stop = function () {
+     this._emulator.stop();
+   };
+
+   V86Runner.prototype.mute = function () {
+     if (this._emulator.is_muted) {
+       this._emulator.speaker_adapter.mixer.set_volume(1, undefined);
+       this._emulator.is_muted = false;
+     }
+   };
+
+   V86Runner.prototype.unmute = function () {
+     if (!this._emulator.is_muted) {
+       this._emulator.speaker_adapter.mixer.set_volume(0, undefined);
+       this._emulator.is_muted = true;
+     }
+   };
+
+   V86Runner.prototype.onStarted = function (func) {
+     this._emulator.add_listener("emulator-started", func);
+   };
+
+   V86Runner.prototype.onReset = function (func) {
+     // not supported
+   };
+
+   V86Runner.prototype.requestFullScreen = function () {
      getfullscreenenabler().call(this._canvas);
    };
 
@@ -2366,6 +2576,7 @@ var Module = null;
    window.PCELoader = PCELoader;
    window.VICELoader = VICELoader;
    window.NP2Loader = NP2Loader;
+   window.V86Loader = V86Loader;
    window.RuffleLoader = RuffleLoader;
    window.CloudpilotLoader = CloudpilotLoader;
    window.Emulator = Emulator;

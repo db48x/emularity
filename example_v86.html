@@ -1,0 +1,76 @@
+<!--
+ The Emularity: An Example Computer Loader
+ For use with The Emularity, downloadable at http://www.emularity.com/
+
+ SIMPLE STEPS for trying an emulated computer (FreeDOS).
+
+ * Check out this repository in your browser-accessible directory;
+   this file as well as es6-promise.js, browserfs.min.js and loader.js
+   are required. The logo and images directories are optional, but the
+   splash screen looks quite a lot better when they're available.
+
+ * Clone: https://github.com/asiekierka/v86/tree/emularity
+   and run "make all".
+
+ * Copy bios/seabios.bin, bios/vgabios.bin, build/libv86.js,
+   build/v86.wasm to "emulators/v86".
+
+ * Optionally, acquire an 8x14 EGA font in WOFF format from:
+   https://int10h.org/oldschool-pc-fonts/fontlist/ and copy it to
+   "emulators/v86/ega437.woff".
+
+ * Download FreeDOS from: https://k.copy.sh/freedos722.img
+
+ * Place disk image in an "examples" subdirectory.
+
+ * Visit your example_v86.html file with a modern
+   Javascript-capable browser.
+-->
+
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>example computer program</title>
+  <style type="text/css">
+@font-face {
+  font-family: 'Ega437';
+  src: url('emulators/v86/ega437.woff') format('woff');
+}
+.emularity-v86-screen-text {
+  font-family: 'Ega437', monospace !important;
+}
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas" style="width: 50%; height: 50%; display: block; margin: 0 auto;" />
+  <script type="text/javascript" src="es6-promise.js"></script>
+  <script type="text/javascript" src="browserfs.min.js"></script>
+  <script type="text/javascript" src="loader.js"></script>
+  <script type="text/javascript">
+    var emulator = new Emulator(document.querySelector("#canvas"),
+                                null,
+                                new V86Loader(V86Loader.nativeResolution(800, 600),
+                                              V86Loader.scale(1),
+                                              V86Loader.emulatorJS("emulators/v86/libv86.js"),
+                                              V86Loader.emulatorWASM("emulators/v86/v86.wasm"),
+                                              V86Loader.memorySize(16),
+                                              V86Loader.mountFile("seabios.bin",
+                                                                  V86Loader.fetchFile("BIOS",
+                                                                                      "emulators/v86/seabios.bin")),
+                                              V86Loader.mountFile("vgabios.bin",
+                                                                  V86Loader.fetchFile("VGA BIOS",
+                                                                                      "emulators/v86/vgabios.bin")),
+                                              V86Loader.mountFile("freedos.img",
+                                                                 V86Loader.fetchFile("FreeDOS",
+                                                                                      "examples/freedos722.img")),
+                                              V86Loader.bios("seabios.bin"),
+                                              V86Loader.vgaBios("vgabios.bin"),
+                                              V86Loader.fda("freedos.img"),
+                                             ));
+    emulator.start({ waitAfterDownloading: true });
+  </script>
+</body>
+
+</html>
