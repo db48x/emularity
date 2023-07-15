@@ -64,6 +64,7 @@ var Module = null;
                   xmil: img("/images/xmillenium_logo.jpg"),
                   vmac: img("/images/vmac.png"),
                   ruffle: img("/images/ruffle.png"),
+                  cloudpilot: img("/images/cloudpilot.png"),
                 };
      } else {
        images = { ia: img("other_logos/ia-logo-150x150.png"),
@@ -77,6 +78,7 @@ var Module = null;
                   xmil: img("other_logos/xmillenium_logo.jpg"),
                   vmac: img("other_logos/vmac.png"),
                   ruffle: img("/other_logos/ruffle.png"),
+                  cloudpilot: img("other_logos/cloudpilot.png"),
                 };
      }
 
@@ -188,6 +190,11 @@ var Module = null;
                                              cfgr = NP2Loader;
                                              get_files = get_vmac_files;
                                            }
+                                           else if (module && module.indexOf("cloudpilot-") === 0) {
+                                            emulator_logo = images.cloudpilot;
+                                            cfgr = CloudpilotLoader;
+                                            get_files = get_cloudpilot_files;
+                                           }
                                            else if (module) {
                                              emulator_logo = images.mame;
                                              cfgr = MAMELoader;
@@ -213,7 +220,7 @@ var Module = null;
                                            }
 
                                            if (/archive\.org$/.test(document.location.hostname)) {
-                                             config_args.push(cfgr.muted(!(typeof $ !== 'undefined' && $.cookie && $.cookie('unmute'))));
+                                             config_args.push(cfgr.muted(document.cookie.indexOf('unmute=1') < 0)) // we're muted, unless cookie 'unmute' is set
                                            }
 
                                            var emulator_start_item = metadata.getElementsByTagName("emulator_start").item(0);
@@ -253,6 +260,8 @@ var Module = null;
                                            } else if (module && module.indexOf("pce-") === 0) {
                                              config_args.push(cfgr.model(modulecfg.driver),
                                                               cfgr.extraArgs(modulecfg.extra_args));
+                                           } else if (module && module.indexOf("cloudpilot-") === 0) { // Cloudpilot
+                                             config_args.push(cfgr.roms(modulecfg.bios_filenames));
                                            } else if (module && module.indexOf("ruffle-") === 0) {
                                              modulecfg.config = modulecfg.config || {};
                                              modulecfg.config.base = get_cors_url(game);
@@ -610,6 +619,31 @@ var Module = null;
        return files;
      }
 
+     function get_cloudpilot_files(cfgr, metadata, modulecfg, filelist) {
+       var files = [];
+       bios_files = modulecfg['bios_filenames'];
+       bios_files.forEach(function (fname, i) {
+                            if (fname) {
+                              var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
+                              files.push(cfgr.mountFile('/'+ fname,
+                                                        cfgr.fetchFile(title,
+                                                                       get_bios_url(fname))));
+                            }
+                          });
+       var meta = dict_from_xml(metadata);
+       var game_files = files_with_ext_from_filelist(filelist, meta.emulator_ext);
+       var len = game_files.length;
+       if (game_files.length > 0) {
+         var file = game_files[0]; // only allow one .swf file to be loaded
+         var title = 'Downloading Game File';
+         var url = (file.name.includes('/')) ? get_zip_url(file.name)
+                                             : get_zip_url(file.name, get_item_name(game));
+         files.push(cfgr.mountFile('/' + file.name, cfgr.fetchFile(title, url)));
+         files.push(cfgr.prc(file.name));
+       }
+       return files;
+    }
+
      var get_item_name = function (game_path) {
        return game_path.split('/').shift();
      };
@@ -958,6 +992,25 @@ var Module = null;
      return { extra_np2_args: args };
    };
 
+   function CloudpilotLoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.runner = CloudpilotRunner;
+     return config;
+   }
+   CloudpilotLoader.roms = function (filenames) {
+     if (typeof filenames == "string")
+       filenames = [filenames];
+     var roms = {};
+     // Assume one .bin file (Palm BIOS ROM), and one .img file (freshly booted session image).
+     roms.bios = filenames.find((f) => f.match(/\.bin$/i));
+     roms.session = filenames.find((f) => f.match(/\.img$/i));
+     return roms;
+   };
+   CloudpilotLoader.prc = function (filename) {
+     return { prc: filename };
+   };
+   CloudpilotLoader.__proto__ = BaseLoader;
+
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, autoboot, extra_args, keepaspect, scale) {
      scale = scale || 1;
      var args = [driver,
@@ -1297,33 +1350,33 @@ var Module = null;
      let gamedata = game_data.fs.readFileSync(game_data.swf_file_name, null, flag_r);
      this.ready = null;
 
-     let ruffle = RufflePlayer.newest();
-     let player = ruffle.createPlayer();
+          let ruffle = RufflePlayer.newest();
+          let player = ruffle.createPlayer();
      player.addEventListener('loadedmetadata', () => {
        player.style.width = player.metadata.width + "px";
        player.style.height = player.metadata.height + "px";
      });
-     this._player = player;
+          this._player = player;
 
-     // copy atributes of canvas to player div
-     for (let el of canvas.attributes){
-       player.setAttribute(el.localName, el.nodeValue);
-     }
+          // copy atributes of canvas to player div
+      for (let el of canvas.attributes){
+         player.setAttribute(el.localName, el.nodeValue);
+       }
 
-     canvas.parentElement.replaceChild(player, canvas);
+       canvas.parentElement.replaceChild(player, canvas);
        player.load({
-        data: gamedata,
+       data: gamedata,
         swfFileName: game_data.swf_file_name.replace('/', ''),
         splashScreen: false
        }).then(() => {
         this.ready(); // clear screen
-     });
+    });
 
    }
 
    RuffleRunner.prototype.requestFullScreen = function () {
        this._player.enterFullscreen();
-   };
+  };
 
    RuffleRunner.prototype.onReset =  function (func) {
    };
@@ -1342,6 +1395,83 @@ var Module = null;
    RuffleRunner.prototype.unmute = function() {
      this._player.volume = 1;
    }
+
+   /*
+    * CloudpilotRunner
+    */
+   function CloudpilotRunner(canvas, game_data) {
+    // Assume we have one of each: *.bin (BIOS ROM), *.img (session image), *.prc (app database)
+    if (game_data.bios) {
+      this._biosFile = game_data.fs.readFileSync("/" + game_data.bios, null, flag_r);
+    }
+    if (game_data.session) {
+      this._sessionFile = game_data.fs.readFileSync("/" + game_data.session, null, flag_r);
+    }
+    if (game_data.prc) {
+      if (game_data.prc.match(/\.zip$/i)) {
+        this._prcZip = game_data.fs.readFileSync("/" + game_data.prc, null, flag_r);
+        this._prcFileName = game_data.prc.replace(/\.zip$/i, '.prc');
+      } else {
+        this._prcFile = game_data.fs.readFileSync("/" + game_data.prc, null, flag_r);
+      }
+    }
+    this._canvas = canvas;
+   }
+
+   CloudpilotRunner.prototype.onReset =  function (func) {
+   };
+
+   CloudpilotRunner.prototype.start =  function (func) {
+    var runner = this;
+    cloudpilot.createEmulator().then(function(emulator) {
+        emulator
+          .setCanvas(runner._canvas)
+          .bindInput(runner._canvas, runner._canvas)
+
+          if (runner._sessionFile && runner._prcFile) {
+            // Load booted image and install app.
+            emulator
+              .loadSession(runner._sessionFile)
+              .installAndLaunchDatabase(runner._prcFile);
+          } else if (runner._sessionFile && runner._prcZip) {
+            // Load booted image and install app.
+            emulator
+              .loadSession(runner._sessionFile)
+              .installFromZipfileAndLaunch(runner._prcZip, runner._prcFileName);
+          } else if (runner._biosFile) {
+            // Missing app .prc; load initial BIOS directly (Palm setup process).
+            emulator.loadRom(runner._biosFile);
+          }
+        emulator.resume();
+        runner._canvas.tabIndex = 0;
+	runner._canvas.style.outline = 0;
+        runner._canvas.focus();
+        runner._emulator = emulator;
+    });
+   };
+
+   CloudpilotRunner.prototype.onStarted =  function (func) {
+     func();
+   };
+
+   CloudpilotRunner.prototype.mute = function() {
+      if (this._emulator) {
+        this._emulator.setVolume(0);
+      }
+   };
+
+   CloudpilotRunner.prototype.unmute = function() {
+      if (this._emulator) {
+        if (!this._emulator.isAudioInitialized()) {
+          this._emulator.initializeAudio();
+        }
+        this._emulator.setVolume(1);
+      }
+   };
+
+   CloudpilotRunner.prototype.requestFullScreen = function () {
+     getfullscreenenabler().call(this._canvas);
+   };
 
    /**
     * Emulator
@@ -2236,6 +2366,7 @@ var Module = null;
    window.VICELoader = VICELoader;
    window.NP2Loader = NP2Loader;
    window.RuffleLoader = RuffleLoader;
+   window.CloudpilotLoader = CloudpilotLoader;
    window.Emulator = Emulator;
    window._SDL_CreateRGBSurfaceFrom = _SDL_CreateRGBSurfaceFrom;
  })(typeof Promise === 'undefined' ? ES6Promise.Promise : Promise);
