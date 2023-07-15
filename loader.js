@@ -191,9 +191,9 @@ var Module = null;
                                              get_files = get_vmac_files;
                                            }
                                            else if (module && module.indexOf("cloudpilot-") === 0) {
-                                            emulator_logo = images.cloudpilot;
-                                            cfgr = CloudpilotLoader;
-                                            get_files = get_cloudpilot_files;
+                                             emulator_logo = images.cloudpilot;
+                                             cfgr = CloudpilotLoader;
+                                             get_files = get_cloudpilot_files;
                                            }
                                            else if (module) {
                                              emulator_logo = images.mame;
@@ -998,8 +998,9 @@ var Module = null;
      return config;
    }
    CloudpilotLoader.roms = function (filenames) {
-     if (typeof filenames == "string")
+     if (typeof filenames == "string") {
        filenames = [filenames];
+     }
      var roms = {};
      // Assume one .bin file (Palm BIOS ROM), and one .img file (freshly booted session image).
      roms.bios = filenames.find((f) => f.match(/\.bin$/i));
@@ -1350,33 +1351,32 @@ var Module = null;
      let gamedata = game_data.fs.readFileSync(game_data.swf_file_name, null, flag_r);
      this.ready = null;
 
-          let ruffle = RufflePlayer.newest();
-          let player = ruffle.createPlayer();
+     let ruffle = RufflePlayer.newest();
+     let player = ruffle.createPlayer();
      player.addEventListener('loadedmetadata', () => {
        player.style.width = player.metadata.width + "px";
        player.style.height = player.metadata.height + "px";
      });
-          this._player = player;
+     this._player = player;
 
-          // copy atributes of canvas to player div
-      for (let el of canvas.attributes){
-         player.setAttribute(el.localName, el.nodeValue);
-       }
+     // copy atributes of canvas to player div
+     for (let el of canvas.attributes){
+       player.setAttribute(el.localName, el.nodeValue);
+     }
 
-       canvas.parentElement.replaceChild(player, canvas);
-       player.load({
-       data: gamedata,
-        swfFileName: game_data.swf_file_name.replace('/', ''),
-        splashScreen: false
-       }).then(() => {
-        this.ready(); // clear screen
-    });
-
+     canvas.parentElement.replaceChild(player, canvas);
+     player.load({ data: gamedata,
+                   swfFileName: game_data.swf_file_name.replace('/', ''),
+                   splashScreen: false
+                 })
+           .then(() => {
+                   this.ready(); // clear screen
+                 });
    }
 
    RuffleRunner.prototype.requestFullScreen = function () {
-       this._player.enterFullscreen();
-  };
+     this._player.enterFullscreen();
+   };
 
    RuffleRunner.prototype.onReset =  function (func) {
    };
@@ -1390,64 +1390,65 @@ var Module = null;
 
    RuffleRunner.prototype.mute = function() {
      this._player.volume = 0;
-   }
+   };
 
    RuffleRunner.prototype.unmute = function() {
      this._player.volume = 1;
-   }
+   };
 
    /*
     * CloudpilotRunner
     */
    function CloudpilotRunner(canvas, game_data) {
-    // Assume we have one of each: *.bin (BIOS ROM), *.img (session image), *.prc (app database)
-    if (game_data.bios) {
-      this._biosFile = game_data.fs.readFileSync("/" + game_data.bios, null, flag_r);
-    }
-    if (game_data.session) {
-      this._sessionFile = game_data.fs.readFileSync("/" + game_data.session, null, flag_r);
-    }
-    if (game_data.prc) {
-      if (game_data.prc.match(/\.zip$/i)) {
-        this._prcZip = game_data.fs.readFileSync("/" + game_data.prc, null, flag_r);
-        this._prcFileName = game_data.prc.replace(/\.zip$/i, '.prc');
-      } else {
-        this._prcFile = game_data.fs.readFileSync("/" + game_data.prc, null, flag_r);
-      }
-    }
-    this._canvas = canvas;
+     // Assume we have one of each: *.bin (BIOS ROM), *.img (session image), *.prc (app database)
+     if (game_data.bios) {
+       this._biosFile = game_data.fs.readFileSync("/" + game_data.bios, null, flag_r);
+     }
+     if (game_data.session) {
+       this._sessionFile = game_data.fs.readFileSync("/" + game_data.session, null, flag_r);
+     }
+     if (game_data.prc) {
+       if (game_data.prc.match(/\.zip$/i)) {
+         this._prcZip = game_data.fs.readFileSync("/" + game_data.prc, null, flag_r);
+         this._prcFileName = game_data.prc.replace(/\.zip$/i, '.prc');
+       } else {
+         this._prcFile = game_data.fs.readFileSync("/" + game_data.prc, null, flag_r);
+       }
+     }
+     this._canvas = canvas;
    }
 
    CloudpilotRunner.prototype.onReset =  function (func) {
    };
 
    CloudpilotRunner.prototype.start =  function (func) {
-    var runner = this;
-    cloudpilot.createEmulator().then(function(emulator) {
-        emulator
-          .setCanvas(runner._canvas)
-          .bindInput(runner._canvas, runner._canvas)
+     var runner = this;
+     cloudpilot.createEmulator()
+               .then(function(emulator) {
+                       emulator
+                         .setCanvas(runner._canvas)
+                         .bindInput(runner._canvas, runner._canvas);
 
-          if (runner._sessionFile && runner._prcFile) {
-            // Load booted image and install app.
-            emulator
-              .loadSession(runner._sessionFile)
-              .installAndLaunchDatabase(runner._prcFile);
-          } else if (runner._sessionFile && runner._prcZip) {
-            // Load booted image and install app.
-            emulator
-              .loadSession(runner._sessionFile)
-              .installFromZipfileAndLaunch(runner._prcZip, runner._prcFileName);
-          } else if (runner._biosFile) {
-            // Missing app .prc; load initial BIOS directly (Palm setup process).
-            emulator.loadRom(runner._biosFile);
-          }
-        emulator.resume();
-        runner._canvas.tabIndex = 0;
-	runner._canvas.style.outline = 0;
-        runner._canvas.focus();
-        runner._emulator = emulator;
-    });
+                         if (runner._sessionFile && runner._prcFile) {
+                           // Load booted image and install app.
+                           emulator
+                             .loadSession(runner._sessionFile)
+                             .installAndLaunchDatabase(runner._prcFile);
+                         } else if (runner._sessionFile && runner._prcZip) {
+                           // Load booted image and install app.
+                           emulator
+                             .loadSession(runner._sessionFile)
+                             .installFromZipfileAndLaunch(runner._prcZip, runner._prcFileName);
+                         } else if (runner._biosFile) {
+                           // Missing app .prc; load initial BIOS directly (Palm setup process).
+                           emulator.loadRom(runner._biosFile);
+                         }
+                       emulator.resume();
+                       runner._canvas.tabIndex = 0;
+                       runner._canvas.style.outline = 0;
+                       runner._canvas.focus();
+                       runner._emulator = emulator;
+                    });
    };
 
    CloudpilotRunner.prototype.onStarted =  function (func) {
@@ -1455,18 +1456,18 @@ var Module = null;
    };
 
    CloudpilotRunner.prototype.mute = function() {
-      if (this._emulator) {
-        this._emulator.setVolume(0);
-      }
+     if (this._emulator) {
+       this._emulator.setVolume(0);
+     }
    };
 
    CloudpilotRunner.prototype.unmute = function() {
-      if (this._emulator) {
-        if (!this._emulator.isAudioInitialized()) {
-          this._emulator.initializeAudio();
-        }
-        this._emulator.setVolume(1);
-      }
+     if (this._emulator) {
+       if (!this._emulator.isAudioInitialized()) {
+         this._emulator.initializeAudio();
+       }
+       this._emulator.setVolume(1);
+     }
    };
 
    CloudpilotRunner.prototype.requestFullScreen = function () {
