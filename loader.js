@@ -1007,8 +1007,8 @@ var Module = null;
    };
 
    /**
-   * RuffleLoader
-   */
+    * RuffleLoader
+    */
    function RuffleLoader () {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.runner = RuffleRunner;
@@ -1022,13 +1022,13 @@ var Module = null;
    };
 
    /**
-   * NP2Loader
-   *
-   * TODO(db48x): This is currently doing triple-duty as the loader
-   * for the xmil and vmac emulators as well. Investigate to see if it
-   * would be better to split them out. Since all three are by the
-   * same author, it may simply be better to rename it instead.
-   */
+    * NP2Loader
+    *
+    * TODO(db48x): This is currently doing triple-duty as the loader
+    * for the xmil and vmac emulators as well. Investigate to see if it
+    * would be better to split them out. Since all three are by the
+    * same author, it may simply be better to rename it instead.
+    */
    function NP2Loader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      if (!config.emulatorStart) {
@@ -1070,59 +1070,59 @@ var Module = null;
    /**
     * V86Loader
     */
-    function V86Loader() {
-      var config = Array.prototype.reduce.call(arguments, extend);
-      config.memory_size = config.memory_size || 32;
-      config.vga_memory_size = config.vga_memory_size || 2;
-      config.boot_order = config.boot_order || 0x213;
-      config.runner = V86Runner;
-      return config;
-    }
-    V86Loader.__proto__ = BaseLoader;
- 
-    V86Loader.bios = function (filename) {
-      return {"bios": {"path": filename}}
-    };
+   function V86Loader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     config.memory_size = config.memory_size || 32;
+     config.vga_memory_size = config.vga_memory_size || 2;
+     config.boot_order = config.boot_order || 0x213;
+     config.runner = V86Runner;
+     return config;
+   }
+   V86Loader.__proto__ = BaseLoader;
 
-    V86Loader.vgaBios = function (filename) {
-      return {"vga_bios": {"path": filename}}
-    };
+   V86Loader.bios = function (filename) {
+     return {"bios": {"path": filename}};
+   };
 
-    V86Loader.fda = function (filename) {
-      return {"fda": {"path": filename}}
-    };
+   V86Loader.vgaBios = function (filename) {
+     return {"vga_bios": {"path": filename}};
+   };
 
-    V86Loader.fdb = function (filename) {
-      return {"fdb": {"path": filename}}
-    };
+   V86Loader.fda = function (filename) {
+     return {"fda": {"path": filename}};
+   };
 
-    V86Loader.hda = function (filename) {
-      return {"hda": {"path": filename}}
-    };
+   V86Loader.fdb = function (filename) {
+     return {"fdb": {"path": filename}};
+   };
 
-    V86Loader.hdb = function (filename) {
-      return {"hda": {"path": filename}}
-    };
+   V86Loader.hda = function (filename) {
+     return {"hda": {"path": filename}};
+   };
 
-    V86Loader.cdrom = function (filename) {
-      return {"cdrom": {"path": filename}}
-    };
+   V86Loader.hdb = function (filename) {
+     return {"hda": {"path": filename}};
+   };
 
-    V86Loader.bootOrder = function (order) {
-      return {"boot_order": order}
-    };
+   V86Loader.cdrom = function (filename) {
+     return {"cdrom": {"path": filename}};
+   };
 
-    V86Loader.acpi = function (enabled) {
-      return {"acpi": !!enabled}
-    };
+   V86Loader.bootOrder = function (order) {
+     return {"boot_order": order};
+   };
 
-    V86Loader.memorySize = function (amount) {
-      return {"memory_size": amount};
-    };
+   V86Loader.acpi = function (enabled) {
+     return {"acpi": !!enabled};
+   };
 
-    V86Loader.vgaMemorySize = function (amount) {
-      return {"vga_memory_size": amount};
-    };
+   V86Loader.memorySize = function (amount) {
+     return {"memory_size": amount};
+   };
+
+   V86Loader.vgaMemorySize = function (amount) {
+     return {"vga_memory_size": amount};
+   };
 
    var build_mame_arguments = function (muted, driver, native_resolution, sample_rate, peripheral, autoboot, extra_args, keepaspect, scale) {
      scale = scale || 1;
@@ -1494,7 +1494,7 @@ var Module = null;
 
      ["bios", "vga_bios", "fda", "fdb", "cdrom", "hda", "hdb"].forEach(key => {
        if (game_data[key] && game_data[key]["path"]) {
-         cfg[key] = {"buffer": game_data.fs.readFileSync('/'+game_data[key]["path"], null, flag_r).buffer};
+         cfg[key] = { buffer: game_data.fs.readFileSync('/' + game_data[key]["path"], null, flag_r).buffer, };
        }
      });
 
@@ -1506,9 +1506,10 @@ var Module = null;
        emu.screen_set_scale(game_data["scale"], game_data["scale"]);
      }
 
-     screenContainerInnerElt.addEventListener('click', function (e) {
-       emu.lock_mouse();
-     });
+     screenContainerInnerElt.addEventListener('click',
+                                              function (e) {
+                                                emu.lock_mouse();
+                                              });
    }
 
    V86Runner.prototype.start = function () {
