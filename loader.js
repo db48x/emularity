@@ -393,9 +393,10 @@ var Module = null;
        bios_files.forEach(function (fname, i) {
                             if (fname) {
                               var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
+                              var url = get_bios_url(fname);
                               files.push(cfgr.mountFile('/'+ fname,
-                                                        cfgr.fetchFile(title,
-                                                                       get_bios_url(fname))));
+                                                        cfgr.fetchFile(title, url)));
+                              already_fetched_urls.push(url);
                             }
                           });
 
