@@ -388,13 +388,15 @@ var Module = null;
 
      function get_mame_files(cfgr, metadata, modulecfg, filelist) {
        var files = [],
-           bios_files = modulecfg['bios_filenames'];
+           bios_files = modulecfg['bios_filenames'],
+           already_fetched_urls = [];
        bios_files.forEach(function (fname, i) {
                             if (fname) {
                               var title = "Bios File ("+ (i+1) +" of "+ bios_files.length +")";
+                              var url = get_bios_url(fname);
                               files.push(cfgr.mountFile('/'+ fname,
-                                                        cfgr.fetchFile(title,
-                                                                       get_bios_url(fname))));
+                                                        cfgr.fetchFile(title, url)));
+                              already_fetched_urls.push(url);
                             }
                           });
 
@@ -421,6 +423,7 @@ var Module = null;
                                                                : get_zip_url(filename, get_item_name(game));
                             files.push(cfgr.mountFile('/'+ filename,
                                                       cfgr.fetchFile(title, url)));
+                            already_fetched_urls.push(url);
                           });
 
        // add on game drive (.chd) files, if any
@@ -431,8 +434,10 @@ var Module = null;
                              var title = "Game Drive ("+ (i+1) +" of "+ len +")";
                              var url = (file.name.includes("/")) ? get_zip_url(file.name)
                                                                  : get_zip_url(file.name, get_item_name(game));
-                             files.push(cfgr.mountFile(modulecfg.driver + '/' + file.name,
-                                                       cfgr.fetchFile(title, url)));
+                             if (!already_fetched_urls.includes(url)) {
+                               files.push(cfgr.mountFile(modulecfg.driver + '/' + file.name,
+                                                         cfgr.fetchFile(title, url)));
+                             }
                            });
 
        Object.keys(peripherals).forEach(function (periph) {
