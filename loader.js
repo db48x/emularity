@@ -189,7 +189,7 @@ var Module = null;
                                            }
                                            else if (module && module.indexOf("vmac-") === 0) {
                                              emulator_logo = images.vmac;
-                                             cfgr = NP2Loader;
+                                             cfgr = vMacLoader;
                                              get_files = get_vmac_files;
                                            }
                                            else if (module && module.indexOf("cloudpilot-") === 0) {
@@ -623,11 +623,15 @@ var Module = null;
        files_with_ext_from_filelist(filelist, meta.emulator_ext).forEach(function (file, i) {
                                                                            game_files_counter[file.name] = 1;
                                                                          });
+       meta_props_matching(meta, /^vmac_drive_([0-9]+)$/).forEach(function (result) {
+                                                                    var key = result[0], periph = result[1][1];
+                                                                    game_files_counter[meta[key]] = periph;
+                                                                  });
 
        var game_files = Object.keys(game_files_counter),
            len = game_files.length;
        game_files.forEach(function (filename, i) {
-                            var title = "Game File ("+ (i+1) +" of "+ len +")",
+                            var title = "Disk Image ("+ (i+1) +" of "+ len +")",
                                 url = (filename.includes("/")) ? get_zip_url(filename)
                                                                : get_zip_url(filename, get_item_name(game));
                             files.push(cfgr.mountFile('/'+ filename,
@@ -1028,11 +1032,12 @@ var Module = null;
 
    /**
     * NP2Loader
+    * for the NEC PC-9800
     *
-    * TODO(db48x): This is currently doing triple-duty as the loader
-    * for the xmil and vmac emulators as well. Investigate to see if it
-    * would be better to split them out. Since all three are by the
-    * same author, it may simply be better to rename it instead.
+    * TODO(db48x): Supposedly NP2, xmil, and Mini vMac were all by the
+    * same author? Looking at it again I’m not so sure. Anyway, they
+    * were all super simple to configure so this code is largely
+    * shared between them.
     */
    function NP2Loader() {
      var config = Array.prototype.reduce.call(arguments, extend);
@@ -1052,6 +1057,24 @@ var Module = null;
      return { extra_np2_args: args };
    };
 
+   /**
+    * vMacLoader
+    * early Mac computers on 680x0
+    */
+   function vMacLoader() {
+     var config = Array.prototype.reduce.call(arguments, extend);
+     if (!config.emulatorStart) {
+       throw new Error("You must specify an autoLoad value in order to start this emulator. Try the name of the disk image.");
+     }
+     config.emulator_arguments = build_vmac_arguments(config.emulatorStart, config.files, config.extra_np2_args);
+     config.runner = NP2Runner;
+     return config;
+   }
+   vMacLoader.__proto__ = NP2Loader;
+
+   /**
+    * CloudpiltLoader
+    */
    function CloudpilotLoader() {
      var config = Array.prototype.reduce.call(arguments, extend);
      config.runner = CloudpilotRunner;
@@ -1211,6 +1234,18 @@ var Module = null;
 
    var build_np2_arguments = function (emulator_start, files, extra_args) {
      var args = emulator_start ? [emulator_start] : [];
+     if (extra_args) {
+       args = args.concat(extra_args);
+     }
+     return args;
+   };
+
+   var build_vmac_arguments = function (emulator_start, files, extra_args) {
+     var args = files.map((f) => '/emulator' + f.mountpoint)
+                     .filter((f) => f != emulator_start && f != '/emulator/minivmac');
+     if (emulator_start) {
+       args.unshift(emulator_start);
+     }
      if (extra_args) {
        args = args.concat(extra_args);
      }
