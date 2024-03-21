@@ -1328,7 +1328,7 @@ var Module = null;
    };
 
    EmscriptenRunner.prototype.requestFullScreen = function () {
-     this._canvas.requestFullscreen();
+     getfullscreenenabler().call(this._canvas);
    };
 
    /*
@@ -2387,7 +2387,7 @@ var Module = null;
        var self = this;
        var fullScreenChangeHandler = function() {
                                        if (!(document.mozFullScreenElement || document.fullScreenElement)) {
-                                         resizeCanvas(canvas, scale, css_resolution, aspectRatio);
+                                         resizeCanvas(self.canvas, self.scale, self.css_resolution, self.aspectRatio);
                                        }
                                      };
        if ('onfullscreenchange' in document) {
